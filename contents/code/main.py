@@ -359,7 +359,7 @@ class ThreadCheckMail(QThread):
 	def __init__(self, parent = None):
 		QThread.__init__(self, parent)
 
-		self.i = 0
+		#self.i = 0
 		self.setTerminationEnabled(True)
 
 	def run(self):
@@ -384,8 +384,8 @@ class ThreadCheckMail(QThread):
 			print x
 			logging.debug(x)
 		finally :
-			print self.i
-			self.i += 1
+			#print self.i
+			#self.i += 1
 			pass
 		return
 
@@ -599,7 +599,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		#print self.checkResult
 		for accountName in string.split(Settings.value('Accounts').toString(),';') :
 			try :
-				if self.checkResult[i][2] > 0 :
+				if int(self.checkResult[i][2]) > 0 :
 					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 						text_1 = "<font color=red><b>" + str(self.checkResult[i][1]) + "</b></font>"
 						accountName_ = "<font color=red><b>" + accountName + "</b></font>"
@@ -619,9 +619,10 @@ class plasmaMailChecker(plasmascript.Applet):
 				pass
 
 			try:
-				self.label[i].setText(accountName_)
-				self.countList[i].setText(text_1)
-				self.countList[i].setToolTip(text_2)
+				if self.initStat :
+					self.label[i].setText(accountName_)
+					self.countList[i].setText(text_1)
+					self.countList[i].setToolTip(text_2)
 			except AttributeError, x:
 				#logging.debug(x)
 				pass
@@ -698,15 +699,22 @@ class plasmaMailChecker(plasmascript.Applet):
 			return None
 		self.appletSettings.refreshSettings(self)
 		#print self.formFactor(), '---'
-		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
-			self.createDialogWidget()
 		try:
 			self.Timer.stop()
+			# останов потока проверки почты перед изменением GUI
+			global g
+			while g.isRunning() :
+				g.exit()
+				time.sleep(0.05)
 		except AttributeError, x:
 			#logging.debug(x)
 			pass
+		except x :
+			print x
 		finally:
 			pass
+		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+			self.createDialogWidget()
 		logging.debug('Settings refreshed. Timer stopped.')
 		self.initStat = False
 		self.refreshData()
@@ -715,8 +723,6 @@ class plasmaMailChecker(plasmascript.Applet):
 		pass
 
 	def _enterPassword(self):
-		global ErrorMsg
-		global RESULT
 		if not self.initStat :
 			self.enterPassword()
 		else:
@@ -741,17 +747,16 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.dialog.move(self.popupPosition(self.dialog.sizeHint()))
 
 	def eventClose(self):
-		global Settings
 		global g
-		GeneralLOCK.unlock()
-		self.Timer.stop()
 		self.disconnect(g, SIGNAL('finished()'), self.refreshData)
-		g.exit()
+		self.Timer.stop()
+		g.quit()
 		while g.isRunning() :
 			g.exit()
 			time.sleep(0.05)
-		print "MailChecker destroyed."
-		logging.debug("MailChecker destroyed.")
+		GeneralLOCK.unlock()
+		print "MailChecker destroyed manually."
+		logging.debug("MailChecker destroyed manually.")
 		sys.stderr.close()
 		sys.stdout.close()
 		self.exit()
@@ -783,6 +788,7 @@ class KeyDialog(QWidget):
 		self.setLayout(self.layout)
 		self.connect(self.ok,SIGNAL('clicked()'), self.initPassWord)
 		self.connect(self.cancel,SIGNAL('clicked()'), self.eventClose)
+		self.keyLineEdit.returnPressed.connect(self.initPassWord)
 		self.show()
 
 	def initPassWord(self):
