@@ -38,6 +38,8 @@ WriteLOCK = QReadWriteLock()
 class PassWord():
 	def __init__(self, key = ''):
 
+		WriteLOCK.lockForWrite()
+
 		if key == '' :
 			key = '**This_bad_or_empty**_' + '16'
 		self.key_ = key
@@ -49,6 +51,8 @@ class PassWord():
 			self.access = True
 		else:
 			self.access = False
+
+		WriteLOCK.unlock()
 
 	def randomString(self, j = 1):
 		return "".join( [random.choice(string.letters) for i in xrange(j)] )
@@ -450,6 +454,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.layout.setSpacing(0)
 		self.connect(self.applet, SIGNAL('destroyed()'), self.eventClose)
 		self.connect(g, SIGNAL('finished()'), self.refreshData)
+		self.connect(self, SIGNAL('access'), self.processInit)
 
 		self.kdehome = unicode(KGlobal.dirs().localkdedir())
 
@@ -790,6 +795,10 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.refreshData()
 
 	def enterPassword(self):
+		global PasswOBJ
+		if PasswOBJ.access :
+			self.emit(SIGNAL('access'))
+			return None
 		self.initStat = True
 		self.dialog = KeyDialog(self)
 		self.dialog.move(self.popupPosition(self.dialog.sizeHint()))
@@ -798,6 +807,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		global g
 		self.disconnect(g, SIGNAL('finished()'), self.refreshData)
 		self.Timer.stop()
+		PasswOBJ.key_ = PasswOBJ.randomString(64)
 		while g.isRunning() :
 			g.exit()
 			time.sleep(0.05)
@@ -847,13 +857,11 @@ class KeyDialog(QWidget):
 		PasswOBJ = PassWord(str(self.keyLineEdit.userText()))
 		if self.existHash == 0 :
 			PasswOBJ.createKeyHash()
-		#elif str(Settings.value('Hash').toString()) != \
-		#						hashlib.sha512(str(self.keyLineEdit.userText())).hexdigest() :
 		elif not PasswOBJ.access :
 			self.eventClose()
 			return None
-		self.keyLineEdit.setText( PassWord().randomString(24) )
-		self.Parent.processInit()
+		self.keyLineEdit.setText( PassWord().randomString(len(str( self.keyLineEdit.userText() ))) )
+		self.Parent.emit(SIGNAL('access'))
 		self.close()
 
 	def eventClose(self):
@@ -1320,6 +1328,7 @@ class PasswordManipulate(QWidget):
 					Settings.endGroup()
 
 				PasswOBJ = PassWord(str(self.inputKey.userText()))
+				self.inputKey.setText(PasswOBJ.randomString(len(self.inputKey.userText())))
 				PasswOBJ.createKeyHash()
 				self.Parent.eventNotification('Information :\nPassword changed successfull!')
 			else:
