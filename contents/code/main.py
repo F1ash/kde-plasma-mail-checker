@@ -116,10 +116,64 @@ def readAccountData(account = ''):
 	return [str(serv_), str(port_), str(login_), \
 			passw_.data(), str(authMethod_), str(connMethod_), str(last_)]
 
+def initPOP3Cache():
+	WriteLOCK.lockForWrite()
+	global Settings
+	dir_ = os.path.expanduser('~/.cache/plasmaMailChecker')
+	if  not os.path.isdir(dir_) :
+		os.mkdir(dir_)
+	for accountName in string.split( Settings.value('Accounts').toString(), ';' ):
+		Settings.beginGroup(str(accountName))
+		if Settings.value('connectMethod').toString() == 'pop' :
+			if not os.path.isfile(dir_ + '/' + str(accountName) + '.cache') :
+				f = open(dir_ + '/' + str(accountName) + '.cache', 'w')
+				f.close()
+			f = open(dir_ +  '/' + str(accountName) + '.cache', 'r')
+			c = open('/dev/shm/' + str(accountName) + '.cache', 'w')
+			c.writelines(f.readlines())
+			f.close()
+			c.close()
+		Settings.endGroup()
+	WriteLOCK.unlock()
+
+def savePOP3Cache():
+	WriteLOCK.lockForWrite()
+	global Settings
+	dir_ = os.path.expanduser('~/.cache/plasmaMailChecker')
+	for accountName in string.split( Settings.value('Accounts').toString(), ';' ):
+		Settings.beginGroup(str(accountName))
+		if Settings.value('connectMethod').toString() == 'pop' :
+			f = open(dir_ + '/' + str(accountName) + '.cache', 'w')
+			c = open('/dev/shm/' + str(accountName) + '.cache', 'r')
+			f.writelines(c.readlines())
+			c.close()
+			f.close()
+		Settings.endGroup()
+	WriteLOCK.unlock()
+
+def defineUIDL(accountName = '', str_ = ''):
+	Result = True
+	# print accountName
+	x = ''
+	STR = []
+	try :
+		f = open('/dev/shm/' + str(accountName) + '.cache', 'r')
+		STR = f.readlines()
+		# print STR
+	except x :
+		print x
+	finally :
+		for uid_ in STR :
+			# print string.split(uid_, '\n')[0] , '--- ', str_
+			if str_ == string.split(uid_, '\n')[0] :
+				Result = False
+				break
+		f.close()
+	return Result
+
 def checkNewMailPOP3(accountName = '', parent = None):
 	global ErrorMsg
 	global PasswOBJ
-	global Settings
 	try:
 		global NewMailAttributes
 		newMailExist = False
@@ -130,7 +184,7 @@ def checkNewMailPOP3(accountName = '', parent = None):
 		lastElemUid = authentificationData[6]
 
 		#print authentificationData[0],authentificationData[1],authentificationData[2],\
-		#parent.passwObj.decode(authentificationData[3]),\
+		#PasswOBJ.decode(authentificationData[3]),\
 		#authentificationData[4],authentificationData[5],\
 		#authentificationData[6] , 'читабельный вид у значений?'
 
@@ -146,39 +200,26 @@ def checkNewMailPOP3(accountName = '', parent = None):
 
 		countAll = int(m.stat()[0])
 		countNew = 0
-		i = countAll
-		while i > 0 :
-			currentElemUid_raw = string.split(m.uidl(i),' ')
-			currentElemUid = currentElemUid_raw[2]
-			if currentElemUid > lastElemUid:
+		mailUidls = []
+		for uidl_ in m.uidl()[1] :
+			currentElemUid = string.split(uidl_,' ')[1]
+			mailUidls += [currentElemUid + '\n']
+			if defineUIDL(accountName, currentElemUid) :
 				Result =''
-				for str_ in m.top(i,0)[1] :
+				for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
 					if str_[:5] in ['From:','Subje'] :
 						Result += str_ + ' '
 				# print Result
 				NewMailAttributes += [Result]
 				newMailExist = newMailExist or True
 				countNew += 1
-			else:
-				break
-			i += -1
-
-		if newMailExist :
-			lastElemUid_raw = string.split(m.uidl(countAll),' ')
-			lastElemUid = lastElemUid_raw[2]
-			Settings.beginGroup(accountName)
-			Settings.setValue('lastElemValue', lastElemUid)
-			Settings.endGroup()
-		else:
-			# print 'New message(s) not found.'
-			if countAll == 0 :
-				Settings.beginGroup(accountName)
-				Settings.setValue('lastElemValue', '0')
-				Settings.endGroup()
 
 		m.quit()
 
-		Settings.sync()
+		c = open('/dev/shm/' + str(accountName) + '.cache', 'w')
+		# print mailUidls
+		c.writelines( mailUidls )
+		c.close()
 
 	except poplib.error_proto, x :
 		ErrorMsg += '\n' + unicode(x[0],'UTF-8')
@@ -213,7 +254,7 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 		lastElemTime = authentificationData[6]
 
 		#print authentificationData[0],authentificationData[1],authentificationData[2],\
-		#parent.passwObj.decode(authentificationData[3]),authentificationData[4],\
+		#PasswOBJ.decode(authentificationData[3]),authentificationData[4],\
 		#authentificationData[5],\
 		#authentificationData[6], 'читабельный вид у значений?'
 
@@ -373,6 +414,7 @@ class ThreadCheckMail(QThread):
 			NewMailAttributes = []
 			newMailExist = False
 			ErrorMsg = ''
+			x = ''
 			i = 0
 			RESULT = []
 			for accountName in string.split(Settings.value('Accounts').toString(),';') :
@@ -490,6 +532,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			pass
 
 		self.initStat = True
+		initPOP3Cache()
 		self.Timer = QTimer()
 		self.Timer.timeout.connect(self._refreshData)
 		self.Timer.start(int(timeOut) * 1000)
@@ -699,6 +742,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			return None
 		self.appletSettings.refreshSettings(self)
 		#print self.formFactor(), '---'
+		x = ''
 		try:
 			self.Timer.stop()
 			# останов потока проверки почты перед изменением GUI
@@ -713,6 +757,8 @@ class plasmaMailChecker(plasmascript.Applet):
 			print x
 		finally:
 			pass
+		savePOP3Cache()
+		initPOP3Cache()
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 			self.createDialogWidget()
 		logging.debug('Settings refreshed. Timer stopped.')
@@ -726,12 +772,14 @@ class plasmaMailChecker(plasmascript.Applet):
 		if not self.initStat :
 			self.enterPassword()
 		else:
+			x = ''
 			try:
-				if g.isRunning :
-					g.quit()
 				self.Timer.stop()
+				while g.isRunning() :
+					g.quit()
+					time.sleep(0.05)
 			except AttributeError, x :
-				print
+				print x
 				pass
 			except x :
 				print x
@@ -750,11 +798,11 @@ class plasmaMailChecker(plasmascript.Applet):
 		global g
 		self.disconnect(g, SIGNAL('finished()'), self.refreshData)
 		self.Timer.stop()
-		g.quit()
 		while g.isRunning() :
 			g.exit()
 			time.sleep(0.05)
 		GeneralLOCK.unlock()
+		savePOP3Cache()
 		print "MailChecker destroyed manually."
 		logging.debug("MailChecker destroyed manually.")
 		sys.stderr.close()
@@ -1286,6 +1334,7 @@ class PasswordManipulate(QWidget):
 		self.oldKey.clear()
 
 try:
+	x = ''
 	def CreateApplet(parent):
 		return plasmaMailChecker(parent)
 except x :
