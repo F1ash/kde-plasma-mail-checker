@@ -355,10 +355,10 @@ def checkMail(accountName = '', parent = None):
 	return False, None, None, Msg
 
 class ThreadCheckMail(QThread):
-	def __init__(self, parent = None):
+	def __init__(self, obj = None, parent = None):
 		QThread.__init__(self, parent)
 
-		self.Parent = parent
+		self.Parent = obj
 		self.setTerminationEnabled(True)
 
 	def run(self):
@@ -399,10 +399,10 @@ class plasmaMailChecker(plasmascript.Applet):
 
 		self.panelIcon = Plasma.IconWidget()
 		self.icon = Plasma.IconWidget()
-		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 
 	def init(self):
 		global Settings
+		global g
 		self.setHasConfigurationInterface(True)
 
 		self.layout = QGraphicsLinearLayout(self.applet)
@@ -446,7 +446,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.applet.setLayout(self.layout)
 		self.resize(self.size())
 
-		self.enterPassword()
+		#self.enterPassword()
 
 	def createDialogWidget(self):
 		global Settings
@@ -474,7 +474,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.Dialog.updateGeometry()
 		self.layout.addItem(self.Dialog)
 
-		self.applet.setLayout(self.layout)
+		self.setLayout(self.layout)
 
 	def processInit(self):
 		global Settings
@@ -502,7 +502,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.Timer.start(int(timeOut) * 1000)
 		logging.debug('Timer started.')
 		if checkAfterRun != '0' :
-			self.Timer.singleShot(7000, self._refreshData)
+			self.Timer.singleShot(1000, self._refreshData)
 
 		self.labelStat.setText("<font color=green><b>..running..</b></font>")
 
@@ -572,8 +572,9 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.panelIcon.setIcon(path_)
 
 		global g
-		g = ThreadCheckMail(self)
-		g.start()
+		if self.wallet :
+			g = ThreadCheckMail(self)
+			g.start()
 
 	def refreshData(self):
 		GeneralLOCK.lock()
@@ -734,11 +735,11 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def _enterPassword(self):
 		if not self.initStat :
-			if not self.wallet :
-				self.eventClose()
-				return None
-			else :
+			self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+			if self.wallet :
 				self.wallet.setFolder('Passwords')
+			else:
+				return None
 			self.enterPassword()
 		else:
 			x = ''
@@ -759,13 +760,12 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.refreshData()
 
 	def enterPassword(self):
-		if self.wallet :
+		if not (self.wallet is None) :
 			self.initStat = True
 			self.wallet.setFolder('Passwords')
 			self.emit(SIGNAL('access'))
 		else :
 			self.initStat = False
-			return None
 
 	def eventClose(self):
 		global g
@@ -778,13 +778,18 @@ class plasmaMailChecker(plasmascript.Applet):
 			pass
 		finally :
 			pass
-		if self.wallet :
+		if not (self.wallet is None) :
 			self.wallet.closeWallet('plasmaMailChecker', True)
 		while g.isRunning() :
 			g.exit()
 			time.sleep(0.05)
 		GeneralLOCK.unlock()
-		savePOP3Cache()
+		try :
+			savePOP3Cache()
+		except IOError, x :
+			print x
+		finally :
+			pass
 		logging.debug("MailChecker destroyed manually.")
 		print "MailChecker destroyed manually."
 		sys.stderr.close()
@@ -1170,7 +1175,6 @@ class PasswordManipulate(QWidget):
 		self.Parent.wallet.requestChangePassword(0)
 
 try:
-	x = ''
 	def CreateApplet(parent):
 		return plasmaMailChecker(parent)
 except x :
@@ -1180,4 +1184,5 @@ finally :
 	#sys.stdout.close()
 	pass
 
+x = ''
 g = ThreadCheckMail()
