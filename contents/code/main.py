@@ -3,7 +3,6 @@
 try :
 	global warningMsg
 	global Settings
-	global PasswObj
 	global RESULT
 	global NewMailAttributes
 	global ErrorMsg
@@ -16,7 +15,6 @@ try :
 	from PyKDE4.kdeui import *
 	from PyKDE4.plasma import Plasma
 	from PyKDE4 import plasmascript
-	from Crypto.Cipher import Blowfish
 	import poplib, imaplib, string, socket, time, os.path, logging, random, hashlib, sys
 	logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
 	RESULT = []
@@ -35,58 +33,6 @@ finally:
 GeneralLOCK = QMutex()
 WriteLOCK = QReadWriteLock()
 
-class PassWord():
-	def __init__(self, key = ''):
-
-		WriteLOCK.lockForWrite()
-
-		if key == '' :
-			key = '**This_bad_or_empty**_' + '16'
-		self.key_ = key
-		#print key, 'passw 1'
-		global Settings
-		self.Key = Blowfish.new(self.key_, Blowfish.MODE_ECB)
-		if str(Settings.value('Hash').toString()) == \
-								hashlib.sha512(self.key_).hexdigest() :
-			self.access = True
-		else:
-			self.access = False
-
-		WriteLOCK.unlock()
-
-	def randomString(self, j = 1):
-		return "".join( [random.choice(string.letters) for i in xrange(j)] )
-
-	def encode(self, str_):
-		STR = str_
-		diff = int( len(STR)/16 + 1 )*16 - len(STR)
-		Result = self.Key.encrypt( \
-					str( STR + self.randomString(14 + diff) + str(16 + diff) ) \
-									)
-		STR = self.randomString( len(STR) )
-		return Result
-
-	def decode(self, str_ = ''):
-		#print str_, 'decoding 1'
-		if str_ == '' :
-			str_ = '**This_bad_or_empty**_' + '16'
-		try:
-			str_raw = self.Key.decrypt(str_)
-			#print str_raw, 'decoding 2'
-			str_raw[:len(str_raw) - int(str_raw[-2:])]
-		except ValueError, x:
-			str_raw = '**This_bad_or_empty**_' + '16'
-			logging.debug(unicode(x[0],'UTF-8'))
-			#print x, 'passw 3'
-		finally:
-			pass
-		return str_raw[:len(str_raw) - int(str_raw[-2:])]
-
-	def createKeyHash(self):
-		global Settings
-		Settings.setValue('Hash', hashlib.sha512(self.key_).hexdigest())
-		self.access = True
-
 def addAccount(account, data_ = ['']):
 	WriteLOCK.lockForWrite()
 	global Settings
@@ -96,8 +42,6 @@ def addAccount(account, data_ = ['']):
 	Settings.setValue('server', str(data_[0]))
 	Settings.setValue('port', str(data_[1]))
 	Settings.setValue('login', str(data_[2]))
-	if str(data_[3]) != '***EncriptedPassWord***' :
-		Settings.setValue('password', str(data_[3]))
 	Settings.setValue('authentificationMethod', str(data_[4]))
 	Settings.setValue('connectMethod', str(data_[5]))
 	Settings.setValue('lastElemValue', str(data_[6]))
@@ -112,13 +56,11 @@ def readAccountData(account = ''):
 	serv_ = Settings.value('server').toString()
 	port_ = Settings.value('port').toString()
 	login_ = Settings.value('login').toString()
-	passw_ = Settings.value('password').toByteArray()
 	authMethod_ = Settings.value('authentificationMethod').toString()
 	connMethod_ = Settings.value('connectMethod').toString()
 	last_ = Settings.value('lastElemValue').toString()
 	Settings.endGroup()
-	return [str(serv_), str(port_), str(login_), \
-			passw_.data(), str(authMethod_), str(connMethod_), str(last_)]
+	return [str(serv_), str(port_), str(login_), '', str(authMethod_), str(connMethod_), str(last_)]
 
 def initPOP3Cache():
 	WriteLOCK.lockForWrite()
@@ -177,7 +119,7 @@ def defineUIDL(accountName = '', str_ = ''):
 
 def checkNewMailPOP3(accountName = '', parent = None):
 	global ErrorMsg
-	global PasswOBJ
+	x = ''
 	try:
 		global NewMailAttributes
 		newMailExist = False
@@ -188,7 +130,7 @@ def checkNewMailPOP3(accountName = '', parent = None):
 		lastElemUid = authentificationData[6]
 
 		#print authentificationData[0],authentificationData[1],authentificationData[2],\
-		#PasswOBJ.decode(authentificationData[3]),\
+		#,\
 		#authentificationData[4],authentificationData[5],\
 		#authentificationData[6] , 'читабельный вид у значений?'
 
@@ -197,8 +139,9 @@ def checkNewMailPOP3(accountName = '', parent = None):
 		else:
 			m = poplib.POP3(authentificationData[0], authentificationData[1])
 
+		#print (str(parent.wallet.readPassword(accountName)[1]), authentificationData[2])
 		auth_login = m.user(authentificationData[2])
-		auth_passw = m.pass_( PasswOBJ.decode(authentificationData[3]) )
+		auth_passw = m.pass_( str(parent.wallet.readPassword(accountName)[1]) )
 		#print auth_login, auth_passw, "дол быть о`кеи вроде бы"
 		#logging.debug(auth_login+ auth_passw+ "дол быть о`кеи вроде бы")
 
@@ -240,6 +183,12 @@ def checkNewMailPOP3(accountName = '', parent = None):
 		probeError = False
 		countAll = 0
 		countNew = 0
+	except x:
+		print x
+		ErrorMsg += 'Unknown Error\n'
+		probeError = False
+		countAll = 0
+		countNew = 0
 	finally:
 		pass
 
@@ -247,8 +196,8 @@ def checkNewMailPOP3(accountName = '', parent = None):
 
 def checkNewMailIMAP4(accountName = '', parent = None):
 	global ErrorMsg
-	global PasswOBJ
 	global Settings
+	x = ''
 	try:
 		global NewMailAttributes
 		newMailExist = False
@@ -258,7 +207,7 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 		lastElemTime = authentificationData[6]
 
 		#print authentificationData[0],authentificationData[1],authentificationData[2],\
-		#PasswOBJ.decode(authentificationData[3]),authentificationData[4],\
+		#authentificationData[4],\
 		#authentificationData[5],\
 		#authentificationData[6], 'читабельный вид у значений?'
 
@@ -271,8 +220,9 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 		else:
 			m = imaplib.IMAP4(authentificationData[0], authentificationData[1])
 
+		#print (str(parent.wallet.readPassword(accountName)[1]), authentificationData[2])
 		if m.login( authentificationData[2], \
-					PasswOBJ.decode(authentificationData[3]) )[0] == 'OK' :
+					str(parent.wallet.readPassword(accountName)[1]) )[0] == 'OK' :
 			answer = m.select()
 			if answer[0] == 'OK' :
 				countAll = int(answer[1][0])
@@ -348,6 +298,12 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 		probeError = False
 		countAll = 0
 		countNew = 0
+	except x:
+		print x
+		ErrorMsg += 'Unknown Error\n'
+		probeError = False
+		countAll = 0
+		countNew = 0
 	finally:
 		pass
 
@@ -370,10 +326,8 @@ def connectProbe(probe_ = 3, checkNewMail = None, authentificationData = '', par
 			ErrorMsg += "\nCan`t connect to server\non Account : " + authentificationData +'\n'
 	return Result, all_, new_, ''
 
-#def checkMail(accountName = '', parent = None):
-def checkMail(args):
+def checkMail(accountName = '', parent = None):
 	global Settings
-	accountName = args
 	Msg = ''
 	if accountName != '' :
 		# print accountName
@@ -391,9 +345,9 @@ def checkMail(args):
 		# print str(connectMethod.toString()),'---'
 		# print countProbe
 		if str(connectMethod.toString()) == 'pop' :
-			return  connectProbe(countProbe, checkNewMailPOP3, accountName)
+			return  connectProbe(countProbe, checkNewMailPOP3, accountName, parent)
 		elif str(connectMethod.toString()) == 'imap' :
-			return connectProbe(countProbe, checkNewMailIMAP4, accountName)
+			return connectProbe(countProbe, checkNewMailIMAP4, accountName, parent)
 		else:
 			Msg = 'connectMethod Error\n'
 	else:
@@ -404,7 +358,7 @@ class ThreadCheckMail(QThread):
 	def __init__(self, parent = None):
 		QThread.__init__(self, parent)
 
-		#self.i = 0
+		self.Parent = parent
 		self.setTerminationEnabled(True)
 
 	def run(self):
@@ -422,7 +376,7 @@ class ThreadCheckMail(QThread):
 			i = 0
 			RESULT = []
 			for accountName in string.split(Settings.value('Accounts').toString(),';') :
-				RESULT += [checkMail(accountName)]
+				RESULT += [checkMail(accountName, self.Parent)]
 				i += 1
 
 			GeneralLOCK.unlock()
@@ -432,6 +386,7 @@ class ThreadCheckMail(QThread):
 		finally :
 			#print self.i
 			#self.i += 1
+			self.Parent.emit(SIGNAL('refresh'))
 			pass
 		return
 
@@ -444,6 +399,7 @@ class plasmaMailChecker(plasmascript.Applet):
 
 		self.panelIcon = Plasma.IconWidget()
 		self.icon = Plasma.IconWidget()
+		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 
 	def init(self):
 		global Settings
@@ -454,6 +410,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.layout.setSpacing(0)
 		self.connect(self.applet, SIGNAL('destroyed()'), self.eventClose)
 		self.connect(g, SIGNAL('finished()'), self.refreshData)
+		self.connect(self, SIGNAL('refresh'), self.refreshData)
 		self.connect(self, SIGNAL('access'), self.processInit)
 
 		self.kdehome = unicode(KGlobal.dirs().localkdedir())
@@ -488,6 +445,8 @@ class plasmaMailChecker(plasmascript.Applet):
 
 		self.applet.setLayout(self.layout)
 		self.resize(self.size())
+
+		self.enterPassword()
 
 	def createDialogWidget(self):
 		global Settings
@@ -613,6 +572,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.panelIcon.setIcon(path_)
 
 		global g
+		g = ThreadCheckMail(self)
 		g.start()
 
 	def refreshData(self):
@@ -741,8 +701,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.dialog.exec_()
 
 	def configAccepted(self):
-		global PasswOBJ
-		if not PasswOBJ.access :
+		if not self.wallet :
 			self.eventNotification('Warning :\nAccess denied!')
 			return None
 		self.appletSettings.refreshSettings(self)
@@ -775,6 +734,11 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def _enterPassword(self):
 		if not self.initStat :
+			if not self.wallet :
+				self.eventClose()
+				return None
+			else :
+				self.wallet.setFolder('Passwords')
 			self.enterPassword()
 		else:
 			x = ''
@@ -795,78 +759,38 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.refreshData()
 
 	def enterPassword(self):
-		global PasswOBJ
-		if PasswOBJ.access :
+		if self.wallet :
+			self.initStat = True
+			self.wallet.setFolder('Passwords')
 			self.emit(SIGNAL('access'))
+		else :
+			self.initStat = False
 			return None
-		self.initStat = True
-		self.dialog = KeyDialog(self)
-		self.dialog.move(self.popupPosition(self.dialog.sizeHint()))
 
 	def eventClose(self):
 		global g
 		self.disconnect(g, SIGNAL('finished()'), self.refreshData)
-		self.Timer.stop()
-		PasswOBJ.key_ = PasswOBJ.randomString(64)
+		self.disconnect(self, SIGNAL('refresh'), self.refreshData)
+		self.disconnect(self, SIGNAL('access'), self.processInit)
+		try :
+			self.Timer.stop()
+		except :
+			pass
+		finally :
+			pass
+		if self.wallet :
+			self.wallet.closeWallet('plasmaMailChecker', True)
 		while g.isRunning() :
 			g.exit()
 			time.sleep(0.05)
 		GeneralLOCK.unlock()
 		savePOP3Cache()
-		print "MailChecker destroyed manually."
 		logging.debug("MailChecker destroyed manually.")
+		print "MailChecker destroyed manually."
 		sys.stderr.close()
 		sys.stdout.close()
-		self.exit()
-
-class KeyDialog(QWidget):
-	def __init__(self, parent = None):
-		QWidget.__init__(self)
-
-		global Settings
-		self.Parent = parent
-		self.setWindowTitle('Enter Encrypting Key')
-		self.setMaximumSize(250.0, 120.0)
-		self.layout = QGridLayout()
-
-		self.existHash = len(str(Settings.value('Hash').toString()))
-		if self.existHash == 0 :
-			self.layout.addWidget(QLabel('<font color=red><b>Create Encrypting Key : </b></font>'), 0, 0)
-		else:
-			self.layout.addWidget(QLabel('<font color=blue><b>Encrypting Key : </b></font>'), 0, 0)
-
-		self.keyLineEdit = KLineEdit()
-		self.keyLineEdit.setContextMenuEnabled(True)
-		self.keyLineEdit.setPasswordMode(True)
-		self.layout.addWidget(self.keyLineEdit, 1, 0, 1, 2)
-		self.ok = QPushButton('&Ok')
-		self.cancel = QPushButton('&Cancel')
-		self.layout.addWidget(self.ok, 2, 0)
-		self.layout.addWidget(self.cancel, 2, 1)
-		self.setLayout(self.layout)
-		self.connect(self.ok,SIGNAL('clicked()'), self.initPassWord)
-		self.connect(self.cancel,SIGNAL('clicked()'), self.eventClose)
-		self.keyLineEdit.returnPressed.connect(self.initPassWord)
-		self.show()
-
-	def initPassWord(self):
-		if str(self.keyLineEdit.userText()) == '' :
-			self.eventClose()
-			return None
-		global PasswOBJ
-		PasswOBJ = PassWord(str(self.keyLineEdit.userText()))
-		if self.existHash == 0 :
-			PasswOBJ.createKeyHash()
-		elif not PasswOBJ.access :
-			self.eventClose()
-			return None
-		self.keyLineEdit.setText( PassWord().randomString(len(str( self.keyLineEdit.userText() ))) )
-		self.Parent.emit(SIGNAL('access'))
-		self.close()
-
-	def eventClose(self):
-		self.Parent.initStat = False
-		self.close()
+		#self.destroy()
+		#self.close()
 
 class EditAccounts(QWidget):
 	def __init__(self, obj = None, parent = None):
@@ -978,8 +902,7 @@ class EditAccounts(QWidget):
 		self.setLayout(self.VBLayout)
 
 	def clearChangedAccount(self):
-		global PasswOBJ
-		if not PasswOBJ.access :
+		if not self.Parent.wallet :
 			self.Parent.eventNotification('Warning :\nAccess denied!')
 			return None
 		if self.Status == 'BUSY' :
@@ -988,9 +911,8 @@ class EditAccounts(QWidget):
 		self.Status = 'FREE'
 
 	def saveChangedAccount(self):
-		global PasswOBJ
 		global Settings
-		if not PasswOBJ.access :
+		if not self.Parent.wallet :
 			self.Parent.eventNotification('Warning :\nAccess denied!')
 			return None
 		if self.Status == 'READY' :
@@ -1002,6 +924,8 @@ class EditAccounts(QWidget):
 			self.Status = 'CLEAR'
 			self.delCurrentAccount(self.oldAccountName)
 			self.accountListBox.addItem(accountName)
+			self.Parent.wallet.writePassword(accountName, authData[3])
+			authData[3] = ''
 			addAccount(accountName, authData)
 
 			self.accountList += [accountName]
@@ -1024,8 +948,7 @@ class EditAccounts(QWidget):
 		self.cryptBox.setCurrentIndex(0)
 
 	def editCurrentAccount(self):
-		global PasswOBJ
-		if not PasswOBJ.access :
+		if not self.Parent.wallet :
 			self.Parent.eventNotification('Warning :\nAccess denied!')
 			return None
 		self.Status = 'BUSY'
@@ -1057,16 +980,21 @@ class EditAccounts(QWidget):
 		#print parameterList[1]
 		self.portBox.setValue(int(parameterList[1]))
 		self.userNameLineEdit.setText(str(parameterList[2]))
-		if parameterList[3] != '***EncriptedKey_not_created***' :
-			self.passwordLineEdit.setText('***EncriptedPassWord***')
+		#if parameterList[3] != '***EncriptedKey_not_created***' :
+		#	self.passwordLineEdit.setText('***EncriptedPassWord***')
+		#else:
+		#	self.passwordLineEdit.setText(str(parameterList[3]))
+		if self.Parent.wallet.hasEntry(self.oldAccountName) :
+			#word_ = self.Parent.wallet.readEntry(self.oldAccountName)
+			#print str(word_[1]),'edit'
+			self.passwordLineEdit.setText( '***EncriptedPassWord***' )
 		else:
-			self.passwordLineEdit.setText(str(parameterList[3]))
+			self.passwordLineEdit.setText( '***EncriptedKey_not_created***' )
 		self.Status = 'READY'
 		pass
 
 	def addNewAccount(self):
-		global PasswOBJ
-		if not PasswOBJ.access :
+		if not self.Parent.wallet :
 			self.eventNotification('Warning :\nAccess denied!')
 			self.configDenied()
 			return None
@@ -1076,11 +1004,12 @@ class EditAccounts(QWidget):
 		if str(str_) != '' :
 			self.accountListBox.addItem(str_)
 			accountName, authData = self.parsingValues()
+			self.Parent.wallet.writePassword(accountName, authData[3])
+			authData[3] = ''
 			addAccount(accountName, authData)
 			self.clearFields()
 
 	def parsingValues(self):
-		global PasswOBJ
 		global Settings
 		accountName = self.stringEditor.userText()
 		accountServer = self.serverLineEdit.userText()
@@ -1088,23 +1017,14 @@ class EditAccounts(QWidget):
 		cryptMethod = self.cryptBox.itemData(self.cryptBox.currentIndex()).toString()
 		port_ = self.portBox.value()
 		userName = self.userNameLineEdit.userText()
-		if len(str(Settings.value('Hash').toString())) == 0 :
-			userPassword = '***EncriptedKey_not_created***'
-			self.Parent.eventNotification('Warning :\nPassword non-encrypted!')
-		elif str(self.passwordLineEdit.userText()) != '***EncriptedPassWord***' :
-			# print str(self.passwordLineEdit.userText())
-			userPassword = PasswOBJ.encode( str(self.passwordLineEdit.userText()) )
-		else:
-			userPassword = '***EncriptedPassWord***'
+		userPassword = self.passwordLineEdit.userText()
 		# print accountName,accountServer,port_,connectMethod,cryptMethod, userName,userPassword, 'parsingVal'
 		return accountName,\
-				[ accountServer, port_, userName,\
-				 userPassword, cryptMethod, connectMethod, '0' ]
+				[ accountServer, port_, userName, userPassword, cryptMethod, connectMethod, '0' ]
 
 	def delCurrentAccount(self, accountName = ''):
-		global PasswOBJ
 		global Settings
-		if not PasswOBJ.access :
+		if not self.Parent.wallet :
 			self.Parent.eventNotification('Warning :\nAccess denied!')
 			return None
 		if self.Status == 'FREE' :
@@ -1126,6 +1046,7 @@ class EditAccounts(QWidget):
 			pass
 
 		Settings.remove(accountName)
+		self.Parent.wallet.removeEntry(accountName)
 		try:
 			self.accountList.remove(accountName)
 		except ValueError, x :
@@ -1214,7 +1135,7 @@ class AppletSettings(QWidget):
 
 	def refreshSettings(self, parent = None):
 		global Settings
-		if not PasswOBJ.access :
+		if not self.Parent.wallet.isOpen() :
 			self.Parent.eventNotification('Warning :\nAccess denied!')
 			return None
 		Settings.setValue('TimeOut', str(self.timeOutBox.value()))
@@ -1238,109 +1159,15 @@ class PasswordManipulate(QWidget):
 
 		self.VBLayout = QVBoxLayout()
 
-		self.layout = QGridLayout()
-
-		self.existHash = len(str(Settings.value('Hash').toString()))
-		if self.existHash == 0 :
-			self.layout.addWidget(QLabel('<font color=red><b>Create Encrypting Key : </b></font>'), 0, 0)
-		else:
-			self.layout.addWidget(QLabel('<font color=blue><b>Encrypting Key : </b></font>'), 0, 0)
-
-			self.layout.addWidget(QLabel('Old key : '),4,0)
-
-			self.oldKey = KLineEdit()
-			self.oldKey.setContextMenuEnabled(True)
-			self.oldKey.setPasswordMode(True)
-			self.layout.addWidget(self.oldKey,5,0)
-
-		self.inputKey = KLineEdit()
-		self.inputKey.setPasswordMode(True)
-		self.inputKey.setContextMenuEnabled(True)
-		self.layout.addWidget(self.inputKey,1,0)
-
-		self.layout.addWidget(QLabel('Confirm key : '),2,0)
-
-		self.confirmKey = KLineEdit()
-		self.confirmKey.setContextMenuEnabled(True)
-		self.confirmKey.setPasswordMode(True)
-		self.layout.addWidget(self.confirmKey,3,0)
-
 		self.addAccountItem = QPushButton('&New')
 		self.addAccountItem.setToolTip('Create new Password')
 		self.addAccountItem.clicked.connect(self.createNewKey)
-		self.layout.addWidget(self.addAccountItem,3,4)
-
-		self.VBLayout.addLayout(self.layout)
+		self.VBLayout.addWidget(self.addAccountItem)
 
 		self.setLayout(self.VBLayout)
 
 	def createNewKey(self):
-		global PasswOBJ
-		global Settings
-		if str(self.inputKey.userText()) == '' :
-			self.clearFields()
-			self.Parent.eventNotification('Warning :\nThis password must die!')
-			return None
-		elif str(self.inputKey.userText()) != str(self.confirmKey.userText()) :
-			self.clearFields()
-			self.Parent.eventNotification('Warning :\nConfirmation false!')
-			return None
-		if self.existHash == 0 :
-			PasswOBJ = PassWord(str(self.inputKey.userText()))
-			PasswOBJ.createKeyHash()
-		elif str(Settings.value('Hash').toString()) != \
-										hashlib.sha512(str(self.oldKey.userText())).hexdigest() :
-			self.clearFields()
-			self.Parent.eventNotification('Warning :\nAccess denied!')
-			return None
-		else:
-			# расшифровать пароль каждой учётки
-			# и сразу перешифровать; по окончании --
-			# -- пересоздать объект PasswOBJ
-			i = 0
-			self.accountList = []
-			while i < Settings.childGroups().count() :
-				accountName = Settings.childGroups().__getitem__(i)
-				self.accountList += [accountName]
-				i += 1
-			_error = False
-			for account in self.accountList :
-				Settings.beginGroup(str(account))
-				# порверка перешифровки
-				str_ = Settings.value('password').toByteArray()
-				try:
-					PassWord(str(self.inputKey.userText())).\
-							encode(str(PasswOBJ.decode(str_.data())))
-				except UnicodeEncodeError, x:
-					logging.debug(x)
-					# print x, '----'
-					_error = True
-				finally:
-					Settings.endGroup()
-					pass
-			if not _error :
-				for account in self.accountList :
-					Settings.beginGroup(str(account))
-					# перешифровка
-					str_ = Settings.value('password').toByteArray()
-					Settings.setValue('password', \
-	PassWord(str(self.inputKey.userText())).encode(str(PasswOBJ.decode(str_.data()))))
-					Settings.endGroup()
-
-				PasswOBJ = PassWord(str(self.inputKey.userText()))
-				self.inputKey.setText(PasswOBJ.randomString(len(self.inputKey.userText())))
-				PasswOBJ.createKeyHash()
-				self.Parent.eventNotification('Information :\nPassword changed successfull!')
-			else:
-				self.Parent.eventNotification('Warning :\nEncode\decode error...\nMay be config destructed.\nClear config manually.')
-
-			self.clearFields()
-		pass
-
-	def clearFields(self):
-		self.inputKey.clear()
-		self.confirmKey.clear()
-		self.oldKey.clear()
+		self.Parent.wallet.requestChangePassword(0)
 
 try:
 	x = ''
@@ -1353,5 +1180,4 @@ finally :
 	#sys.stdout.close()
 	pass
 
-PasswOBJ = PassWord()
 g = ThreadCheckMail()
