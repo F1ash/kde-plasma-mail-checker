@@ -561,9 +561,11 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.labelStat.setText("<font color=green><b>..running..</b></font>")
 				self.icon.setIcon(path_)
 				self.disconnect(self.icon, SIGNAL('clicked()'), self._enterPassword)
+				self.icon.setToolTip("<font color=blue><b>Mail\nChecking</b></font>")
 			else :
 				self.panelIcon.setIcon(path_)
 				self.disconnect(self.panelIcon, SIGNAL('clicked()'), self._enterPassword)
+				self.panelIcon.setToolTip("<font color=blue><b>Mail\nChecking</b></font>")
 		else:
 			path_ = self.kdehome + \
 				'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_stop.png'
@@ -594,9 +596,11 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.labelStat.setText("<font color=green><b>..running..</b></font>")
 				self.icon.setIcon(path_)
 				self.connect(self.icon, SIGNAL('clicked()'), self._enterPassword)
+				self.icon.setToolTip("<font color=blue><b>Click for Start\Stop</b></font>")
 			else :
 				self.panelIcon.setIcon(path_)
 				self.connect(self.panelIcon, SIGNAL('clicked()'), self._enterPassword)
+				self.panelIcon.setToolTip("<font color=blue><b>Click for Start\Stop</b></font>")
 		else:
 			noCheck = True
 			path_ = self.kdehome + \
