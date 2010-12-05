@@ -556,12 +556,14 @@ class plasmaMailChecker(plasmascript.Applet):
 	def _refreshData(self):
 		if self.initStat :
 			path_ = self.kdehome + \
-					'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker.png'
+					'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_web.png'
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 				self.labelStat.setText("<font color=green><b>..running..</b></font>")
 				self.icon.setIcon(path_)
+				self.disconnect(self.icon, SIGNAL('clicked()'), self._enterPassword)
 			else :
 				self.panelIcon.setIcon(path_)
+				self.disconnect(self.panelIcon, SIGNAL('clicked()'), self._enterPassword)
 		else:
 			path_ = self.kdehome + \
 				'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_stop.png'
@@ -591,8 +593,10 @@ class plasmaMailChecker(plasmascript.Applet):
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 				self.labelStat.setText("<font color=green><b>..running..</b></font>")
 				self.icon.setIcon(path_)
+				self.connect(self.icon, SIGNAL('clicked()'), self._enterPassword)
 			else :
 				self.panelIcon.setIcon(path_)
+				self.connect(self.panelIcon, SIGNAL('clicked()'), self._enterPassword)
 		else:
 			noCheck = True
 			path_ = self.kdehome + \
