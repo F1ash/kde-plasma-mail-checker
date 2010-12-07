@@ -510,7 +510,6 @@ class plasmaMailChecker(plasmascript.Applet):
 		# Output the notifyrc file to the correct location
 		print "Outputting notifyrc file"
 
-		# Create fbnotifier-plasmoid directory if required
 		dir_ = kdehome+"share/apps/plasmaMailChecker"
 		if not os.path.isdir(dir_):
 			try:
@@ -565,7 +564,9 @@ class plasmaMailChecker(plasmascript.Applet):
 			else :
 				self.panelIcon.setIcon(path_)
 				self.disconnect(self.panelIcon, SIGNAL('clicked()'), self._enterPassword)
-				self.panelIcon.setToolTip("<font color=blue><b>Mail\nChecking</b></font>")
+				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
+									self.panelIcon.toolTip(), "<font color=blue><b>Mail\nChecking</b></font>", \
+									self.panelIcon.icon() ) )
 		else:
 			path_ = self.kdehome + \
 				'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_stop.png'
@@ -574,6 +575,10 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.icon.setIcon(path_)
 			else :
 				self.panelIcon.setIcon(path_)
+				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
+								self.panelIcon.toolTip(), "<font color=blue><b>Click for Start\Stop</b></font>", \
+								self.panelIcon.icon() ) )
+			return None
 
 		global g
 		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
@@ -600,7 +605,9 @@ class plasmaMailChecker(plasmascript.Applet):
 			else :
 				self.panelIcon.setIcon(path_)
 				self.connect(self.panelIcon, SIGNAL('clicked()'), self._enterPassword)
-				self.panelIcon.setToolTip("<font color=blue><b>Click for Start\Stop</b></font>")
+				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
+							self.panelIcon.toolTip(), "<font color=blue><b>Click for Start\Stop</b></font>", \
+							self.panelIcon.icon() ) )
 		else:
 			noCheck = True
 			path_ = self.kdehome + \
@@ -610,10 +617,14 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.icon.setIcon(path_)
 			else :
 				self.panelIcon.setIcon(path_)
+				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
+								self.panelIcon.toolTip(), "<font color=blue><b>Click for Start\Stop</b></font>", \
+								self.panelIcon.icon() ) )
 
 		self.checkResult = RESULT
 		i = 0
 		newMailExist = False
+		x = ''
 		#print self.checkResult
 		for accountName in string.split(Settings.value('Accounts').toString(),';') :
 			try :
@@ -623,6 +634,7 @@ class plasmaMailChecker(plasmascript.Applet):
 						accountName_ = "<font color=red><b>" + accountName + "</b></font>"
 						text_2 = "<font color=red><b>" + \
 									'New : ' + str(self.checkResult[i][2]) + "</b></font>"
+					self.listNewMail += '\n' + accountName + ' ' + str(self.checkResult[i][2])
 					newMailExist = True
 				else:
 					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -632,6 +644,8 @@ class plasmaMailChecker(plasmascript.Applet):
 						text_2 = "<font color=lime><b>" + \
 									'New : ' + str(self.checkResult[i][2]) + "</b></font>"
 			except IndexError, x :
+				print x
+			except x :
 				print x
 			finally :
 				pass
@@ -644,6 +658,8 @@ class plasmaMailChecker(plasmascript.Applet):
 			except AttributeError, x:
 				#logging.debug(x)
 				pass
+			except x :
+				print x
 			finally:
 				pass
 			i += 1
@@ -667,6 +683,8 @@ class plasmaMailChecker(plasmascript.Applet):
 					self.eventNotification(ErrorMsg + self.checkResult[i - 1][3])
 		except IndexError, x :
 			print x
+		except x :
+			print x
 		finally :
 			pass
 
@@ -682,7 +700,10 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.panelIcon.setIcon(path_)
 		else:
 			self.panelIcon.setIcon(path_2)
-		self.panelIcon.setToolTip('M@ilChecker\nClick for Start\Stop')
+		self.panelIcon.setToolTip('M@ilChecker')
+		Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
+							self.panelIcon.toolTip(), "<font color=blue><b>Click for Start\Stop</b></font>", \
+							self.panelIcon.icon() ) )
 		self.panelIcon.resize(32,32)
 		self.panelIcon.show()
 		self.connect(self.panelIcon,SIGNAL('clicked()'), self._enterPassword)
