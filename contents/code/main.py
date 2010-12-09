@@ -15,7 +15,7 @@ try :
 	from PyKDE4.kdeui import *
 	from PyKDE4.plasma import Plasma
 	from PyKDE4 import plasmascript
-	import poplib, imaplib, string, socket, time, os.path, logging, random, hashlib, sys
+	import poplib, imaplib, string, socket, time, os.path, logging, random, hashlib, sys, email.header
 	logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
 	RESULT = []
 	Settings = QSettings('mailChecker','mailChecker')
@@ -141,6 +141,10 @@ def checkNewMailPOP3(accountName = '', parent = None):
 
 		#print (str(parent.wallet.readPassword(accountName)[1]), authentificationData[2])
 		auth_login = m.user(authentificationData[2])
+		parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+		if parent.wallet is None :
+			parent.eventNotification('Warning :\nAccess denied!')
+			return False, 0, 0
 		auth_passw = m.pass_( str(parent.wallet.readPassword(accountName)[1]) )
 		#print auth_login, auth_passw, "дол быть о`кеи вроде бы"
 		#logging.debug(auth_login+ auth_passw+ "дол быть о`кеи вроде бы")
@@ -154,8 +158,15 @@ def checkNewMailPOP3(accountName = '', parent = None):
 			if defineUIDL(accountName, currentElemUid) :
 				Result =''
 				for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
-					if str_[:5] in ['From:','Subje'] :
+					if str_[:5] == 'From:' :
 						Result += str_ + ' '
+					if str_[:5] == 'Subje' :
+						# print str_, email.header.decode_header(str_)
+						if len(email.header.decode_header(str_)) == 1 :
+							Result += str_ + ' '
+						else :
+							Result += email.header.decode_header(str_)[1][0].\
+														decode(email.header.decode_header(str_)[1][1]) + ' '
 				# print Result
 				NewMailAttributes += [Result]
 				newMailExist = newMailExist or True
@@ -221,6 +232,10 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 			m = imaplib.IMAP4(authentificationData[0], authentificationData[1])
 
 		#print (str(parent.wallet.readPassword(accountName)[1]), authentificationData[2])
+		parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+		if parent.wallet is None :
+			parent.eventNotification('Warning :\nAccess denied!')
+			return False, 0, 0
 		if m.login( authentificationData[2], \
 					str(parent.wallet.readPassword(accountName)[1]) )[0] == 'OK' :
 			answer = m.select()
@@ -241,8 +256,15 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 					if currentElemTime > lastElemTime :
 						Result =''
 						for str_ in string.split(m.fetch(i,"(BODY[HEADER])")[1][0][1],'\r\n') :
-							if str_[:5] in ['From:','Subje'] :
+							if str_[:5] == 'From:' :
 								Result += str_ + ' '
+							if str_[:5] == 'Subje' :
+								# print str_, email.header.decode_header(str_)
+								if len(email.header.decode_header(str_)) == 1 :
+									Result += str_ + ' '
+								else :
+									Result += email.header.decode_header(str_)[1][0].\
+														decode(email.header.decode_header(str_)[1][1]) + ' '
 						# print Result
 						NewMailAttributes += [Result]
 						newMailExist = newMailExist or True
@@ -253,9 +275,11 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 			else:
 				#print 'selectDirError'
 				logging.debug('selectDirError')
+				probeError, countAll, countNew = False, 0, 0
 		else:
 			#print 'AuthError'
 			logging.debug('AuthError')
+			probeError, countAll, countNew = False, 0, 0
 			pass
 
 		if newMailExist :
@@ -399,6 +423,7 @@ class plasmaMailChecker(plasmascript.Applet):
 
 		self.panelIcon = Plasma.IconWidget()
 		self.icon = Plasma.IconWidget()
+		self.listNewMail = []
 
 	def init(self):
 		global Settings
@@ -624,6 +649,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.checkResult = RESULT
 		i = 0
 		newMailExist = False
+		self.listNewMail = ''
 		x = ''
 		#print self.checkResult
 		for accountName in string.split(Settings.value('Accounts').toString(),';') :
@@ -634,7 +660,7 @@ class plasmaMailChecker(plasmascript.Applet):
 						accountName_ = "<font color=red><b>" + accountName + "</b></font>"
 						text_2 = "<font color=red><b>" + \
 									'New : ' + str(self.checkResult[i][2]) + "</b></font>"
-					self.listNewMail += '\n' + accountName + ' ' + str(self.checkResult[i][2])
+					self.listNewMail += '<pre>' + accountName + '&#09;' + str(self.checkResult[i][2]) + '</pre>'
 					newMailExist = True
 				else:
 					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -676,6 +702,13 @@ class plasmaMailChecker(plasmascript.Applet):
 			# KNotification.beep()
 			# KNotification.StandardEvent(KNotification.Notification)
 			self.eventNotification('New Massage(s) :' + STR_)
+
+		if self.listNewMail == '' :
+			self.listNewMail = 'No new mail'
+		Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
+								self.panelIcon.toolTip(), \
+								"<font color=lime><b>" + self.listNewMail + "</b></font>", \
+								self.panelIcon.icon() ) )
 
 		try :
 			if ErrorMsg != '' or self.checkResult[i - 1][3] != '' :
@@ -806,12 +839,12 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.disconnect(self, SIGNAL('access'), self.processInit)
 		try :
 			self.Timer.stop()
+			if not (self.wallet is None) :
+				self.wallet.closeWallet('plasmaMailChecker', True)
 		except :
 			pass
 		finally :
 			pass
-		if not (self.wallet is None) :
-			self.wallet.closeWallet('plasmaMailChecker', True)
 		while g.isRunning() :
 			g.exit()
 			time.sleep(0.05)
@@ -828,6 +861,10 @@ class plasmaMailChecker(plasmascript.Applet):
 		sys.stdout.close()
 		#self.destroy()
 		#self.close()
+
+	def mouseDoubleClickEvent(self, ev):
+		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+			self.showConfigurationInterface()
 
 class EditAccounts(QWidget):
 	def __init__(self, obj = None, parent = None):
