@@ -31,10 +31,10 @@ finally:
 	'O`key'
 
 GeneralLOCK = QMutex()
-WriteLOCK = QReadWriteLock()
+LOCK = QReadWriteLock()
 
 def addAccount(account, data_ = ['']):
-	WriteLOCK.lockForWrite()
+	LOCK.lockForWrite()
 	global Settings
 	accounts_ = Settings.value('Accounts').toString()
 	Settings.setValue('Accounts', accounts_ + ';' + str(account))
@@ -48,10 +48,11 @@ def addAccount(account, data_ = ['']):
 		Settings.setValue('lastElemValue', str(data_[6]))
 	Settings.endGroup()
 	Settings.sync()
-	WriteLOCK.unlock()
+	LOCK.unlock()
 	pass
 
 def readAccountData(account = ''):
+	LOCK.lockForRead()
 	global Settings
 	Settings.beginGroup(account)
 	serv_ = Settings.value('server').toString()
@@ -61,10 +62,11 @@ def readAccountData(account = ''):
 	connMethod_ = Settings.value('connectMethod').toString()
 	last_ = Settings.value('lastElemValue').toString()
 	Settings.endGroup()
+	LOCK.unlock()
 	return [str(serv_), str(port_), str(login_), '', str(authMethod_), str(connMethod_), str(last_)]
 
 def initPOP3Cache():
-	WriteLOCK.lockForWrite()
+	LOCK.lockForWrite()
 	global Settings
 	dir_ = os.path.expanduser('~/.cache/plasmaMailChecker')
 	if  not os.path.isdir(dir_) :
@@ -81,10 +83,10 @@ def initPOP3Cache():
 			f.close()
 			c.close()
 		Settings.endGroup()
-	WriteLOCK.unlock()
+	LOCK.unlock()
 
 def savePOP3Cache():
-	WriteLOCK.lockForWrite()
+	LOCK.lockForWrite()
 	global Settings
 	dir_ = os.path.expanduser('~/.cache/plasmaMailChecker')
 	for accountName in string.split( Settings.value('Accounts').toString(), ';' ):
@@ -96,7 +98,7 @@ def savePOP3Cache():
 			c.close()
 			f.close()
 		Settings.endGroup()
-	WriteLOCK.unlock()
+	LOCK.unlock()
 
 def defineUIDL(accountName = '', str_ = ''):
 	Result = True
@@ -144,7 +146,6 @@ def checkNewMailPOP3(accountName = '', parent = None):
 		auth_login = m.user(authentificationData[2])
 		parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if parent.wallet is None :
-			parent.eventNotification('Warning :\nAccess denied!')
 			return False, 0, 0
 		auth_passw = m.pass_( str(parent.wallet.readPassword(accountName)[1]) )
 		#print auth_login, auth_passw, "дол быть о`кеи вроде бы"
@@ -235,7 +236,6 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 		#print (str(parent.wallet.readPassword(accountName)[1]), authentificationData[2])
 		parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if parent.wallet is None :
-			parent.eventNotification('Warning :\nAccess denied!')
 			return False, 0, 0
 		if m.login( authentificationData[2], \
 					str(parent.wallet.readPassword(accountName)[1]) )[0] == 'OK' :
@@ -460,6 +460,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.icon.setMaximumSize(35.0, 35.0)
 			self.icon.setToolTip("<font color=blue><b>Click for Start\Stop</b></font>")
 			self.connect(self.icon,SIGNAL('clicked()'), self._enterPassword)
+			self.connect(self.icon,SIGNAL('changed()'), self._enterPassword)
 			self.titleLayout.addItem(self.icon)
 
 			self.layout.setOrientation(Qt.Vertical)
@@ -472,7 +473,17 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.applet.setLayout(self.layout)
 		self.resize(self.size())
 
-		#self.enterPassword()
+		AutoRun = Settings.value('AutoRun').toString()
+		try:
+			int(AutoRun)
+		except ValueError, x:
+			#logging.debug(x)
+			AutoRun = '0'
+		finally:
+			pass
+		self.Timer = QTimer()
+		if AutoRun != '0' :
+			self.Timer.singleShot(2000, self._enterPassword)
 
 	def createDialogWidget(self):
 		global Settings
@@ -505,7 +516,6 @@ class plasmaMailChecker(plasmascript.Applet):
 	def processInit(self):
 		global Settings
 		timeOut = Settings.value('TimeOut').toString()
-		checkAfterRun = Settings.value('CheckAfterRun').toString()
 		try:
 			int(timeOut)
 		except ValueError, x:
@@ -513,22 +523,13 @@ class plasmaMailChecker(plasmascript.Applet):
 			timeOut = '600'
 		finally:
 			pass
-		try:
-			int(checkAfterRun)
-		except ValueError, x:
-			#logging.debug(x)
-			checkAfterRun = '0'
-		finally:
-			pass
 
 		self.initStat = True
 		initPOP3Cache()
-		self.Timer = QTimer()
 		self.Timer.timeout.connect(self._refreshData)
+		self.Timer.singleShot(1000, self._refreshData)
 		self.Timer.start(int(timeOut) * 1000)
 		logging.debug('Timer started.')
-		if checkAfterRun != '0' :
-			self.Timer.singleShot(1000, self._refreshData)
 
 		self.labelStat.setText("<font color=green><b>..running..</b></font>")
 
@@ -611,6 +612,8 @@ class plasmaMailChecker(plasmascript.Applet):
 		if not (self.wallet is None) :
 			g = ThreadCheckMail(self)
 			g.start()
+		else:
+			self.emit(SIGNAL('refresh'))
 
 	def refreshData(self):
 		GeneralLOCK.lock()
@@ -1149,7 +1152,7 @@ class AppletSettings(QWidget):
 		global Settings
 
 		timeOut = Settings.value('TimeOut').toString()
-		checkAfterRun = Settings.value('CheckAfterRun').toString()
+		AutoRun = Settings.value('AutoRun').toString()
 		countProbe = Settings.value('CountProbe').toString()
 		showError = Settings.value('ShowError').toString()
 		try:
@@ -1160,10 +1163,10 @@ class AppletSettings(QWidget):
 		finally:
 			pass
 		try:
-			int(checkAfterRun)
+			int(AutoRun)
 		except ValueError, x:
 			#logging.debug(x)
-			checkAfterRun = '0'
+			AutoRun = '0'
 		finally:
 			pass
 		try:
@@ -1189,13 +1192,13 @@ class AppletSettings(QWidget):
 		self.timeOutBox = KIntSpinBox(1, 7200, 1, int(timeOut), self)
 		self.layout.addWidget(self.timeOutBox, 0, 1)
 
-		self.timeOutLabel = QLabel("Check mail after\nrun applet:")
+		self.timeOutLabel = QLabel("Autorun mail checking :")
 		self.layout.addWidget(self.timeOutLabel,1,0)
 
-		self.checkAfterRun = QCheckBox()
-		if int(checkAfterRun) > 0 :
-			self.checkAfterRun.setCheckState(2)
-		self.layout.addWidget(self.checkAfterRun,1,1)
+		self.AutoRun = QCheckBox()
+		if int(AutoRun) > 0 :
+			self.AutoRun.setCheckState(2)
+		self.layout.addWidget(self.AutoRun,1,1)
 
 		self.countProbe = QLabel("Count of connect probe\nto mail server:")
 		self.layout.addWidget(self.countProbe,2,0)
@@ -1221,10 +1224,10 @@ class AppletSettings(QWidget):
 			return None
 		Settings.setValue('TimeOut', str(self.timeOutBox.value()))
 		Settings.setValue('CountProbe', str(self.countProbeBox.value()))
-		if self.checkAfterRun.isChecked() :
-			Settings.setValue('CheckAfterRun', '1')
+		if self.AutoRun.isChecked() :
+			Settings.setValue('AutoRun', '1')
 		else:
-			Settings.setValue('CheckAfterRun', '0')
+			Settings.setValue('AutoRun', '0')
 		if self.showErrorBox.isChecked() :
 			Settings.setValue('ShowError', '1')
 		else:
