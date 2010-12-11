@@ -44,7 +44,8 @@ def addAccount(account, data_ = ['']):
 	Settings.setValue('login', str(data_[2]))
 	Settings.setValue('authentificationMethod', str(data_[4]))
 	Settings.setValue('connectMethod', str(data_[5]))
-	Settings.setValue('lastElemValue', str(data_[6]))
+	if str(data_[6]) != '0' :
+		Settings.setValue('lastElemValue', str(data_[6]))
 	Settings.endGroup()
 	Settings.sync()
 	WriteLOCK.unlock()
