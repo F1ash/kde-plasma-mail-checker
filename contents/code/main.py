@@ -165,7 +165,7 @@ def checkNewMailPOP3(accountName = '', parent = None):
 					if str_[:5] == 'Subje' :
 						# print str_, email.header.decode_header(str_)
 						if len(email.header.decode_header(str_)) == 1 :
-							Result += str_ + ' '
+							Result += unicode(str_, 'UTF-8') + ' '
 						else :
 							Result += email.header.decode_header(str_)[1][0].\
 														decode(email.header.decode_header(str_)[1][1]) + ' '
@@ -262,7 +262,7 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 							if str_[:5] == 'Subje' :
 								# print str_, email.header.decode_header(str_)
 								if len(email.header.decode_header(str_)) == 1 :
-									Result += str_ + ' '
+									Result += unicode(str_, 'UTF-8') + ' '
 								else :
 									Result += email.header.decode_header(str_)[1][0].\
 														decode(email.header.decode_header(str_)[1][1]) + ' '
