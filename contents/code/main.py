@@ -110,7 +110,7 @@ def defineUIDL(accountName = '', str_ = ''):
 		STR = f.readlines()
 		# print STR
 	except x :
-		print x
+		print x, '  defUidl'
 	finally :
 		for uid_ in STR :
 			# print string.split(uid_, '\n')[0] , '--- ', str_
@@ -161,13 +161,13 @@ def checkNewMailPOP3(accountName = '', parent = None):
 				Result =''
 				for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
 					if str_[:5] == 'From:' :
-						Result += str_ + ' '
+						Result += unicode(str_, 'UTF-8') + ' '
 					if str_[:5] == 'Subje' :
 						# print str_, email.header.decode_header(str_)
 						if len(email.header.decode_header(str_)) == 1 :
 							Result += unicode(str_, 'UTF-8') + ' '
 						else :
-							Result += email.header.decode_header(str_)[1][0].\
+							Result += 'Subject: ' + email.header.decode_header(str_)[1][0].\
 														decode(email.header.decode_header(str_)[1][1]) + ' '
 				# print Result
 				NewMailAttributes += [Result]
@@ -182,22 +182,25 @@ def checkNewMailPOP3(accountName = '', parent = None):
 		c.close()
 
 	except poplib.error_proto, x :
+		print x, '  POP3_1'
 		ErrorMsg += '\n' + unicode(x[0],'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except socket.error, x :
+		print x, '  POP3_2'
 		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except socket.gaierror, x :
+		print x, '  POP3_3'
 		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except x:
-		print x
+		print x, '  POP3_4'
 		ErrorMsg += 'Unknown Error\n'
 		probeError = False
 		countAll = 0
@@ -258,13 +261,13 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 						Result =''
 						for str_ in string.split(m.fetch(i,"(BODY[HEADER])")[1][0][1],'\r\n') :
 							if str_[:5] == 'From:' :
-								Result += str_ + ' '
+								Result += unicode(str_, 'UTF-8') + ' '
 							if str_[:5] == 'Subje' :
 								# print str_, email.header.decode_header(str_)
 								if len(email.header.decode_header(str_)) == 1 :
 									Result += unicode(str_, 'UTF-8') + ' '
 								else :
-									Result += email.header.decode_header(str_)[1][0].\
+									Result += 'Subject: ' + email.header.decode_header(str_)[1][0].\
 														decode(email.header.decode_header(str_)[1][1]) + ' '
 						# print Result
 						NewMailAttributes += [Result]
@@ -309,22 +312,25 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 		Settings.sync()
 
 	except imaplib.IMAP4.error, x :
+		print x, '  IMAP4_1'
 		ErrorMsg += '\n' + unicode(x[0],'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except socket.error, x :
+		print x, '  IMAP4_2'
 		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except socket.gaierror, x :
+		print x, '  IMAP4_3'
 		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except x:
-		print x
+		print x, '  IMAP4_5'
 		ErrorMsg += 'Unknown Error\n'
 		probeError = False
 		countAll = 0
@@ -364,6 +370,7 @@ def checkMail(accountName = '', parent = None):
 		try:
 			countProbe = int(countProbe_raw.toString())
 		except ValueError:
+			print x, '  checkMail'
 			countProbe = 3
 		finally:
 			pass
@@ -406,7 +413,7 @@ class ThreadCheckMail(QThread):
 
 			GeneralLOCK.unlock()
 		except x :
-			print x
+			print x, '  thread'
 			logging.debug(x)
 		finally :
 			#print self.i
@@ -477,6 +484,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		try:
 			int(AutoRun)
 		except ValueError, x:
+			print x, '  AutoRun'
 			#logging.debug(x)
 			AutoRun = '0'
 		finally:
@@ -519,6 +527,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		try:
 			int(timeOut)
 		except ValueError, x:
+			print x, '  processInit'
 			#logging.debug(x)
 			timeOut = '600'
 		finally:
@@ -610,8 +619,9 @@ class plasmaMailChecker(plasmascript.Applet):
 		global g
 		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if not (self.wallet is None) :
-			g = ThreadCheckMail(self)
-			g.start()
+			if not g.isRunning() :
+				g = ThreadCheckMail(self)
+				g.start()
 		else:
 			self.emit(SIGNAL('refresh'))
 
@@ -674,9 +684,9 @@ class plasmaMailChecker(plasmascript.Applet):
 						text_2 = "<font color=lime><b>" + \
 									'New : ' + str(self.checkResult[i][2]) + "</b></font>"
 			except IndexError, x :
-				print x
+				print x, '  refresh_1'
 			except x :
-				print x
+				print x, '  refresh_2'
 			finally :
 				pass
 
@@ -686,10 +696,15 @@ class plasmaMailChecker(plasmascript.Applet):
 					self.countList[i].setText(text_1)
 					self.countList[i].setToolTip(text_2)
 			except AttributeError, x:
+				#print x, '  refresh_3'
 				#logging.debug(x)
 				pass
+			except UnboundLocalError, x :
+				print x, '  refresh_4'
+				pass
 			except x :
-				print x
+				print x, '  refresh_5'
+				pass
 			finally:
 				pass
 			i += 1
@@ -719,9 +734,9 @@ class plasmaMailChecker(plasmascript.Applet):
 				if Settings.value('ShowError').toString() != '0' and not noCheck :
 					self.eventNotification(ErrorMsg + self.checkResult[i - 1][3])
 		except IndexError, x :
-			print x
+			print x, '  refresh_5'
 		except x :
-			print x
+			print x, '  refresh_6'
 		finally :
 			pass
 
@@ -782,12 +797,13 @@ class plasmaMailChecker(plasmascript.Applet):
 			global g
 			while g.isRunning() :
 				g.exit()
-				time.sleep(0.05)
+				time.sleep(0.5)
 		except AttributeError, x:
+			print x, '  acceptConf_1'
 			#logging.debug(x)
 			pass
 		except x :
-			print x
+			print x, '  acceptConf_2'
 		finally:
 			pass
 		savePOP3Cache()
@@ -815,12 +831,12 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.Timer.stop()
 				while g.isRunning() :
 					g.quit()
-					time.sleep(0.05)
+					time.sleep(0.5)
 			except AttributeError, x :
-				print x
+				print x, '  _entP_1'
 				pass
 			except x :
-				print x
+				print x, '  _entP_2'
 			finally:
 				pass
 			logging.debug('No enter password. Timer stopped.')
@@ -841,22 +857,24 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.disconnect(g, SIGNAL('finished()'), self.refreshData)
 		self.disconnect(self, SIGNAL('refresh'), self.refreshData)
 		self.disconnect(self, SIGNAL('access'), self.processInit)
+		x = ''
 		try :
 			self.Timer.stop()
 			if not (self.wallet is None) :
 				self.wallet.closeWallet('plasmaMailChecker', True)
-		except :
+		except x :
+			print x, '  eventClose_1'
 			pass
 		finally :
 			pass
 		while g.isRunning() :
-			g.exit()
-			time.sleep(0.05)
+			g.terminate()
+			time.sleep(0.5)
 		GeneralLOCK.unlock()
 		try :
 			savePOP3Cache()
 		except IOError, x :
-			print x
+			print x, '  eventClose_2'
 		finally :
 			pass
 		logging.debug("MailChecker destroyed manually.")
@@ -1133,6 +1151,7 @@ class EditAccounts(QWidget):
 		try:
 			self.accountList.remove(accountName)
 		except ValueError, x :
+			print x, '  delAcc'
 			#logging.debug(x)
 			pass
 		finally:
@@ -1165,6 +1184,7 @@ class AppletSettings(QWidget):
 		try:
 			int(AutoRun)
 		except ValueError, x:
+			print x, '  AppletSettings_1'
 			#logging.debug(x)
 			AutoRun = '0'
 		finally:
@@ -1172,6 +1192,7 @@ class AppletSettings(QWidget):
 		try:
 			int(countProbe)
 		except ValueError, x:
+			print x, '  AppletSettings_2'
 			#logging.debug(x)
 			countProbe = 3
 		finally:
@@ -1179,6 +1200,7 @@ class AppletSettings(QWidget):
 		try:
 			int(showError)
 		except ValueError, x:
+			print x, '  AppletSettings_3'
 			#logging.debug(x)
 			showError = 1
 		finally:
@@ -1257,7 +1279,7 @@ try:
 	def CreateApplet(parent):
 		return plasmaMailChecker(parent)
 except x :
-	print x
+	print x, '  main method'
 finally :
 	#sys.stderr.close()
 	#sys.stdout.close()
