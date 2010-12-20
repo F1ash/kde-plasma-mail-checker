@@ -22,8 +22,8 @@ try :
 	NewMailAttributes = []
 	ErrorMsg = ''
 	warningMsg = ''
-	sys.stderr = open('/dev/shm/errorMailChecker' + str(time.time()) + '.log','w')
-	sys.stdout = open('/dev/shm/outMailChecker' + str(time.time()) + '.log','w')
+	#sys.stderr = open('/dev/shm/errorMailChecker' + str(time.time()) + '.log','w')
+	#sys.stdout = open('/dev/shm/outMailChecker' + str(time.time()) + '.log','w')
 except ImportError, warningMsg :
 	print "ImportError", warningMsg
 	logging.debug(warningMsg)
@@ -432,6 +432,8 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.panelIcon = Plasma.IconWidget()
 		self.icon = Plasma.IconWidget()
 		self.listNewMail = []
+		self.connectIconsFlag = False
+		self.connectTimerFlag = False
 
 	def init(self):
 		global Settings
@@ -442,7 +444,6 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.layout.setContentsMargins(1, 1, 1, 1)
 		self.layout.setSpacing(0)
 		self.connect(self.applet, SIGNAL('destroyed()'), self.eventClose)
-		self.connect(g, SIGNAL('finished()'), self.refreshData)
 		self.connect(self, SIGNAL('refresh'), self.refreshData)
 		self.connect(self, SIGNAL('access'), self.processInit)
 
@@ -462,12 +463,10 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.TitleDialog.setText("<font color=blue><b>M@il Checker</b></font>")
 			self.titleLayout.addItem(self.TitleDialog)
 
-			self.icon = Plasma.IconWidget()
 			self.icon.setIcon(iconPath)
 			self.icon.setMaximumSize(35.0, 35.0)
 			self.icon.setToolTip("<font color=blue><b>Click for Start\Stop</b></font>")
-			self.connect(self.icon,SIGNAL('clicked()'), self._enterPassword)
-			self.connect(self.icon,SIGNAL('changed()'), self._enterPassword)
+			self.connectIconsFlag = self.connect(self.icon, SIGNAL('clicked()'), self._enterPassword)
 			self.titleLayout.addItem(self.icon)
 
 			self.layout.setOrientation(Qt.Vertical)
@@ -491,7 +490,13 @@ class plasmaMailChecker(plasmascript.Applet):
 			pass
 		self.Timer = QTimer()
 		if AutoRun != '0' :
-			self.Timer.singleShot(2000, self._enterPassword)
+			#self.Timer.singleShot(2000, self._enterPassword)
+			QApplication.postEvent(self, QEvent(QEvent.User))
+
+	def customEvent(self, event):
+		if event.type() == QEvent.User :
+			self.enterPassword()
+		pass
 
 	def createDialogWidget(self):
 		global Settings
@@ -535,7 +540,9 @@ class plasmaMailChecker(plasmascript.Applet):
 
 		self.initStat = True
 		initPOP3Cache()
-		self.Timer.timeout.connect(self._refreshData)
+
+		if not self.connectTimerFlag :
+			self.connectTimerFlag = self.connect(self.Timer, SIGNAL('timeout()'), self._refreshData)
 		self.Timer.singleShot(1000, self._refreshData)
 		self.Timer.start(int(timeOut) * 1000)
 		logging.debug('Timer started.')
@@ -592,14 +599,19 @@ class plasmaMailChecker(plasmascript.Applet):
 		if self.initStat :
 			path_ = self.kdehome + \
 					'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_web.png'
+
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 				self.labelStat.setText("<font color=green><b>..running..</b></font>")
 				self.icon.setIcon(path_)
-				self.disconnect(self.icon, SIGNAL('clicked()'), self._enterPassword)
+				if self.connectIconsFlag :
+					self.connectIconsFlag = not ( self.disconnect(self.icon, SIGNAL('clicked()'), \
+																				self._enterPassword) )
 				self.icon.setToolTip("<font color=blue><b>Mail\nChecking</b></font>")
 			else :
 				self.panelIcon.setIcon(path_)
-				self.disconnect(self.panelIcon, SIGNAL('clicked()'), self._enterPassword)
+				if self.connectIconsFlag :
+					self.connectIconsFlag = not ( self.disconnect(self.panelIcon, SIGNAL('clicked()'), \
+																				self._enterPassword) )
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
 									self.panelIcon.toolTip(), "<font color=blue><b>Mail\nChecking</b></font>", \
 									self.panelIcon.icon() ) )
@@ -622,8 +634,13 @@ class plasmaMailChecker(plasmascript.Applet):
 			if not g.isRunning() :
 				g = ThreadCheckMail(self)
 				g.start()
+				#print 'start'
+			else :
+				#print 'isRunning'
+				pass
 		else:
 			self.emit(SIGNAL('refresh'))
+			#print 'false start'
 
 	def refreshData(self):
 		GeneralLOCK.lock()
@@ -639,11 +656,9 @@ class plasmaMailChecker(plasmascript.Applet):
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 				self.labelStat.setText("<font color=green><b>..running..</b></font>")
 				self.icon.setIcon(path_)
-				self.connect(self.icon, SIGNAL('clicked()'), self._enterPassword)
 				self.icon.setToolTip("<font color=blue><b>Click for Start\Stop</b></font>")
 			else :
 				self.panelIcon.setIcon(path_)
-				self.connect(self.panelIcon, SIGNAL('clicked()'), self._enterPassword)
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
 							self.panelIcon.toolTip(), "<font color=blue><b>Click for Start\Stop</b></font>", \
 							self.panelIcon.icon() ) )
@@ -654,6 +669,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 				self.labelStat.setText("<font color=red><b>..stopped..</b></font>")
 				self.icon.setIcon(path_)
+				self.icon.setToolTip("<font color=blue><b>Click for Start\Stop</b></font>")
 			else :
 				self.panelIcon.setIcon(path_)
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
@@ -740,6 +756,12 @@ class plasmaMailChecker(plasmascript.Applet):
 		finally :
 			pass
 
+		if not self.connectIconsFlag :
+			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+				self.connectIconsFlag = self.connect(self.icon, SIGNAL('clicked()'), self._enterPassword)
+			else :
+				self.connectIconsFlag = self.connect(self.panelIcon, SIGNAL('clicked()'), self._enterPassword)
+
 		GeneralLOCK.unlock()
 
 	def createIconWidget(self):
@@ -758,7 +780,7 @@ class plasmaMailChecker(plasmascript.Applet):
 							self.panelIcon.icon() ) )
 		self.panelIcon.resize(32,32)
 		self.panelIcon.show()
-		self.connect(self.panelIcon,SIGNAL('clicked()'), self._enterPassword)
+		self.connectIconsFlag = self.connect(self.panelIcon, SIGNAL('clicked()'), self._enterPassword)
 		self.layout.addItem(self.panelIcon)
 		self.labelStat = Plasma.Label()
 
@@ -784,19 +806,20 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.dialog.exec_()
 
 	def configAccepted(self):
+		self.disconnect(self, SIGNAL('refresh'), self.refreshData)
 		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if self.wallet is None :
 			self.eventNotification('Warning :\nAccess denied!')
 			return None
 		self.appletSettings.refreshSettings(self)
 		#print self.formFactor(), '---'
+		global g
 		x = ''
 		try:
 			self.Timer.stop()
 			# останов потока проверки почты перед изменением GUI
-			global g
-			while g.isRunning() :
-				g.exit()
+			g.exit()
+			while not g.wait() :
 				time.sleep(0.5)
 		except AttributeError, x:
 			print x, '  acceptConf_1'
@@ -812,7 +835,8 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.createDialogWidget()
 		logging.debug('Settings refreshed. Timer stopped.')
 		self.initStat = False
-		self.refreshData()
+		self.connect(self, SIGNAL('refresh'), self.refreshData)
+		self.emit(SIGNAL('refresh'))
 
 	def configDenied(self):
 		pass
@@ -821,16 +845,17 @@ class plasmaMailChecker(plasmascript.Applet):
 		if not self.initStat :
 			self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 			if not (self.wallet is None) :
-				self.wallet.setFolder('Passwords')
-			else:
+				#print '_eP'
+				self.enterPassword()
+			else :
+				#print '_eP_1'
 				return None
-			self.enterPassword()
-		else:
+		else :
 			x = ''
 			try:
 				self.Timer.stop()
-				while g.isRunning() :
-					g.quit()
+				g.quit()
+				while not g.wait() :
 					time.sleep(0.5)
 			except AttributeError, x :
 				print x, '  _entP_1'
@@ -841,20 +866,21 @@ class plasmaMailChecker(plasmascript.Applet):
 				pass
 			logging.debug('No enter password. Timer stopped.')
 			self.initStat = False
-			self.refreshData()
+			#print 'stop_eP'
+			self.emit(SIGNAL('refresh'))
 
 	def enterPassword(self):
 		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if not (self.wallet is None) :
-			self.initStat = True
+			#print 'eP'
 			self.wallet.setFolder('Passwords')
 			self.emit(SIGNAL('access'))
 		else :
+			#print 'eP_1'
 			self.initStat = False
 
 	def eventClose(self):
 		global g
-		self.disconnect(g, SIGNAL('finished()'), self.refreshData)
 		self.disconnect(self, SIGNAL('refresh'), self.refreshData)
 		self.disconnect(self, SIGNAL('access'), self.processInit)
 		x = ''
@@ -862,25 +888,27 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.Timer.stop()
 			if not (self.wallet is None) :
 				self.wallet.closeWallet('plasmaMailChecker', True)
-		except x :
+		except AttributeError, x :
 			print x, '  eventClose_1'
+		except x :
+			print x, '  eventClose_2'
 			pass
 		finally :
 			pass
-		while g.isRunning() :
-			g.terminate()
+		g.terminate()
+		while not g.wait() :
 			time.sleep(0.5)
 		GeneralLOCK.unlock()
 		try :
 			savePOP3Cache()
 		except IOError, x :
-			print x, '  eventClose_2'
+			print x, '  eventClose_3'
 		finally :
 			pass
 		logging.debug("MailChecker destroyed manually.")
 		print "MailChecker destroyed manually."
-		sys.stderr.close()
-		sys.stdout.close()
+		#sys.stderr.close()
+		#sys.stdout.close()
 		#self.destroy()
 		#self.close()
 
