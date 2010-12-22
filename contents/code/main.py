@@ -15,7 +15,7 @@ try :
 	from PyKDE4.kdeui import *
 	from PyKDE4.plasma import Plasma
 	from PyKDE4 import plasmascript
-	import poplib, imaplib, string, socket, time, os.path, logging, random, hashlib, sys, email.header
+	import poplib, imaplib, string, socket, time, os.path, logging, random, sys, email.header
 	logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
 	RESULT = []
 	Settings = QSettings('mailChecker','mailChecker')
@@ -23,7 +23,7 @@ try :
 	ErrorMsg = ''
 	warningMsg = ''
 	#sys.stderr = open('/dev/shm/errorMailChecker' + str(time.time()) + '.log','w')
-	#sys.stdout = open('/dev/shm/outMailChecker' + str(time.time()) + '.log','w')
+	sys.stdout = open('/tmp/outMailChecker' + str(time.time()) + '.log','w')
 except ImportError, warningMsg :
 	print "ImportError", warningMsg
 	logging.debug(warningMsg)
@@ -93,9 +93,10 @@ def savePOP3Cache():
 		Settings.beginGroup(str(accountName))
 		if Settings.value('connectMethod').toString() == 'pop' :
 			f = open(dir_ + '/' + str(accountName) + '.cache', 'w')
-			c = open('/dev/shm/' + str(accountName) + '.cache', 'r')
-			f.writelines(c.readlines())
-			c.close()
+			if os.path.isfile('/dev/shm/' + str(accountName) + '.cache') :
+				c = open('/dev/shm/' + str(accountName) + '.cache', 'r')
+				f.writelines(c.readlines())
+				c.close()
 			f.close()
 		Settings.endGroup()
 	LOCK.unlock()
@@ -146,6 +147,7 @@ def checkNewMailPOP3(accountName = '', parent = None):
 		auth_login = m.user(authentificationData[2])
 		parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if parent.wallet is None :
+			m.quit()
 			return False, 0, 0
 		auth_passw = m.pass_( str(parent.wallet.readPassword(accountName)[1]) )
 		#print auth_login, auth_passw, "дол быть о`кеи вроде бы"
@@ -239,6 +241,7 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 		#print (str(parent.wallet.readPassword(accountName)[1]), authentificationData[2])
 		parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if parent.wallet is None :
+			m.logout()
 			return False, 0, 0
 		if m.login( authentificationData[2], \
 					str(parent.wallet.readPassword(accountName)[1]) )[0] == 'OK' :
@@ -387,11 +390,13 @@ def checkMail(accountName = '', parent = None):
 	return False, None, None, Msg
 
 class ThreadCheckMail(QThread):
-	def __init__(self, obj = None, parent = None):
+	def __init__(self, obj = None, timeout = 120, parent = None):
 		QThread.__init__(self, parent)
 
 		self.Parent = obj
 		self.setTerminationEnabled(True)
+		self.Timer = QTimer()
+		self.timeout = timeout
 
 	def run(self):
 		try:
@@ -407,20 +412,27 @@ class ThreadCheckMail(QThread):
 			x = ''
 			i = 0
 			RESULT = []
+			self.Timer.singleShot(int(self.timeout) * 1000, self._terminate)
 			for accountName in string.split(Settings.value('Accounts').toString(),';') :
 				RESULT += [checkMail(accountName, self.Parent)]
 				i += 1
 
-			GeneralLOCK.unlock()
 		except x :
 			print x, '  thread'
 			logging.debug(x)
 		finally :
-			#print self.i
-			#self.i += 1
+			self.Timer.stop()
+			GeneralLOCK.unlock()
+			#QApplication.postEvent(self.Parent, QEvent(1010))
 			self.Parent.emit(SIGNAL('refresh'))
 			pass
 		return
+
+	def _terminate(self):
+		global ErrorMsg
+		ErrorMsg += 'Timeout thread error'
+		print 'Mail thread timeout terminating...'
+		self.exit()
 
 class plasmaMailChecker(plasmascript.Applet):
 	def __init__(self, parent = None):
@@ -433,12 +445,13 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.icon = Plasma.IconWidget()
 		self.listNewMail = []
 		self.connectIconsFlag = False
-		self.connectTimerFlag = False
 
 	def init(self):
 		global Settings
-		global g
 		self.setHasConfigurationInterface(True)
+
+		self.Timer = QTimer()
+		self.Timer.timeout.connect(self._refreshData)
 
 		self.layout = QGraphicsLinearLayout(self.applet)
 		self.layout.setContentsMargins(1, 1, 1, 1)
@@ -476,7 +489,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		else:
 			self.createIconWidget()
 
-		self.applet.setLayout(self.layout)
+		self.setLayout(self.layout)
 		self.resize(self.size())
 
 		AutoRun = Settings.value('AutoRun').toString()
@@ -488,7 +501,6 @@ class plasmaMailChecker(plasmascript.Applet):
 			AutoRun = '0'
 		finally:
 			pass
-		self.Timer = QTimer()
 		if AutoRun != '0' :
 			#self.Timer.singleShot(2000, self._enterPassword)
 			QApplication.postEvent(self, QEvent(QEvent.User))
@@ -496,18 +508,27 @@ class plasmaMailChecker(plasmascript.Applet):
 	def customEvent(self, event):
 		if event.type() == QEvent.User :
 			self.enterPassword()
+		# elif event.type() == 1010 :
+		#	self.refreshData()
 		pass
 
 	def createDialogWidget(self):
 		global Settings
+		if 'Dialog' in dir(self) :
+			self.layout.removeItem(self.Dialog)
+			del self.label
+			del self.countList
+			del self.labelStat
+			del self.Dialog
+			#print 're-createDialog'
 		self.Dialog = QGraphicsGridLayout()
 		i = 0
 		self.label = []
 		self.countList = []
 		for accountName in string.split(Settings.value('Accounts').toString(),';') :
 			#print accountName_
-			self.label += accountName
-			self.countList += accountName
+			self.label += [accountName]
+			self.countList += [accountName]
 
 			self.label[i] = Plasma.Label()
 			self.countList[i] = Plasma.Label()
@@ -528,7 +549,10 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def processInit(self):
 		global Settings
+		global g
+		Settings.sync()
 		timeOut = Settings.value('TimeOut').toString()
+		waitThread = Settings.value('WaitThread').toString()
 		try:
 			int(timeOut)
 		except ValueError, x:
@@ -537,15 +561,24 @@ class plasmaMailChecker(plasmascript.Applet):
 			timeOut = '600'
 		finally:
 			pass
+		try:
+			int(waitThread)
+		except ValueError, x:
+			print x, '  processInit_1'
+			#logging.debug(x)
+			waitThread = '120'
+		finally:
+			pass
 
 		self.initStat = True
 		initPOP3Cache()
 
-		if not self.connectTimerFlag :
-			self.connectTimerFlag = self.connect(self.Timer, SIGNAL('timeout()'), self._refreshData)
+		g = ThreadCheckMail(self, int(waitThread))
+
 		self.Timer.singleShot(1000, self._refreshData)
 		self.Timer.start(int(timeOut) * 1000)
 		logging.debug('Timer started.')
+		print 'processInit'
 
 		self.labelStat.setText("<font color=green><b>..running..</b></font>")
 
@@ -596,6 +629,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		KComponentData.SkipMainComponentRegistration))
 
 	def _refreshData(self):
+		print '_refresh'
 		if self.initStat :
 			path_ = self.kdehome + \
 					'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_web.png'
@@ -615,6 +649,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
 									self.panelIcon.toolTip(), "<font color=blue><b>Mail\nChecking</b></font>", \
 									self.panelIcon.icon() ) )
+			print '~', self.connectIconsFlag
 		else:
 			path_ = self.kdehome + \
 				'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_stop.png'
@@ -626,23 +661,24 @@ class plasmaMailChecker(plasmascript.Applet):
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
 								self.panelIcon.toolTip(), "<font color=blue><b>Click for Start\Stop</b></font>", \
 								self.panelIcon.icon() ) )
+			print '~~', self.connectIconsFlag
 			return None
 
 		global g
 		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if not (self.wallet is None) :
 			if not g.isRunning() :
-				g = ThreadCheckMail(self)
 				g.start()
-				#print 'start'
+				print 'start'
 			else :
-				#print 'isRunning'
+				print 'isRunning'
 				pass
 		else:
 			self.emit(SIGNAL('refresh'))
-			#print 'false start'
+			print 'false start'
 
 	def refreshData(self):
+		print 'refresh'
 		GeneralLOCK.lock()
 		global ErrorMsg
 		global NewMailAttributes
@@ -707,7 +743,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				pass
 
 			try:
-				if self.initStat :
+				if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) and self.initStat :
 					self.label[i].setText(accountName_)
 					self.countList[i].setText(text_1)
 					self.countList[i].setToolTip(text_2)
@@ -725,8 +761,6 @@ class plasmaMailChecker(plasmascript.Applet):
 				pass
 			i += 1
 
-		self.applet.setLayout(self.layout)
-
 		if newMailExist and not noCheck :
 			STR_ = ''
 			i = 0
@@ -738,23 +772,24 @@ class plasmaMailChecker(plasmascript.Applet):
 			# KNotification.StandardEvent(KNotification.Notification)
 			self.eventNotification('New Massage(s) :' + STR_)
 
-		if self.listNewMail == '' :
-			self.listNewMail = 'No new mail'
-		Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
+		if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
+			if self.listNewMail == '' :
+				self.listNewMail = 'No new mail'
+			Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
 								self.panelIcon.toolTip(), \
 								"<font color=lime><b>" + self.listNewMail + "</b></font>", \
 								self.panelIcon.icon() ) )
 
 		try :
-			if ErrorMsg != '' or self.checkResult[i - 1][3] != '' :
-				if Settings.value('ShowError').toString() != '0' and not noCheck :
-					self.eventNotification(ErrorMsg + self.checkResult[i - 1][3])
+			ErrorMsg += self.checkResult[i - 1][3]
 		except IndexError, x :
 			print x, '  refresh_5'
 		except x :
 			print x, '  refresh_6'
 		finally :
-			pass
+			if ErrorMsg != '' :
+				if Settings.value('ShowError').toString() != '0' and not noCheck :
+					self.eventNotification( ErrorMsg )
 
 		if not self.connectIconsFlag :
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -830,7 +865,6 @@ class plasmaMailChecker(plasmascript.Applet):
 		finally:
 			pass
 		savePOP3Cache()
-		initPOP3Cache()
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 			self.createDialogWidget()
 		logging.debug('Settings refreshed. Timer stopped.')
@@ -864,9 +898,10 @@ class plasmaMailChecker(plasmascript.Applet):
 				print x, '  _entP_2'
 			finally:
 				pass
+			savePOP3Cache()
 			logging.debug('No enter password. Timer stopped.')
 			self.initStat = False
-			#print 'stop_eP'
+			print 'stop_eP'
 			self.emit(SIGNAL('refresh'))
 
 	def enterPassword(self):
@@ -908,7 +943,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		logging.debug("MailChecker destroyed manually.")
 		print "MailChecker destroyed manually."
 		#sys.stderr.close()
-		#sys.stdout.close()
+		sys.stdout.close()
 		#self.destroy()
 		#self.close()
 
@@ -1202,6 +1237,7 @@ class AppletSettings(QWidget):
 		AutoRun = Settings.value('AutoRun').toString()
 		countProbe = Settings.value('CountProbe').toString()
 		showError = Settings.value('ShowError').toString()
+		waitThread = Settings.value('WaitThread').toString()
 		try:
 			int(timeOut)
 		except ValueError, x:
@@ -1233,36 +1269,45 @@ class AppletSettings(QWidget):
 			showError = 1
 		finally:
 			pass
+		try:
+			int(waitThread)
+		except ValueError, x:
+			print x, '  processInit_1'
+			#logging.debug(x)
+			waitThread = '120'
+		finally:
+			pass
 
 		self.layout = QGridLayout()
 
 		self.timeOutLabel = QLabel("Timeout checking (sec.):")
 		self.layout.addWidget(self.timeOutLabel,0,0)
-
-		self.timeOutBox = KIntSpinBox(1, 7200, 1, int(timeOut), self)
+		self.timeOutBox = KIntSpinBox(10, 7200, 1, int(timeOut), self)
 		self.layout.addWidget(self.timeOutBox, 0, 1)
 
-		self.timeOutLabel = QLabel("Autorun mail checking :")
-		self.layout.addWidget(self.timeOutLabel,1,0)
-
-		self.AutoRun = QCheckBox()
+		self.autoRunLabel = QLabel("Autorun mail checking :")
+		self.layout.addWidget(self.autoRunLabel,1,0)
+		self.AutoRunBox = QCheckBox()
 		if int(AutoRun) > 0 :
-			self.AutoRun.setCheckState(2)
-		self.layout.addWidget(self.AutoRun,1,1)
+			self.AutoRunBox.setCheckState(2)
+		self.layout.addWidget(self.AutoRunBox,1,1)
 
 		self.countProbe = QLabel("Count of connect probe\nto mail server:")
 		self.layout.addWidget(self.countProbe,2,0)
-
 		self.countProbeBox = KIntSpinBox(1, 10, 1, int(countProbe), self)
 		self.layout.addWidget(self.countProbeBox, 2, 1)
 
 		self.showError = QLabel("Show error messages :")
 		self.layout.addWidget(self.showError,3,0)
-
 		self.showErrorBox = QCheckBox()
 		if int(showError) > 0 :
 			self.showErrorBox.setCheckState(2)
 		self.layout.addWidget(self.showErrorBox,3,1)
+
+		self.waitThreadLabel = QLabel("Waiting checking connect (sec.):")
+		self.layout.addWidget(self.waitThreadLabel,4,0)
+		self.waitThreadBox = KIntSpinBox(60, 7200, 1, int(waitThread), self)
+		self.layout.addWidget(self.waitThreadBox, 4, 1)
 
 		self.setLayout(self.layout)
 
@@ -1274,7 +1319,8 @@ class AppletSettings(QWidget):
 			return None
 		Settings.setValue('TimeOut', str(self.timeOutBox.value()))
 		Settings.setValue('CountProbe', str(self.countProbeBox.value()))
-		if self.AutoRun.isChecked() :
+		Settings.setValue('WaitThread', str(self.waitThreadBox.value()))
+		if self.AutoRunBox.isChecked() :
 			Settings.setValue('AutoRun', '1')
 		else:
 			Settings.setValue('AutoRun', '0')
