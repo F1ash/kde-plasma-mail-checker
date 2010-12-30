@@ -15,15 +15,17 @@ try :
 	from PyKDE4.kdeui import *
 	from PyKDE4.plasma import Plasma
 	from PyKDE4 import plasmascript
-	import poplib, imaplib, string, socket, time, os.path, logging, random, sys, email.header
-	logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
+	import poplib, imaplib, string, socket, time, os.path, logging, random, sys, email.header, pdb, gc
+	logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s', \
+											datefmt='%Y-%m-%d %H:%M:%S', filename=LOG_FILENAME)
 	RESULT = []
 	Settings = QSettings('mailChecker','mailChecker')
 	NewMailAttributes = []
 	ErrorMsg = ''
 	warningMsg = ''
 	#sys.stderr = open('/dev/shm/errorMailChecker' + str(time.time()) + '.log','w')
-	sys.stdout = open('/tmp/outMailChecker' + str(time.time()) + '.log','w')
+	sys.stdout = open('/tmp/outMailChecker' + \
+						time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
 except ImportError, warningMsg :
 	print "ImportError", warningMsg
 	logging.debug(warningMsg)
@@ -121,37 +123,23 @@ def defineUIDL(accountName = '', str_ = ''):
 		f.close()
 	return Result
 
-def checkNewMailPOP3(accountName = '', parent = None):
+def checkNewMailPOP3(accountData = ['', '']):
 	global ErrorMsg
 	x = ''
 	try:
 		global NewMailAttributes
 		newMailExist = False
 		probeError = True
-		authentificationData = readAccountData(accountName)
-		#print accountName
-		#logging.debug(accountName)
+		authentificationData = readAccountData(accountData[0])
 		lastElemUid = authentificationData[6]
-
-		#print authentificationData[0],authentificationData[1],authentificationData[2],\
-		#,\
-		#authentificationData[4],authentificationData[5],\
-		#authentificationData[6] , 'читабельный вид у значений?'
 
 		if authentificationData[4] == 'SSL' :
 			m = poplib.POP3_SSL(authentificationData[0], authentificationData[1])
 		else:
 			m = poplib.POP3(authentificationData[0], authentificationData[1])
 
-		#print (str(parent.wallet.readPassword(accountName)[1]), authentificationData[2])
 		auth_login = m.user(authentificationData[2])
-		parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
-		if parent.wallet is None :
-			m.quit()
-			return False, 0, 0
-		auth_passw = m.pass_( str(parent.wallet.readPassword(accountName)[1]) )
-		#print auth_login, auth_passw, "дол быть о`кеи вроде бы"
-		#logging.debug(auth_login+ auth_passw+ "дол быть о`кеи вроде бы")
+		auth_passw = m.pass_( accountData[1] )
 
 		countAll = int(m.stat()[0])
 		countNew = 0
@@ -159,7 +147,7 @@ def checkNewMailPOP3(accountName = '', parent = None):
 		for uidl_ in m.uidl()[1] :
 			currentElemUid = string.split(uidl_,' ')[1]
 			mailUidls += [currentElemUid + '\n']
-			if defineUIDL(accountName, currentElemUid) :
+			if defineUIDL(accountData[0], currentElemUid) :
 				Result =''
 				for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
 					if str_[:5] == 'From:' :
@@ -178,7 +166,7 @@ def checkNewMailPOP3(accountName = '', parent = None):
 
 		m.quit()
 
-		c = open('/dev/shm/' + str(accountName) + '.cache', 'w')
+		c = open('/dev/shm/' + str(accountData[0]) + '.cache', 'w')
 		# print mailUidls
 		c.writelines( mailUidls )
 		c.close()
@@ -212,7 +200,7 @@ def checkNewMailPOP3(accountName = '', parent = None):
 
 	return probeError, countAll, countNew
 
-def checkNewMailIMAP4(accountName = '', parent = None):
+def checkNewMailIMAP4(accountData = ['', '']):
 	global ErrorMsg
 	global Settings
 	x = ''
@@ -220,31 +208,15 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 		global NewMailAttributes
 		newMailExist = False
 		probeError = True
-		authentificationData = readAccountData(accountName)
-		# print accountName
+		authentificationData = readAccountData(accountData[0])
 		lastElemTime = authentificationData[6]
-
-		#print authentificationData[0],authentificationData[1],authentificationData[2],\
-		#authentificationData[4],\
-		#authentificationData[5],\
-		#authentificationData[6], 'читабельный вид у значений?'
-
-		#logging.debug(authentificationData[0]+authentificationData[1]+authentificationData[2]+\
-		#authentificationData[3]+authentificationData[4]+authentificationData[5]+\
-		#authentificationData[6]+ 'читабельный вид у значений?')
 
 		if authentificationData[4] == 'SSL' :
 			m = imaplib.IMAP4_SSL(authentificationData[0], authentificationData[1])
 		else:
 			m = imaplib.IMAP4(authentificationData[0], authentificationData[1])
 
-		#print (str(parent.wallet.readPassword(accountName)[1]), authentificationData[2])
-		parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
-		if parent.wallet is None :
-			m.logout()
-			return False, 0, 0
-		if m.login( authentificationData[2], \
-					str(parent.wallet.readPassword(accountName)[1]) )[0] == 'OK' :
+		if m.login( authentificationData[2], accountData[1] )[0] == 'OK' :
 			answer = m.select()
 			if answer[0] == 'OK' :
 				countAll = int(answer[1][0])
@@ -299,13 +271,13 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 			date_ = imaplib.Internaldate2tuple(lastElemTime_Internal)
 			lastElemTime = str(time.mktime(date_))
 			# print lastElemTime
-			Settings.beginGroup(accountName)
+			Settings.beginGroup(accountData[0])
 			Settings.setValue('lastElemValue', lastElemTime)
 			Settings.endGroup()
 		else:
 			# print 'New message(s) not found.'
 			if countAll == 0 :
-				Settings.beginGroup(accountName)
+				Settings.beginGroup(accountData[0])
 				Settings.setValue('lastElemValue', '0')
 				Settings.endGroup()
 
@@ -343,7 +315,7 @@ def checkNewMailIMAP4(accountName = '', parent = None):
 
 	return probeError, countAll, countNew
 
-def connectProbe(probe_ = 3, checkNewMail = None, authentificationData = '', parent = None):
+def connectProbe(probe_ = 3, checkNewMail = None, authentificationData = ['', '']):
 	global ErrorMsg
 	Result = False
 	all_ = 0
@@ -351,23 +323,23 @@ def connectProbe(probe_ = 3, checkNewMail = None, authentificationData = '', par
 	i = 0
 	while i < probe_ :
 		# print 'Probe ', i + 1
-		test_, all_, new_ = checkNewMail(authentificationData, parent)
+		test_, all_, new_ = checkNewMail(authentificationData)
 		if test_ :
 			Result = True
 			break
 		i += 1
 		if i == probe_ :
-			ErrorMsg += "\nCan`t connect to server\non Account : " + authentificationData +'\n'
+			ErrorMsg += "\nCan`t connect to server\non Account : " + authentificationData[0] +'\n'
 	return Result, all_, new_, ''
 
-def checkMail(accountName = '', parent = None):
+def checkMail(accountData = ['', '']):
 	global Settings
 	Msg = ''
-	if accountName != '' :
+	if accountData[0] != '' :
 		# print accountName
 		countProbe_raw = Settings.value('CountProbe')
 		# print countProbe_raw.toString()
-		Settings.beginGroup(accountName)
+		Settings.beginGroup(accountData[0])
 		connectMethod = Settings.value('connectMethod')
 		Settings.endGroup()
 		try:
@@ -380,23 +352,40 @@ def checkMail(accountName = '', parent = None):
 		# print str(connectMethod.toString()),'---'
 		# print countProbe
 		if str(connectMethod.toString()) == 'pop' :
-			return  connectProbe(countProbe, checkNewMailPOP3, accountName, parent)
+			return  connectProbe(countProbe, checkNewMailPOP3, accountData)
 		elif str(connectMethod.toString()) == 'imap' :
-			return connectProbe(countProbe, checkNewMailIMAP4, accountName, parent)
+			return connectProbe(countProbe, checkNewMailIMAP4, accountData)
 		else:
 			Msg = 'connectMethod Error\n'
 	else:
 		Msg = 'accountName Error\n'
 	return False, None, None, Msg
 
+class Translator(QTranslator):
+	def __init__(self, context = '', lang='ru', parent=None):
+		QTranslator.__init__(self, parent)
+		kdehome = unicode(KGlobal.dirs().localkdedir())
+		_Path = kdehome + "share/apps/plasma/plasmoids/plasmaMailChecker/contents/code/"
+		self.load(QString(lang), QString(_Path), QString('qm'))
+		self.context = context
+
+	def _translate(self, sourceText):
+		res = QTranslator.translate(self, self.context, sourceText)
+		if len(res) == 0:
+			res = QString(sourceText)
+		return res
+
 class ThreadCheckMail(QThread):
-	def __init__(self, obj = None, timeout = 120, parent = None):
+	def __init__(self, obj = None, accountData = [('', '')], timeout = 120, parent = None):
 		QThread.__init__(self, parent)
 
 		self.Parent = obj
-		self.setTerminationEnabled(True)
+		self.setTerminationEnabled(False)
 		self.Timer = QTimer()
-		self.timeout = timeout
+		self.Timer.setSingleShot(True)
+		self.Timer.timeout.connect(self._terminate)
+		self.timeout = int(timeout) * 1000
+		self.accData = accountData
 
 	def run(self):
 		try:
@@ -410,15 +399,15 @@ class ThreadCheckMail(QThread):
 			newMailExist = False
 			ErrorMsg = ''
 			x = ''
-			i = 0
 			RESULT = []
-			self.Timer.singleShot(int(self.timeout) * 1000, self._terminate)
-			for accountName in string.split(Settings.value('Accounts').toString(),';') :
-				RESULT += [checkMail(accountName, self.Parent)]
-				i += 1
+			self.Timer.start(self.timeout)
+			for accountData in self.accData :
+				RESULT += [checkMail(accountData)]
 
 		except x :
 			print x, '  thread'
+			#tb = sys.exc_info()[2]
+			#pdb.post_mortem(tb)
 			logging.debug(x)
 		finally :
 			self.Timer.stop()
@@ -432,7 +421,10 @@ class ThreadCheckMail(QThread):
 		global ErrorMsg
 		ErrorMsg += 'Timeout thread error'
 		print 'Mail thread timeout terminating...'
-		self.exit()
+		self.Timer.stop()
+		GeneralLOCK.unlock()
+		self.Parent.emit(SIGNAL('refresh'))
+		self.terminate()
 
 class plasmaMailChecker(plasmascript.Applet):
 	def __init__(self, parent = None):
@@ -445,6 +437,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.icon = Plasma.IconWidget()
 		self.listNewMail = []
 		self.connectIconsFlag = False
+		self.tr = Translator('plasmaMailChecker')
 
 	def init(self):
 		global Settings
@@ -473,12 +466,12 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.titleLayout.setOrientation(Qt.Horizontal)
 
 			self.TitleDialog = Plasma.Label()
-			self.TitleDialog.setText("<font color=blue><b>M@il Checker</b></font>")
+			self.TitleDialog.setText(self.tr._translate("<font color=blue><b>M@il Checker</b></font>"))
 			self.titleLayout.addItem(self.TitleDialog)
 
 			self.icon.setIcon(iconPath)
 			self.icon.setMaximumSize(35.0, 35.0)
-			self.icon.setToolTip("<font color=blue><b>Click for Start\Stop</b></font>")
+			self.icon.setToolTip(self.tr._translate("<font color=blue><b>Click for Start\Stop</b></font>"))
 			self.connectIconsFlag = self.connect(self.icon, SIGNAL('clicked()'), self._enterPassword)
 			self.titleLayout.addItem(self.icon)
 
@@ -490,7 +483,6 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.createIconWidget()
 
 		self.setLayout(self.layout)
-		self.resize(self.size())
 
 		AutoRun = Settings.value('AutoRun').toString()
 		try:
@@ -502,14 +494,13 @@ class plasmaMailChecker(plasmascript.Applet):
 		finally:
 			pass
 		if AutoRun != '0' :
-			#self.Timer.singleShot(2000, self._enterPassword)
 			QApplication.postEvent(self, QEvent(QEvent.User))
 
 	def customEvent(self, event):
 		if event.type() == QEvent.User :
 			self.enterPassword()
-		# elif event.type() == 1010 :
-		#	self.refreshData()
+		elif event.type() == 1011 :
+			self._refreshData()
 		pass
 
 	def createDialogWidget(self):
@@ -526,7 +517,6 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.label = []
 		self.countList = []
 		for accountName in string.split(Settings.value('Accounts').toString(),';') :
-			#print accountName_
 			self.label += [accountName]
 			self.countList += [accountName]
 
@@ -539,7 +529,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			i += 1
 
 		self.labelStat = Plasma.Label()
-		self.labelStat.setText("<font color=red><b>..stopped..</b></font>")
+		self.labelStat.setText(self.tr._translate("<font color=red><b>..stopped..</b></font>"))
 		self.Dialog.addItem(self.labelStat, i, 0)
 
 		self.Dialog.updateGeometry()
@@ -549,10 +539,9 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def processInit(self):
 		global Settings
-		global g
 		Settings.sync()
 		timeOut = Settings.value('TimeOut').toString()
-		waitThread = Settings.value('WaitThread').toString()
+		self.waitThread = Settings.value('WaitThread').toString()
 		try:
 			int(timeOut)
 		except ValueError, x:
@@ -562,25 +551,21 @@ class plasmaMailChecker(plasmascript.Applet):
 		finally:
 			pass
 		try:
-			int(waitThread)
+			int(self.waitThread)
 		except ValueError, x:
 			print x, '  processInit_1'
 			#logging.debug(x)
-			waitThread = '120'
+			self.waitThread = '120'
 		finally:
 			pass
 
 		self.initStat = True
 		initPOP3Cache()
 
-		g = ThreadCheckMail(self, int(waitThread))
-
-		self.Timer.singleShot(1000, self._refreshData)
 		self.Timer.start(int(timeOut) * 1000)
 		logging.debug('Timer started.')
 		print 'processInit'
-
-		self.labelStat.setText("<font color=green><b>..running..</b></font>")
+		QApplication.postEvent(self, QEvent(1011))
 
 	def createNotifyrc(self, kdehome):
 		# Output the notifyrc file to the correct location
@@ -629,56 +614,62 @@ class plasmaMailChecker(plasmascript.Applet):
 		KComponentData.SkipMainComponentRegistration))
 
 	def _refreshData(self):
-		print '_refresh'
+		#print '_refresh'
 		if self.initStat :
 			path_ = self.kdehome + \
 					'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_web.png'
 
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
-				self.labelStat.setText("<font color=green><b>..running..</b></font>")
+				self.labelStat.setText(self.tr._translate("<font color=green><b>..running..</b></font>"))
 				self.icon.setIcon(path_)
 				if self.connectIconsFlag :
 					self.connectIconsFlag = not ( self.disconnect(self.icon, SIGNAL('clicked()'), \
 																				self._enterPassword) )
-				self.icon.setToolTip("<font color=blue><b>Mail\nChecking</b></font>")
+				self.icon.setToolTip(self.tr._translate("<font color=blue><b>Mail\nChecking</b></font>"))
 			else :
 				self.panelIcon.setIcon(path_)
 				if self.connectIconsFlag :
 					self.connectIconsFlag = not ( self.disconnect(self.panelIcon, SIGNAL('clicked()'), \
 																				self._enterPassword) )
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
-									self.panelIcon.toolTip(), "<font color=blue><b>Mail\nChecking</b></font>", \
-									self.panelIcon.icon() ) )
-			print '~', self.connectIconsFlag
+					self.panelIcon.toolTip(), \
+					self.tr._translate("<font color=blue><b>Mail\nChecking</b></font>"), \
+					self.panelIcon.icon() ) )
 		else:
 			path_ = self.kdehome + \
 				'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_stop.png'
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
-				self.labelStat.setText("<font color=red><b>..stopped..</b></font>")
+				self.labelStat.setText(self.tr._translate("<font color=red><b>..stopped..</b></font>"))
 				self.icon.setIcon(path_)
 			else :
 				self.panelIcon.setIcon(path_)
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
-								self.panelIcon.toolTip(), "<font color=blue><b>Click for Start\Stop</b></font>", \
-								self.panelIcon.icon() ) )
-			print '~~', self.connectIconsFlag
+					self.panelIcon.toolTip(), \
+					self.tr._translate("<font color=blue><b>Click for Start\Stop</b></font>"), \
+					self.panelIcon.icon() ) )
 			return None
 
 		global g
 		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if not (self.wallet is None) :
 			if not g.isRunning() :
+				# print 'start'
+				accData = []
+				for accountName in string.split(Settings.value('Accounts').toString(),';') :
+					accData += [(accountName, self.wallet.readPassword(accountName)[1])]
+				g = ThreadCheckMail(self, accData, self.waitThread)
+				#_res = pdb.runcall(g.start)
+				#logging.debug(_res)
 				g.start()
-				print 'start'
 			else :
-				print 'isRunning'
+				# print 'isRunning'
 				pass
 		else:
 			self.emit(SIGNAL('refresh'))
-			print 'false start'
+			# print 'false start'
 
 	def refreshData(self):
-		print 'refresh'
+		#print 'refresh'
 		GeneralLOCK.lock()
 		global ErrorMsg
 		global NewMailAttributes
@@ -690,63 +681,63 @@ class plasmaMailChecker(plasmascript.Applet):
 			path_ = self.kdehome + \
 					'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker.png'
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
-				self.labelStat.setText("<font color=green><b>..running..</b></font>")
+				self.labelStat.setText(self.tr._translate("<font color=green><b>..running..</b></font>"))
 				self.icon.setIcon(path_)
-				self.icon.setToolTip("<font color=blue><b>Click for Start\Stop</b></font>")
+				self.icon.setToolTip(self.tr._translate("<font color=blue><b>Click for Start\Stop</b></font>"))
 			else :
 				self.panelIcon.setIcon(path_)
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
-							self.panelIcon.toolTip(), "<font color=blue><b>Click for Start\Stop</b></font>", \
-							self.panelIcon.icon() ) )
+					self.panelIcon.toolTip(), \
+					self.tr._translate("<font color=blue><b>Click for Start\Stop</b></font>"), \
+					self.panelIcon.icon() ) )
 		else:
 			noCheck = True
 			path_ = self.kdehome + \
 				'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_stop.png'
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
-				self.labelStat.setText("<font color=red><b>..stopped..</b></font>")
+				self.labelStat.setText(self.tr._translate("<font color=red><b>..stopped..</b></font>"))
 				self.icon.setIcon(path_)
-				self.icon.setToolTip("<font color=blue><b>Click for Start\Stop</b></font>")
+				self.icon.setToolTip(self.tr._translate("<font color=blue><b>Click for Start\Stop</b></font>"))
 			else :
 				self.panelIcon.setIcon(path_)
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
-								self.panelIcon.toolTip(), "<font color=blue><b>Click for Start\Stop</b></font>", \
-								self.panelIcon.icon() ) )
+					self.panelIcon.toolTip(), \
+					self.tr._translate("<font color=blue><b>Click for Start\Stop</b></font>"), \
+					self.panelIcon.icon() ) )
 
 		self.checkResult = RESULT
+		#print self.checkResult
 		i = 0
 		newMailExist = False
 		self.listNewMail = ''
 		x = ''
-		#print self.checkResult
 		for accountName in string.split(Settings.value('Accounts').toString(),';') :
 			try :
 				if int(self.checkResult[i][2]) > 0 :
 					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
-						text_1 = "<font color=red><b>" + str(self.checkResult[i][1]) + "</b></font>"
 						accountName_ = "<font color=red><b>" + accountName + "</b></font>"
+						text_1 = "<font color=red><b>" + str(self.checkResult[i][1]) + "</b></font>"
 						text_2 = "<font color=red><b>" + \
 									'New : ' + str(self.checkResult[i][2]) + "</b></font>"
 					self.listNewMail += '<pre>' + accountName + '&#09;' + str(self.checkResult[i][2]) + '</pre>'
 					newMailExist = True
 				else:
 					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+						accountName_ = "<font color=lime><b>" + accountName + "</b></font>"
 						text_1 = "<font color=lime><b>" + \
 									str(self.checkResult[i][1]) + "</b></font>"
-						accountName_ = "<font color=lime><b>" + accountName + "</b></font>"
 						text_2 = "<font color=lime><b>" + \
 									'New : ' + str(self.checkResult[i][2]) + "</b></font>"
-			except IndexError, x :
-				print x, '  refresh_1'
-			except x :
-				print x, '  refresh_2'
-			finally :
-				pass
 
-			try:
 				if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) and self.initStat :
 					self.label[i].setText(accountName_)
 					self.countList[i].setText(text_1)
 					self.countList[i].setToolTip(text_2)
+
+			except IndexError, x :
+				print x, '  refresh_1'
+			except x :
+				print x, '  refresh_2'
 			except AttributeError, x:
 				#print x, '  refresh_3'
 				#logging.debug(x)
@@ -774,7 +765,7 @@ class plasmaMailChecker(plasmascript.Applet):
 
 		if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
 			if self.listNewMail == '' :
-				self.listNewMail = 'No new mail'
+				self.listNewMail = self.tr._translate("No new mail")
 			Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
 								self.panelIcon.toolTip(), \
 								"<font color=lime><b>" + self.listNewMail + "</b></font>", \
@@ -809,10 +800,11 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.panelIcon.setIcon(path_)
 		else:
 			self.panelIcon.setIcon(path_2)
-		self.panelIcon.setToolTip('M@ilChecker')
+		self.panelIcon.setToolTip(self.tr._translate("<font color=blue><b>M@il Checker</b></font>"))
 		Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
-							self.panelIcon.toolTip(), "<font color=blue><b>Click for Start\Stop</b></font>", \
-							self.panelIcon.icon() ) )
+			self.panelIcon.toolTip(), \
+			self.tr._translate("<font color=blue><b>Click for Start\Stop</b></font>"), \
+			self.panelIcon.icon() ) )
 		self.panelIcon.resize(32,32)
 		self.panelIcon.show()
 		self.connectIconsFlag = self.connect(self.panelIcon, SIGNAL('clicked()'), self._enterPassword)
@@ -823,11 +815,11 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def createConfigurationInterface(self, parent):
 		self.editAccounts = EditAccounts(self)
-		parent.addPage(self.editAccounts,"Accounts")
+		parent.addPage(self.editAccounts,self.tr._translate("Accounts"))
 		self.appletSettings = AppletSettings(self)
-		parent.addPage(self.appletSettings, 'Settings')
+		parent.addPage(self.appletSettings, self.tr._translate("Settings"))
 		self.passwordManipulate = PasswordManipulate(self)
-		parent.addPage(self.passwordManipulate, 'Password Manipulation')
+		parent.addPage(self.passwordManipulate, self.tr._translate("Password Manipulation"))
 		self.connect(parent, SIGNAL("okClicked()"), self.configAccepted)
 		self.connect(parent, SIGNAL("cancelClicked()"), self.configDenied)
 
@@ -844,7 +836,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.disconnect(self, SIGNAL('refresh'), self.refreshData)
 		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if self.wallet is None :
-			self.eventNotification('Warning :\nAccess denied!')
+			self.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
 		self.appletSettings.refreshSettings(self)
 		#print self.formFactor(), '---'
@@ -865,6 +857,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		finally:
 			pass
 		savePOP3Cache()
+		del self.dialog
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 			self.createDialogWidget()
 		logging.debug('Settings refreshed. Timer stopped.')
@@ -873,6 +866,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.emit(SIGNAL('refresh'))
 
 	def configDenied(self):
+		del self.dialog
 		pass
 
 	def _enterPassword(self):
@@ -944,8 +938,6 @@ class plasmaMailChecker(plasmascript.Applet):
 		print "MailChecker destroyed manually."
 		#sys.stderr.close()
 		sys.stdout.close()
-		#self.destroy()
-		#self.close()
 
 	def mouseDoubleClickEvent(self, ev):
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -957,6 +949,7 @@ class EditAccounts(QWidget):
 
 		self.Status = 'FREE'
 		self.Parent = obj
+		self.tr = Translator('EditAccounts')
 		global Settings
 
 		self.VBLayout = QVBoxLayout()
@@ -976,22 +969,22 @@ class EditAccounts(QWidget):
 		self.layout.addWidget(self.accountListBox,0,0,2,3)
 
 		self.stringEditor = KLineEdit()
-		self.stringEditor.setToolTip("Deprecated char : '<b>;</b>'")
+		self.stringEditor.setToolTip(self.tr._translate("Deprecated char : '<b>;</b>'"))
 		self.stringEditor.setContextMenuEnabled(True)
 		self.layout.addWidget(self.stringEditor,3,0)
 
 		self.addAccountItem = QPushButton('&Add')
-		self.addAccountItem.setToolTip('Add new Account')
+		self.addAccountItem.setToolTip(self.tr._translate("Add new Account"))
 		self.addAccountItem.clicked.connect(self.addNewAccount)
 		self.layout.addWidget(self.addAccountItem,3,4)
 
 		self.editAccountItem = QPushButton('&Edit')
-		self.editAccountItem.setToolTip('Edit current Account')
+		self.editAccountItem.setToolTip(self.tr._translate("Edit current Account"))
 		self.editAccountItem.clicked.connect(self.editCurrentAccount)
 		self.layout.addWidget(self.editAccountItem,1,4)
 
 		self.delAccountItem = QPushButton('&Del')
-		self.delAccountItem.setToolTip('Delete current Account')
+		self.delAccountItem.setToolTip(self.tr._translate("Delete current Account"))
 		self.delAccountItem.clicked.connect(self.delCurrentAccount)
 		self.layout.addWidget(self.delAccountItem,0,4)
 
@@ -999,13 +992,13 @@ class EditAccounts(QWidget):
 
 		self.HB1Layout = QGridLayout()
 
-		self.HB1Layout.addWidget(QLabel('Server : '),0,0)
+		self.HB1Layout.addWidget(QLabel(self.tr._translate("Server : ")),0,0)
 
-		self.HB1Layout.addWidget(QLabel('Port : '),0,1)
+		self.HB1Layout.addWidget(QLabel(self.tr._translate("Port : ")),0,1)
 
 		self.serverLineEdit = KLineEdit()
 		self.serverLineEdit.setContextMenuEnabled(True)
-		self.serverLineEdit.setToolTip('Example : imap.gmail.com, pop.mail.ru')
+		self.serverLineEdit.setToolTip(self.tr._translate("Example : imap.gmail.com, pop.mail.ru"))
 		self.HB1Layout.addWidget(self.serverLineEdit,1,0)
 
 		self.portBox = KIntSpinBox(0, 65000, 1, 0, self)
@@ -1015,21 +1008,21 @@ class EditAccounts(QWidget):
 
 		self.HB2Layout = QGridLayout()
 
-		self.HB2Layout.addWidget(QLabel('AuthMethod : '),0,0)
+		self.HB2Layout.addWidget(QLabel(self.tr._translate("AuthMethod : ")),0,0)
 
 		self.connectMethodBox = KComboBox()
 		self.connectMethodBox.addItem('POP3',QVariant('pop'))
 		self.connectMethodBox.addItem('IMAP4',QVariant('imap'))
 		self.HB2Layout.addWidget(self.connectMethodBox,1,0)
 
-		self.HB2Layout.addWidget(QLabel('Encrypt : '),0,1)
+		self.HB2Layout.addWidget(QLabel(self.tr._translate("Encrypt : ")),0,1)
 
 		self.cryptBox = KComboBox()
 		self.cryptBox.addItem('None',QVariant('None'))
 		self.cryptBox.addItem('SSL',QVariant('SSL'))
 		self.HB2Layout.addWidget(self.cryptBox,1,1)
 
-		self.HB2Layout.addWidget(QLabel('Changes : '),0,2)
+		self.HB2Layout.addWidget(QLabel(self.tr._translate("Changes : ")),0,2)
 
 		self.saveChanges = QPushButton('&Save')
 		self.saveChanges.clicked.connect(self.saveChangedAccount)
@@ -1043,9 +1036,9 @@ class EditAccounts(QWidget):
 
 		self.HB3Layout = QGridLayout()
 
-		self.HB3Layout.addWidget(QLabel('Username : '),0,0)
+		self.HB3Layout.addWidget(QLabel(self.tr._translate("Username : ")),0,0)
 
-		self.HB3Layout.addWidget(QLabel('Password : '),0,1)
+		self.HB3Layout.addWidget(QLabel(self.tr._translate("Password : ")),0,1)
 
 		self.userNameLineEdit = KLineEdit()
 		self.userNameLineEdit.setContextMenuEnabled(True)
@@ -1063,7 +1056,7 @@ class EditAccounts(QWidget):
 	def clearChangedAccount(self):
 		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if self.Parent.wallet is None :
-			self.Parent.eventNotification('Warning :\nAccess denied!')
+			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
 		if self.Status == 'BUSY' :
 			return None
@@ -1074,13 +1067,13 @@ class EditAccounts(QWidget):
 		global Settings
 		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if self.Parent.wallet is None :
-			self.Parent.eventNotification('Warning :\nAccess denied!')
+			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
 		if self.Status == 'READY' :
 			accountName, authData = self.parsingValues()
 			if accountName == '' :
 				self.clearChangedAccount()
-				self.Parent.eventNotification('Warning :\nSet Account Name!')
+				self.Parent.eventNotification(self.tr._translate("Warning :\nSet Account Name!"))
 				return None
 			self.Status = 'CLEAR'
 			self.delCurrentAccount(self.oldAccountName)
@@ -1111,7 +1104,7 @@ class EditAccounts(QWidget):
 	def editCurrentAccount(self):
 		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if self.Parent.wallet is None :
-			self.Parent.eventNotification('Warning :\nAccess denied!')
+			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
 		self.Status = 'BUSY'
 		accountName = self.accountListBox.currentItem().text()
@@ -1142,13 +1135,7 @@ class EditAccounts(QWidget):
 		#print parameterList[1]
 		self.portBox.setValue(int(parameterList[1]))
 		self.userNameLineEdit.setText(str(parameterList[2]))
-		#if parameterList[3] != '***EncriptedKey_not_created***' :
-		#	self.passwordLineEdit.setText('***EncriptedPassWord***')
-		#else:
-		#	self.passwordLineEdit.setText(str(parameterList[3]))
 		if self.Parent.wallet.hasEntry(self.oldAccountName) :
-			#word_ = self.Parent.wallet.readEntry(self.oldAccountName)
-			#print str(word_[1]),'edit'
 			self.passwordLineEdit.setText( '***EncriptedPassWord***' )
 		else:
 			self.passwordLineEdit.setText( '***EncriptedKey_not_created***' )
@@ -1158,7 +1145,7 @@ class EditAccounts(QWidget):
 	def addNewAccount(self):
 		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if self.Parent.wallet is None :
-			self.Parent.eventNotification('Warning :\nAccess denied!')
+			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			self.Parent.configDenied()
 			return None
 		if self.Status != 'FREE' :
@@ -1189,7 +1176,7 @@ class EditAccounts(QWidget):
 		global Settings
 		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if self.Parent.wallet is None :
-			self.Parent.eventNotification('Warning :\nAccess denied!')
+			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
 		if self.Status == 'FREE' :
 			item_ = self.accountListBox.currentRow()
@@ -1231,6 +1218,7 @@ class AppletSettings(QWidget):
 		QWidget.__init__(self, parent)
 
 		self.Parent = obj
+		self.tr = Translator('AppletSettings')
 		global Settings
 
 		timeOut = Settings.value('TimeOut').toString()
@@ -1280,33 +1268,33 @@ class AppletSettings(QWidget):
 
 		self.layout = QGridLayout()
 
-		self.timeOutLabel = QLabel("Timeout checking (sec.):")
+		self.timeOutLabel = QLabel(self.tr._translate("Timeout checking (sec.):"))
 		self.layout.addWidget(self.timeOutLabel,0,0)
 		self.timeOutBox = KIntSpinBox(10, 7200, 1, int(timeOut), self)
 		self.layout.addWidget(self.timeOutBox, 0, 1)
 
-		self.autoRunLabel = QLabel("Autorun mail checking :")
+		self.autoRunLabel = QLabel(self.tr._translate("Autorun mail checking :"))
 		self.layout.addWidget(self.autoRunLabel,1,0)
 		self.AutoRunBox = QCheckBox()
 		if int(AutoRun) > 0 :
 			self.AutoRunBox.setCheckState(2)
 		self.layout.addWidget(self.AutoRunBox,1,1)
 
-		self.countProbe = QLabel("Count of connect probe\nto mail server:")
+		self.countProbe = QLabel(self.tr._translate("Count of connect probe\nto mail server:"))
 		self.layout.addWidget(self.countProbe,2,0)
 		self.countProbeBox = KIntSpinBox(1, 10, 1, int(countProbe), self)
 		self.layout.addWidget(self.countProbeBox, 2, 1)
 
-		self.showError = QLabel("Show error messages :")
+		self.showError = QLabel(self.tr._translate("Show error messages :"))
 		self.layout.addWidget(self.showError,3,0)
 		self.showErrorBox = QCheckBox()
 		if int(showError) > 0 :
 			self.showErrorBox.setCheckState(2)
 		self.layout.addWidget(self.showErrorBox,3,1)
 
-		self.waitThreadLabel = QLabel("Waiting checking connect (sec.):")
+		self.waitThreadLabel = QLabel(self.tr._translate("Autoexit connect (sec.):"))
 		self.layout.addWidget(self.waitThreadLabel,4,0)
-		self.waitThreadBox = KIntSpinBox(60, 7200, 1, int(waitThread), self)
+		self.waitThreadBox = KIntSpinBox(10, 7200, 1, int(waitThread), self)
 		self.layout.addWidget(self.waitThreadBox, 4, 1)
 
 		self.setLayout(self.layout)
@@ -1315,7 +1303,7 @@ class AppletSettings(QWidget):
 		global Settings
 		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if self.Parent.wallet is None :
-			self.Parent.eventNotification('Warning :\nAccess denied!')
+			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
 		Settings.setValue('TimeOut', str(self.timeOutBox.value()))
 		Settings.setValue('CountProbe', str(self.countProbeBox.value()))
@@ -1336,11 +1324,12 @@ class PasswordManipulate(QWidget):
 		QWidget.__init__(self)
 
 		self.Parent = obj
+		self.tr = Translator('PasswordManipulate')
 
 		self.VBLayout = QVBoxLayout()
 
 		self.addAccountItem = QPushButton('&New')
-		self.addAccountItem.setToolTip('Create new Password')
+		self.addAccountItem.setToolTip(self.tr._translate("Create new Password"))
 		self.addAccountItem.clicked.connect(self.createNewKey)
 		self.VBLayout.addWidget(self.addAccountItem)
 
@@ -1352,12 +1341,12 @@ class PasswordManipulate(QWidget):
 try:
 	def CreateApplet(parent):
 		return plasmaMailChecker(parent)
+	x = ''
+	g = ThreadCheckMail()
+	#gc.set_debug(gc.DEBUG_LEAK)
 except x :
 	print x, '  main method'
+	#tb = sys.exc_info()[2]
+	#pdb.post_mortem(tb)
 finally :
-	#sys.stderr.close()
-	#sys.stdout.close()
 	pass
-
-x = ''
-g = ThreadCheckMail()
