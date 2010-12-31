@@ -15,7 +15,7 @@ try :
 	from PyKDE4.kdeui import *
 	from PyKDE4.plasma import Plasma
 	from PyKDE4 import plasmascript
-	import poplib, imaplib, string, socket, time, os.path, logging, random, sys, email.header, pdb, gc
+	import poplib, imaplib, string, socket, time, os.path, logging, random, sys, email.header, pdb, gc, locale
 	logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s', \
 											datefmt='%Y-%m-%d %H:%M:%S', filename=LOG_FILENAME)
 	RESULT = []
@@ -362,8 +362,11 @@ def checkMail(accountData = ['', '']):
 	return False, None, None, Msg
 
 class Translator(QTranslator):
-	def __init__(self, context = '', lang='ru', parent=None):
+	def __init__(self, context = '', parent=None):
 		QTranslator.__init__(self, parent)
+
+		lang = locale.getdefaultlocale()[0][:2]
+		#print lang
 		kdehome = unicode(KGlobal.dirs().localkdedir())
 		_Path = kdehome + "share/apps/plasma/plasmoids/plasmaMailChecker/contents/code/"
 		self.load(QString(lang), QString(_Path), QString('qm'))
