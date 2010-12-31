@@ -128,7 +128,7 @@ Set Account Name!</source>
     </message>
     <message>
         <location filename="main.py" line="804"/>
-        <source>&lt;font color=blue&gt;&lt;b&gt;Click for StartStop&lt;/b&gt;&lt;/font&gt;</source>
+        <source>&lt;font color=blue&gt;&lt;b&gt;Click for Start\Stop&lt;/b&gt;&lt;/font&gt;</source>
         <translation>&lt;font color=blue&gt;&lt;b&gt;Пуск\Стоп&lt;/b&gt;&lt;/font&gt;</translation>
     </message>
     <message>
@@ -165,7 +165,7 @@ Checking&lt;/b&gt;&lt;/font&gt;</source>
     <message>
         <location filename="main.py" line="822"/>
         <source>Password Manipulation</source>
-        <translation type="unfinished">Управление паролем</translation>
+        <translation>Управление паролем</translation>
     </message>
     <message>
         <location filename="main.py" line="839"/>
