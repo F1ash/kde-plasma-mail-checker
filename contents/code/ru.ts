@@ -127,6 +127,11 @@ Set Account Name!</source>
         <translation>&lt;font color=blue&gt;&lt;b&gt;Почтовый @гент&lt;/b&gt;&lt;/font&gt;</translation>
     </message>
     <message>
+        <location filename="main.py" line="528"/>
+        <source>&lt;font color=red&gt;&lt;b&gt;Account&lt;/b&gt;&lt;/font&gt;</source>
+        <translation>&lt;font color=red&gt;&lt;b&gt;Учётка&lt;/b&gt;&lt;/font&gt;</translation>
+    </message>
+    <message>
         <location filename="main.py" line="804"/>
         <source>&lt;font color=blue&gt;&lt;b&gt;Click for Start\Stop&lt;/b&gt;&lt;/font&gt;</source>
         <translation>&lt;font color=blue&gt;&lt;b&gt;Пуск\Стоп&lt;/b&gt;&lt;/font&gt;</translation>

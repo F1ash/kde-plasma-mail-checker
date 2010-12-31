@@ -525,7 +525,8 @@ class plasmaMailChecker(plasmascript.Applet):
 
 			self.label[i] = Plasma.Label()
 			self.countList[i] = Plasma.Label()
-			self.label[i].setToolTip('Account ' + accountName)
+			self.label[i].setToolTip(self.tr._translate("<font color=red><b>Account</b></font>") + \
+																					' ' + accountName)
 
 			self.Dialog.addItem(self.label[i],i,0)
 			self.Dialog.addItem(self.countList[i],i,1)
