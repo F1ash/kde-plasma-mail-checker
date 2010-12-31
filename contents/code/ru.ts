@@ -17,7 +17,8 @@
         <location filename="main.py" line="1283"/>
         <source>Count of connect probe
 to mail server:</source>
-        <translation>Количество попыток подключения\nк серверу :</translation>
+        <translation>Количество попыток подключения
+к серверу :</translation>
     </message>
     <message>
         <location filename="main.py" line="1288"/>
