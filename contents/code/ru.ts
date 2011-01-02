@@ -159,6 +159,16 @@ Checking&lt;/b&gt;&lt;/font&gt;</source>
         <translation>Нет новой почты</translation>
     </message>
     <message>
+        <location filename="main.py" line="724"/>
+        <source>New : </source>
+        <translation>Новых : </translation>
+    </message>
+    <message>
+        <location filename="main.py" line="724"/>
+        <source>New Massage(s) :</source>
+        <translation>Новая почта :</translation>
+    </message>
+    <message>
         <location filename="main.py" line="818"/>
         <source>Accounts</source>
         <translation>Учётки</translation>

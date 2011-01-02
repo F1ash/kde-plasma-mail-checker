@@ -721,17 +721,16 @@ class plasmaMailChecker(plasmascript.Applet):
 					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 						accountName_ = "<font color=red><b>" + accountName + "</b></font>"
 						text_1 = "<font color=red><b>" + str(self.checkResult[i][1]) + "</b></font>"
-						text_2 = "<font color=red><b>" + \
-									'New : ' + str(self.checkResult[i][2]) + "</b></font>"
+						text_2 = "<font color=red><b>" + self.tr._translate('New : ') + \
+											str(self.checkResult[i][2]) + "</b></font>"
 					self.listNewMail += '<pre>' + accountName + '&#09;' + str(self.checkResult[i][2]) + '</pre>'
 					newMailExist = True
 				else:
 					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 						accountName_ = "<font color=lime><b>" + accountName + "</b></font>"
-						text_1 = "<font color=lime><b>" + \
-									str(self.checkResult[i][1]) + "</b></font>"
-						text_2 = "<font color=lime><b>" + \
-									'New : ' + str(self.checkResult[i][2]) + "</b></font>"
+						text_1 = "<font color=lime><b>" + str(self.checkResult[i][1]) + "</b></font>"
+						text_2 = "<font color=lime><b>" + self.tr._translate('New : ') + \
+											str(self.checkResult[i][2]) + "</b></font>"
 
 				if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) and self.initStat :
 					self.label[i].setText(accountName_)
@@ -765,7 +764,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			# print 'newM@ilExist'
 			# KNotification.beep()
 			# KNotification.StandardEvent(KNotification.Notification)
-			self.eventNotification('New Massage(s) :' + STR_)
+			self.eventNotification(self.tr._translate('New Massage(s) :') + STR_)
 
 		if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
 			if self.listNewMail == '' :
