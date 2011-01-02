@@ -151,7 +151,8 @@ def checkNewMailPOP3(accountData = ['', '']):
 				Result =''
 				for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
 					if str_[:5] == 'From:' :
-						Result += unicode(str_, 'UTF-8') + ' '
+						# Result += unicode(str_, 'UTF-8') + ' '
+						Result += str_ + ' '
 					if str_[:5] == 'Subje' :
 						# print str_, email.header.decode_header(str_)
 						if len(email.header.decode_header(str_)) == 1 :
@@ -237,7 +238,8 @@ def checkNewMailIMAP4(accountData = ['', '']):
 						Result =''
 						for str_ in string.split(m.fetch(i,"(BODY[HEADER])")[1][0][1],'\r\n') :
 							if str_[:5] == 'From:' :
-								Result += unicode(str_, 'UTF-8') + ' '
+								# Result += unicode(str_, 'UTF-8') + ' '
+								Result += str_ + ' '
 							if str_[:5] == 'Subje' :
 								# print str_, email.header.decode_header(str_)
 								if len(email.header.decode_header(str_)) == 1 :
