@@ -191,8 +191,14 @@ def checkNewMailPOP3(accountData = ['', '']):
 		probeError = False
 		countAll = 0
 		countNew = 0
-	except x:
+	except UnicodeDecodeError, x :
 		print x, '  POP3_4'
+		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
+		probeError = False
+		countAll = 0
+		countNew = 0
+	except x:
+		print x, '  POP3_5'
 		ErrorMsg += 'Unknown Error\n'
 		probeError = False
 		countAll = 0
@@ -304,6 +310,12 @@ def checkNewMailIMAP4(accountData = ['', '']):
 		countNew = 0
 	except socket.gaierror, x :
 		print x, '  IMAP4_3'
+		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
+		probeError = False
+		countAll = 0
+		countNew = 0
+	except UnicodeDecodeError, x :
+		print x, '  IMAP4_4'
 		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
 		probeError = False
 		countAll = 0

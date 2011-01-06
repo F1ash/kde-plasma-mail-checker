@@ -34,7 +34,8 @@ to mail server:</source>
         <location filename="main.py" line="1306"/>
         <source>Warning :
 Access denied!</source>
-        <translation>Внимание:\nДоступ запрещён !</translation>
+        <translation>Внимание:
+Доступ запрещён !</translation>
     </message>
 </context>
 <context>
@@ -103,13 +104,15 @@ Access denied!</source>
         <location filename="main.py" line="1179"/>
         <source>Warning :
 Access denied!</source>
-        <translation>Внимание :\nДоступ запрещён !</translation>
+        <translation>Внимание :
+Доступ запрещён !</translation>
     </message>
     <message>
         <location filename="main.py" line="1076"/>
         <source>Warning :
 Set Account Name!</source>
-        <translation>внимание :\nЗадайте имя учётной записи !</translation>
+        <translation>внимание :
+Задайте имя учётной записи !</translation>
     </message>
 </context>
 <context>
@@ -187,7 +190,8 @@ Checking&lt;/b&gt;&lt;/font&gt;</source>
         <location filename="main.py" line="839"/>
         <source>Warning :
 Access denied!</source>
-        <translation>Внимание :\nДоступ запрещён !</translation>
+        <translation>Внимание :
+Доступ запрещён !</translation>
     </message>
 </context>
 </TS>
