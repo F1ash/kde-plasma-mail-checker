@@ -15,7 +15,7 @@ try :
 	from PyKDE4.kdeui import *
 	from PyKDE4.plasma import Plasma
 	from PyKDE4 import plasmascript
-	import poplib, imaplib, string, socket, time, os.path, logging, random, sys, email.header, pdb, gc, locale
+	import poplib, imaplib, string, socket, time, os.path, logging, random, sys, email.header, gc, locale
 	logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s', \
 											datefmt='%Y-%m-%d %H:%M:%S', filename=LOG_FILENAME)
 	RESULT = []
@@ -148,21 +148,25 @@ def checkNewMailPOP3(accountData = ['', '']):
 			currentElemUid = string.split(uidl_,' ')[1]
 			mailUidls += [currentElemUid + '\n']
 			if defineUIDL(accountData[0], currentElemUid) :
-				Result =''
+				From = ''
+				Subj = ''
 				for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
 					if str_[:5] == 'From:' :
-						# Result += unicode(str_, 'UTF-8') + ' '
-						Result += str_ + ' '
+						_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
+						for part_str in email.header.decode_header(_str) :
+							if part_str[1] is None :
+								From += part_str[0] + ' '
+							else :
+								From += part_str[0].decode(part_str[1]) + ' '
 					if str_[:5] == 'Subje' :
-						# print str_, email.header.decode_header(str_)
-						if len(email.header.decode_header(str_)) == 1 :
-							# Result += unicode(str_, 'UTF-8') + ' '
-							Result += str_ + ' '
-						else :
-							Result += 'Subject: ' + email.header.decode_header(str_)[1][0].\
-														decode(email.header.decode_header(str_)[1][1]) + ' '
+						_str = string.replace(str_, '"', '')
+						for part_str in email.header.decode_header(_str) :
+							if part_str[1] is None :
+								Subj += part_str[0] + ' '
+							else :
+								Subj += part_str[0].decode(part_str[1]) + ' '
 				# print Result
-				NewMailAttributes += [Result]
+				NewMailAttributes += [From + '\n' + Subj]
 				newMailExist = newMailExist or True
 				countNew += 1
 
@@ -241,21 +245,23 @@ def checkNewMailIMAP4(accountData = ['', '']):
 					currentElemTime = str(time.mktime(date_))
 					# print currentElemTime
 					if currentElemTime > lastElemTime :
-						Result =''
-						for str_ in string.split(m.fetch(i,"(BODY[HEADER])")[1][0][1],'\r\n') :
+						From = ''
+						Subj = ''
+						for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
 							if str_[:5] == 'From:' :
-								# Result += unicode(str_, 'UTF-8') + ' '
-								Result += str_ + ' '
+								_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
+								for part_str in email.header.decode_header(_str) :
+									if part_str[1] is None :
+										From += part_str[0] + ' '
+									else :
+										From += part_str[0].decode(part_str[1]) + ' '
 							if str_[:5] == 'Subje' :
-								# print str_, email.header.decode_header(str_)
-								if len(email.header.decode_header(str_)) == 1 :
-									# Result += unicode(str_, 'UTF-8') + ' '
-									Result += str_ + ' '
-								else :
-									Result += 'Subject: ' + email.header.decode_header(str_)[1][0].\
-														decode(email.header.decode_header(str_)[1][1]) + ' '
+									if part_str[1] is None :
+										Subj += part_str[0] + ' '
+									else :
+										Subj += part_str[0].decode(part_str[1]) + ' '
 						# print Result
-						NewMailAttributes += [Result]
+						NewMailAttributes += [From + '\n' + Subj]
 						newMailExist = newMailExist or True
 						countNew += 1
 					else:
