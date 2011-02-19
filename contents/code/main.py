@@ -35,6 +35,17 @@ finally:
 GeneralLOCK = QMutex()
 LOCK = QReadWriteLock()
 
+def to_unicode(_str):
+	str_ = '<=junk_string=>'
+	try:
+		str_ = str(_str)
+	except UnicodeEncodeError:
+		str_ = unicode(_str, 'UTF-8')
+	except TypeError:
+		str_ = _str
+	finally:
+		return str_
+
 def addAccount(account, data_ = ['']):
 	LOCK.lockForWrite()
 	global Settings
@@ -166,7 +177,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 							else :
 								Subj += part_str[0].decode(part_str[1]) + ' '
 				# print Result
-				NewMailAttributes += [From + '\n' + Subj]
+				NewMailAttributes += [to_unicode(From) + '\n' + to_unicode(Subj)]
 				newMailExist = newMailExist or True
 				countNew += 1
 
@@ -261,7 +272,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 									else :
 										Subj += part_str[0].decode(part_str[1]) + ' '
 						# print Result
-						NewMailAttributes += [From + '\n' + Subj]
+						NewMailAttributes += [to_unicode(From) + '\n' + to_unicode(Subj)]
 						newMailExist = newMailExist or True
 						countNew += 1
 					else:
