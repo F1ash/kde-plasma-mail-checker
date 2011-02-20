@@ -400,10 +400,20 @@ class Translator(QTranslator):
 
 		lang = locale.getdefaultlocale()[0][:2]
 		#print lang
-		kdehome = unicode(KGlobal.dirs().localkdedir())
-		_Path = kdehome + "share/apps/plasma/plasmoids/plasmaMailChecker/contents/code/"
+		_Path = self.user_or_sys(lang + '.qm')
 		self.load(QString(lang), QString(_Path), QString('qm'))
 		self.context = context
+
+	def user_or_sys(self, path_):
+		kdehome = unicode(KGlobal.dirs().localkdedir())
+		var1 = kdehome + 'share/apps/plasma/plasmoids/plasmaMailChecker/contents/code/'
+		var2 = '/usr/share/kde4/apps/plasma/plasmoids/plasmaMailChecker/contents/code/'
+		if os.path.exists(var1 + path_) :
+			return var1
+		elif os.path.exists(var2 + path_) :
+			return var2
+		else :
+			return kdehome
 
 	def _translate(self, sourceText):
 		res = QTranslator.translate(self, self.context, sourceText)
@@ -494,8 +504,9 @@ class plasmaMailChecker(plasmascript.Applet):
 		if not os.path.exists(self.kdehome+"share/apps/plasmaMailChecker/plasmaMailChecker.notifyrc"):
 			if os.path.exists(self.kdehome+"share/apps"):
 				self.createNotifyrc(self.kdehome)
-		iconPath = self.kdehome + \
-				"share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_stop.png"
+		self.stopIconPath = self.user_or_sys('icons/mailChecker_stop.png')
+		self.webIconPath = self.user_or_sys('icons/mailChecker_web.png')
+		self.usualIconPath = self.user_or_sys('icons/mailChecker.png')
 
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 			self.titleLayout = QGraphicsLinearLayout()
@@ -505,7 +516,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.TitleDialog.setText(self.tr._translate("<font color=blue><b>M@il Checker</b></font>"))
 			self.titleLayout.addItem(self.TitleDialog)
 
-			self.icon.setIcon(iconPath)
+			self.icon.setIcon(self.stopIconPath)
 			self.icon.setMaximumSize(35.0, 35.0)
 			self.icon.setToolTip(self.tr._translate("<font color=blue><b>Click for Start\Stop</b></font>"))
 			self.connectIconsFlag = self.connect(self.icon, SIGNAL('clicked()'), self._enterPassword)
@@ -538,6 +549,16 @@ class plasmaMailChecker(plasmascript.Applet):
 		elif event.type() == 1011 :
 			self._refreshData()
 		pass
+
+	def user_or_sys(self, path_):
+		var1 = self.kdehome + 'share/apps/plasma/plasmoids/plasmaMailChecker/contents/' + path_
+		var2 = '/usr/share/kde4/apps/plasma/plasmoids/plasmaMailChecker/contents/' + path_
+		if os.path.exists(var1) :
+			return var1
+		elif os.path.exists(var2) :
+			return var2
+		else :
+			return self.kdehome
 
 	def createDialogWidget(self):
 		global Settings
@@ -653,8 +674,7 @@ class plasmaMailChecker(plasmascript.Applet):
 	def _refreshData(self):
 		#print '_refresh'
 		if self.initStat :
-			path_ = self.kdehome + \
-					'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_web.png'
+			path_ = self.webIconPath
 
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 				self.labelStat.setText(self.tr._translate("<font color=green><b>..running..</b></font>"))
@@ -673,8 +693,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					self.tr._translate("<font color=blue><b>Mail\nChecking</b></font>"), \
 					self.panelIcon.icon() ) )
 		else:
-			path_ = self.kdehome + \
-				'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_stop.png'
+			path_ = self.stopIconPath
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 				self.labelStat.setText(self.tr._translate("<font color=red><b>..stopped..</b></font>"))
 				self.icon.setIcon(path_)
@@ -715,8 +734,7 @@ class plasmaMailChecker(plasmascript.Applet):
 
 		if self.initStat :
 			noCheck = False
-			path_ = self.kdehome + \
-					'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker.png'
+			path_ = self.usualIconPath
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 				self.labelStat.setText(self.tr._translate("<font color=green><b>..running..</b></font>"))
 				self.icon.setIcon(path_)
@@ -729,8 +747,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					self.panelIcon.icon() ) )
 		else:
 			noCheck = True
-			path_ = self.kdehome + \
-				'share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_stop.png'
+			path_ = self.stopIconPath
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 				self.labelStat.setText(self.tr._translate("<font color=red><b>..stopped..</b></font>"))
 				self.icon.setIcon(path_)
@@ -829,13 +846,7 @@ class plasmaMailChecker(plasmascript.Applet):
 	def createIconWidget(self):
 		self.panelIcon = Plasma.IconWidget()
 
-		path_1 = self.kdehome + "share/apps/plasma/plasmoids/plasmaMailChecker/contents/icons/mailChecker_stop.png"
-		path_ = os.path.expanduser(path_1)
-		path_2 = '/usr/share/icons/mailChecker_stop.png'
-		if os.path.exists(path_):
-			self.panelIcon.setIcon(path_)
-		else:
-			self.panelIcon.setIcon(path_2)
+		self.panelIcon.setIcon(self.stopIconPath)
 		self.panelIcon.setToolTip(self.tr._translate("<font color=blue><b>M@il Checker</b></font>"))
 		Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
 			self.panelIcon.toolTip(), \
