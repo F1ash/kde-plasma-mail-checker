@@ -861,12 +861,14 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.setLayout(self.layout)
 
 	def createConfigurationInterface(self, parent):
-		self.editAccounts = EditAccounts(self)
+		self.editAccounts = EditAccounts(parent)
 		parent.addPage(self.editAccounts,self.tr._translate("Accounts"))
-		self.appletSettings = AppletSettings(self)
+		self.appletSettings = AppletSettings(parent)
 		parent.addPage(self.appletSettings, self.tr._translate("Settings"))
-		self.passwordManipulate = PasswordManipulate(self)
+		self.passwordManipulate = PasswordManipulate(parent)
 		parent.addPage(self.passwordManipulate, self.tr._translate("Password Manipulation"))
+		self.fontsNcolour = Font_n_Colour(parent)
+		parent.addPage(self.fontsNcolour, self.tr._translate("Font & Colour"))
 		self.connect(parent, SIGNAL("okClicked()"), self.configAccepted)
 		self.connect(parent, SIGNAL("cancelClicked()"), self.configDenied)
 
@@ -886,6 +888,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
 		self.appletSettings.refreshSettings(self)
+		self.fontsNcolour.refreshSettings(self)
 		#print self.formFactor(), '---'
 		global g
 		x = ''
@@ -1260,6 +1263,9 @@ class EditAccounts(QWidget):
 			i += 1
 		Settings.setValue('Accounts', str_)
 
+	def eventClose(self, event):
+		self.Parent.done(0)
+
 class AppletSettings(QWidget):
 	def __init__(self, obj = None, parent= None):
 		QWidget.__init__(self, parent)
@@ -1366,6 +1372,9 @@ class AppletSettings(QWidget):
 
 		Settings.sync()
 
+	def eventClose(self, event):
+		self.Parent.done(0)
+
 class PasswordManipulate(QWidget):
 	def __init__(self, obj = None, parent = None):
 		QWidget.__init__(self)
@@ -1384,6 +1393,441 @@ class PasswordManipulate(QWidget):
 
 	def createNewKey(self):
 		self.Parent.wallet.requestChangePassword(0)
+
+	def eventClose(self, event):
+		self.Parent.done(0)
+
+class Font_n_Colour(QWidget):
+	def __init__(self, obj = None, parent = None):
+		QWidget.__init__(self)
+
+		self.Parent = obj
+		self.tr = Translator('Font_n_Colour')
+		global Settings
+
+		self.headerFontVar = self.initValue('headerFont')
+		self.headerSizeVar = self.initValue('headerSize')
+		self.headerBoldVar = self.initValue('headerBold')
+		self.headerItalVar = self.initValue('headerItal')
+		self.headerColourVar = self.initValue('headerColour')
+
+		self.accountFontVar = self.initValue('accountFont')
+		self.accountSizeVar = self.initValue('accountSize')
+		self.accountBoldVar = self.initValue('accountBold')
+		self.accountItalVar = self.initValue('accountItal')
+		self.accountColourVar = self.initValue('accountColour')
+		self.accountSFontVar = self.initValue('accountSFont')
+		self.accountSSizeVar = self.initValue('accountSSize')
+		self.accountSBoldVar = self.initValue('accountSBold')
+		self.accountSItalVar = self.initValue('accountSItal')
+		self.accountSColourVar = self.initValue('accountSColour')
+
+		self.accountToolTipFontVar = self.initValue('accountToolTipFont')
+		self.accountToolTipSizeVar = self.initValue('accountToolTipSize')
+		self.accountToolTipBoldVar = self.initValue('accountToolTipBold')
+		self.accountToolTipItalVar = self.initValue('accountToolTipItal')
+		self.accountToolTipColourVar = self.initValue('accountToolTipColour')
+		self.accountToolTipSFontVar = self.initValue('accountToolTipSFont')
+		self.accountToolTipSSizeVar = self.initValue('accountToolTipSSize')
+		self.accountToolTipSBoldVar = self.initValue('accountToolTipSBold')
+		self.accountToolTipSItalVar = self.initValue('accountToolTipSItal')
+		self.accountToolTipSColourVar = self.initValue('accountToolTipSColour')
+
+		self.countFontVar = self.initValue('countFont')
+		self.countSizeVar = self.initValue('countSize')
+		self.countBoldVar = self.initValue('countBold')
+		self.countItalVar = self.initValue('countItal')
+		self.countColourVar = self.initValue('countColour')
+		self.countSFontVar = self.initValue('countSFont')
+		self.countSSizeVar = self.initValue('countSSize')
+		self.countSBoldVar = self.initValue('countSBold')
+		self.countSItalVar = self.initValue('countSItal')
+		self.countSColourVar = self.initValue('countSColour')
+
+		self.countToolTipFontVar = self.initValue('countToolTipFont')
+		self.countToolTipSizeVar = self.initValue('countToolTipSize')
+		self.countToolTipBoldVar = self.initValue('countToolTipBold')
+		self.countToolTipItalVar = self.initValue('countToolTipItal')
+		self.countToolTipColourVar = self.initValue('countToolTipColour')
+		self.countToolTipSFontVar = self.initValue('countToolTipSFont')
+		self.countToolTipSSizeVar = self.initValue('countToolTipSSize')
+		self.countToolTipSBoldVar = self.initValue('countToolTipSBold')
+		self.countToolTipSItalVar = self.initValue('countToolTipSItal')
+		self.countToolTipSColourVar = self.initValue('countToolTipSColour')
+
+		self.init()
+
+	def init(self):
+		self.layout = QGridLayout()
+
+		self.label1 = QLabel(self.tr._translate("Normal"))
+		self.label2 = QLabel(self.tr._translate("Select"))
+		self.label1.setMaximumHeight(30)
+		self.label2.setMaximumHeight(30)
+		self.layout.addWidget(self.label1, 0, 0)
+		self.layout.addWidget(self.label2, 0, 5)
+
+		prefix, suffix = self.cursive_n_bold(self.headerBoldVar, self.headerItalVar)
+		self.headerFontLabel = QLabel(self.tr._translate('<font color=' + self.headerColourVar + \
+							' face="' + self.headerFontVar + '">' + prefix + 'Header :' + suffix + '</font>'))
+		self.layout.addWidget(self.headerFontLabel, 1, 0)
+
+		self.headerFontButton = QPushButton()
+		self.headerFontButton.setText('Font')
+		self.headerFontButton.clicked.connect(self.headerFont)
+		self.layout.addWidget(self.headerFontButton, 1, 1)
+
+		self.headerColourButton = QPushButton()
+		self.headerColourButton.setText('Color')
+		self.connect(self.headerColourButton, SIGNAL('clicked()'), self.headerColour)
+		self.layout.addWidget(self.headerColourButton, 1, 2)
+
+		prefix, suffix = self.cursive_n_bold(self.accountBoldVar, self.accountItalVar)
+		self.accountFontLabel = QLabel(self.tr._translate('<font color="' + self.accountColourVar + '" face="' + \
+										self.accountFontVar + '">' + prefix + 'Account :' + suffix + '</font>'))
+		self.layout.addWidget(self.accountFontLabel, 2, 0)
+		prefix, suffix = self.cursive_n_bold(self.accountSBoldVar, self.accountSItalVar)
+		self.accountSFontLabel = QLabel(self.tr._translate('<font color=' + self.accountSColourVar + \
+				' face="' + self.accountSFontVar + '">' + prefix + 'Account :' + suffix + '</font>'))
+		self.layout.addWidget(self.accountSFontLabel, 2, 5)
+
+		self.accountFontButton = QPushButton()
+		self.accountFontButton.setText('Font')
+		self.connect(self.accountFontButton, SIGNAL('clicked()'), self.accountFont)
+		self.layout.addWidget(self.accountFontButton, 2, 1)
+
+		self.accountColourButton = QPushButton()
+		self.accountColourButton.setText('Color')
+		self.connect(self.accountColourButton, SIGNAL('clicked()'), self.accountColour)
+		self.layout.addWidget(self.accountColourButton, 2, 2)
+
+		self.accountSFontButton = QPushButton()
+		self.accountSFontButton.setText('Font')
+		self.connect(self.accountSFontButton, SIGNAL('clicked()'), self.accountSFont)
+		self.layout.addWidget(self.accountSFontButton, 2, 3)
+
+		self.accountSColourButton = QPushButton()
+		self.accountSColourButton.setText('Color')
+		self.connect(self.accountSColourButton, SIGNAL('clicked()'), self.accountSColour)
+		self.layout.addWidget(self.accountSColourButton, 2, 4)
+
+		prefix, suffix = self.cursive_n_bold(self.accountToolTipBoldVar, self.accountToolTipItalVar)
+		self.accountToolTipFontLabel = QLabel(self.tr._translate('<font color=' + self.accountToolTipColourVar + \
+			' face="' + self.accountToolTipFontVar + '">' + prefix + 'Account\nToolTip :' + suffix + '</font>'))
+		self.layout.addWidget(self.accountToolTipFontLabel, 3, 0)
+		prefix, suffix = self.cursive_n_bold(self.accountToolTipSBoldVar, self.accountToolTipSItalVar)
+		self.accountToolTipSFontLabel = QLabel(self.tr._translate('<font color=' + self.accountToolTipSColourVar + \
+			' face="' + self.accountToolTipSFontVar + '">' + prefix + 'Account\nToolTip :' + suffix + '</font>'))
+		self.layout.addWidget(self.accountToolTipSFontLabel, 3, 5)
+
+		self.accountToolTipFontButton = QPushButton()
+		self.accountToolTipFontButton.setText('Font')
+		self.connect(self.accountToolTipFontButton, SIGNAL('clicked()'), self.accountToolTipFont)
+		self.layout.addWidget(self.accountToolTipFontButton, 3, 1)
+
+		self.accountToolTipColourButton = QPushButton()
+		self.accountToolTipColourButton.setText('Color')
+		self.connect(self.accountToolTipColourButton, SIGNAL('clicked()'), self.accountToolTipColour)
+		self.layout.addWidget(self.accountToolTipColourButton, 3, 2)
+
+		self.accountToolTipSFontButton = QPushButton()
+		self.accountToolTipSFontButton.setText('Font')
+		self.connect(self.accountToolTipSFontButton, SIGNAL('clicked()'), self.accountToolTipSFont)
+		self.layout.addWidget(self.accountToolTipSFontButton, 3, 3)
+
+		self.accountToolTipSColourButton = QPushButton()
+		self.accountToolTipSColourButton.setText('Color')
+		self.connect(self.accountToolTipSColourButton, SIGNAL('clicked()'), self.accountToolTipSColour)
+		self.layout.addWidget(self.accountToolTipSColourButton, 3, 4)
+
+		prefix, suffix = self.cursive_n_bold(self.countBoldVar, self.countItalVar)
+		self.countFontLabel = QLabel(self.tr._translate('<font color="' + self.countColourVar + \
+			'" face="' + self.countFontVar + '">' + prefix + 'count :' + suffix + '</font>'))
+		self.layout.addWidget(self.countFontLabel, 4, 0)
+		prefix, suffix = self.cursive_n_bold(self.countSBoldVar, self.countSItalVar)
+		self.countSFontLabel = QLabel(self.tr._translate('<font color="' + self.countSColourVar + \
+				'" face="' + self.countSFontVar + '">' + prefix + 'count :' + suffix + '</font>'))
+		self.layout.addWidget(self.countSFontLabel, 4, 5)
+
+		self.countFontButton = QPushButton()
+		self.countFontButton.setText('Font')
+		self.connect(self.countFontButton, SIGNAL('clicked()'), self.countFont)
+		self.layout.addWidget(self.countFontButton, 4, 1)
+
+		self.countColourButton = QPushButton()
+		self.countColourButton.setText('Color')
+		self.connect(self.countColourButton, SIGNAL('clicked()'), self.countColour)
+		self.layout.addWidget(self.countColourButton, 4, 2)
+
+		self.countSFontButton = QPushButton()
+		self.countSFontButton.setText('Font')
+		self.connect(self.countSFontButton, SIGNAL('clicked()'), self.countSFont)
+		self.layout.addWidget(self.countSFontButton, 4, 3)
+
+		self.countSColourButton = QPushButton()
+		self.countSColourButton.setText('Color')
+		self.connect(self.countSColourButton, SIGNAL('clicked()'), self.countSColour)
+		self.layout.addWidget(self.countSColourButton, 4, 4)
+
+		prefix, suffix = self.cursive_n_bold(self.countToolTipBoldVar, self.countToolTipItalVar)
+		self.countToolTipFontLabel = QLabel(self.tr._translate('<font color=' + self.countToolTipColourVar + \
+				' face="' + self.countToolTipFontVar + '">' + prefix + 'count\nToolTip :' + suffix + '</font>'))
+		self.layout.addWidget(self.countToolTipFontLabel, 5, 0)
+		prefix, suffix = self.cursive_n_bold(self.countToolTipSBoldVar, self.countToolTipSItalVar)
+		self.countToolTipSFontLabel = QLabel(self.tr._translate('<font color=' + self.countToolTipSColourVar + \
+				' face="' + self.countToolTipSFontVar + '">' + prefix + 'count\nToolTip :' + suffix + '</font>'))
+		self.layout.addWidget(self.countToolTipSFontLabel, 5, 5)
+
+		self.countToolTipFontButton = QPushButton()
+		self.countToolTipFontButton.setText('Font')
+		self.connect(self.countToolTipFontButton, SIGNAL('clicked()'), self.countToolTipFont)
+		self.layout.addWidget(self.countToolTipFontButton, 5, 1)
+
+		self.countToolTipColourButton = QPushButton()
+		self.countToolTipColourButton.setText('Color')
+		self.connect(self.countToolTipColourButton, SIGNAL('clicked()'), self.countToolTipColour)
+		self.layout.addWidget(self.countToolTipColourButton, 5, 2)
+
+		self.countToolTipSFontButton = QPushButton()
+		self.countToolTipSFontButton.setText('Font')
+		self.connect(self.countToolTipSFontButton, SIGNAL('clicked()'), self.countToolTipSFont)
+		self.layout.addWidget(self.countToolTipSFontButton, 5, 3)
+
+		self.countToolTipSColourButton = QPushButton()
+		self.countToolTipSColourButton.setText('Color')
+		self.connect(self.countToolTipSColourButton, SIGNAL('clicked()'), self.countToolTipSColour)
+		self.layout.addWidget(self.countToolTipSColourButton, 5, 4)
+
+		self.setLayout(self.layout)
+
+	def initValue(self, key_):
+		global Settings
+		if Settings.contains(key_) :
+			#print key_, Settings.value(key_).toString()
+			return Settings.value(key_).toString()
+		else :
+			Settings.setValue(key_, QVariant('0'))
+			#print key_, Settings.value(key_).toString()
+			return '0'
+
+	def cursive_n_bold(self, bold, italic):
+		pref = ''
+		suff = ''
+		if bold == '1' :
+			pref += '<b>'; suff += '</b>'
+		if italic == '1' :
+			pref = '<i>' + pref; suff += '</i>'
+		return pref, suff
+
+	def getFont(self):
+		font = QFontDialog()
+		font.exec_()
+		selectFont = font.selectedFont()
+		str_ = string.split(selectFont.key(), ',')
+		b = '0'; i = '0'
+		if selectFont.bold() : b = '1'
+		if selectFont.italic() : i = '1'
+		font.done(0)
+		return str_[0], str_[1], b, i
+
+	def getColour(self):
+		colour = QColorDialog(self)
+		colour.exec_()
+		selectColour = colour.selectedColor()
+		colour.done(0)
+		return selectColour.name()
+
+	def headerFont(self):
+		self.headerFontVar, self.headerSizeVar, self.headerBoldVar, self.headerItalVar = self.getFont()
+		prefix, suffix = self.cursive_n_bold(self.headerBoldVar, self.headerItalVar)
+		self.headerFontLabel.clear()
+		self.headerFontLabel.setText(self.tr._translate('<font color=' + self.headerColourVar + \
+							' face="' + self.headerFontVar + '">' + prefix + 'Header :' + suffix + '</font>'))
+
+	def headerColour(self):
+		self.headerColourVar = self.getColour()
+		prefix, suffix = self.cursive_n_bold(self.headerBoldVar, self.headerItalVar)
+		self.headerFontLabel.clear()
+		self.headerFontLabel.setText(self.tr._translate('<font color=' + self.headerColourVar + \
+							' face="' + self.headerFontVar + '">' + prefix + 'Header :' + suffix + '</font>'))
+
+	def accountFont(self):
+		self.accountFontVar, self.accountSizeVar, self.accountBoldVar, self.accountItalVar = self.getFont()
+		prefix, suffix = self.cursive_n_bold(self.accountBoldVar, self.accountItalVar)
+		self.accountFontLabel.clear()
+		self.accountFontLabel.setText(self.tr._translate('<font color="' + self.accountColourVar + '" face="' + \
+										self.accountFontVar + '">' + prefix + 'Account :' + suffix + '</font>'))
+
+	def accountColour(self):
+		self.accountColourVar = self.getColour()
+		prefix, suffix = self.cursive_n_bold(self.accountBoldVar, self.headerItalVar)
+		self.accountFontLabel.clear()
+		self.accountFontLabel.setText(self.tr._translate('<font color="' + self.accountColourVar + '" face="' + \
+										self.accountFontVar + '">' + prefix + 'Account :' + suffix + '</font>'))
+
+	def accountSFont(self):
+		self.accountSFontVar, self.accountSSizeVar, self.accountSBoldVar, self.accountSItalVar = self.getFont()
+		prefix, suffix = self.cursive_n_bold(self.accountSBoldVar, self.accountSItalVar)
+		self.accountSFontLabel.clear()
+		self.accountSFontLabel.setText(self.tr._translate('<font color=' + self.accountSColourVar + \
+				' face="' + self.accountSFontVar + '">' + prefix + 'Account :' + suffix + '</font>'))
+
+	def accountSColour(self):
+		self.accountSColourVar = self.getColour()
+		prefix, suffix = self.cursive_n_bold(self.accountSBoldVar, self.accountSItalVar)
+		self.accountSFontLabel.clear()
+		self.accountSFontLabel.setText(self.tr._translate('<font color=' + self.accountSColourVar + \
+				' face="' + self.accountSFontVar + '">' + prefix + 'Account :' + suffix + '</font>'))
+
+	def accountToolTipFont(self):
+		self.accountToolTipFontVar, self.accountToolTipSizeVar, self.accountToolTipBoldVar, \
+		self.accountToolTipItalVar = self.getFont()
+		prefix, suffix = self.cursive_n_bold(self.accountToolTipBoldVar, self.accountToolTipItalVar)
+		self.accountToolTipFontLabel.clear()
+		self.accountToolTipFontLabel.setText(self.tr._translate('<font color=' + self.accountToolTipColourVar + \
+			' face="' + self.accountToolTipFontVar + '">' + prefix + 'Account\nToolTip :' + suffix + '</font>'))
+
+	def accountToolTipColour(self):
+		self.accountToolTipColourVar = self.getColour()
+		prefix, suffix = self.cursive_n_bold(self.accountToolTipBoldVar, self.accountToolTipItalVar)
+		self.accountToolTipFontLabel.clear()
+		self.accountToolTipFontLabel.setText(self.tr._translate('<font color=' + self.accountToolTipColourVar + \
+			' face="' + self.accountToolTipFontVar + '">' + prefix + 'Account\nToolTip :' + suffix + '</font>'))
+
+	def accountToolTipSFont(self):
+		self.accountToolTipSFontVar, self.accountToolTipSSizeVar, self.accountToolTipSBoldVar, \
+		self.accountToolTipSItalVar = self.getFont()
+		prefix, suffix = self.cursive_n_bold(self.accountToolTipSBoldVar, self.accountToolTipSItalVar)
+		self.accountToolTipSFontLabel.clear()
+		self.accountToolTipSFontLabel.setText(self.tr._translate('<font color=' + self.accountToolTipSColourVar + \
+			' face="' + self.accountToolTipSFontVar + '">' + prefix + 'Account\nToolTip :' + suffix + '</font>'))
+
+	def accountToolTipSColour(self):
+		self.accountToolTipSColourVar = self.getColour()
+		prefix, suffix = self.cursive_n_bold(self.accountToolTipSBoldVar, self.accountToolTipSItalVar)
+		self.accountToolTipSFontLabel.clear()
+		self.accountToolTipSFontLabel.setText(self.tr._translate('<font color=' + self.accountToolTipSColourVar + \
+			' face="' + self.accountToolTipSFontVar + '">' + prefix + 'Account\nToolTip :' + suffix + '</font>'))
+
+	def countFont(self):
+		self.countFontVar, self.countSizeVar, self.countBoldVar, self.countItalVar = self.getFont()
+		prefix, suffix = self.cursive_n_bold(self.countBoldVar, self.countItalVar)
+		self.countFontLabel.clear()
+		self.countFontLabel.setText(self.tr._translate('<font color="' + self.countColourVar + \
+			'" face="' + self.countFontVar + '">' + prefix + 'count :' + suffix + '</font>'))
+
+	def countColour(self):
+		self.countColourVar = self.getColour()
+		prefix, suffix = self.cursive_n_bold(self.countBoldVar, self.countItalVar)
+		self.countFontLabel.clear()
+		self.countFontLabel.setText(self.tr._translate('<font color="' + self.countColourVar + \
+			'" face="' + self.countFontVar + '">' + prefix + 'count :' + suffix + '</font>'))
+
+	def countSFont(self):
+		self.countSFontVar, self.countSSizeVar, self.countSBoldVar, self.countSItalVar = self.getFont()
+		prefix, suffix = self.cursive_n_bold(self.countSBoldVar, self.countSItalVar)
+		self.countSFontLabel.clear()
+		self.countSFontLabel.setText(self.tr._translate('<font color="' + self.countSColourVar + \
+				'" face="' + self.countSFontVar + '">' + prefix + 'count :' + suffix + '</font>'))
+
+	def countSColour(self):
+		self.countSColourVar = self.getColour()
+		prefix, suffix = self.cursive_n_bold(self.countSBoldVar, self.countSItalVar)
+		self.countSFontLabel.clear()
+		self.countSFontLabel.setText(self.tr._translate('<font color="' + self.countSColourVar + \
+				'" face="' + self.countSFontVar + '">' + prefix + 'count :' + suffix + '</font>'))
+
+	def countToolTipFont(self):
+		self.countToolTipFontVar, self.countToolTipSizeVar, \
+		self.countToolTipBoldVar, self.countToolTipItalVar = self.getFont()
+		prefix, suffix = self.cursive_n_bold(self.countToolTipBoldVar, self.countToolTipItalVar)
+		self.countToolTipFontLabel.clear()
+		self.countToolTipFontLabel.setText(self.tr._translate('<font color=' + self.countToolTipColourVar + \
+				' face="' + self.countToolTipFontVar + '">' + prefix + 'count\nToolTip :' + suffix + '</font>'))
+
+	def countToolTipColour(self):
+		self.countToolTipColourVar = self.getColour()
+		prefix, suffix = self.cursive_n_bold(self.countToolTipBoldVar, self.countToolTipItalVar)
+		self.countToolTipFontLabel.clear()
+		self.countToolTipFontLabel.setText(self.tr._translate('<font color=' + self.countToolTipColourVar + \
+				' face="' + self.countToolTipFontVar + '">' + prefix + 'count\nToolTip :' + suffix + '</font>'))
+
+	def countToolTipSFont(self):
+		self.countToolTipSFontVar, self.countToolTipSSizeVar, \
+		self.countToolTipSBoldVar, self.countToolTipSItalVar = self.getFont()
+		prefix, suffix = self.cursive_n_bold(self.countToolTipSBoldVar, self.countToolTipSItalVar)
+		self.countToolTipSFontLabel.clear()
+		self.countToolTipSFontLabel.setText(self.tr._translate('<font color=' + self.countToolTipSColourVar + \
+				' face="' + self.countToolTipSFontVar + '">' + prefix + 'count\nToolTip :' + suffix + '</font>'))
+
+	def countToolTipSColour(self):
+		self.countToolTipSColourVar = self.getColour()
+		prefix, suffix = self.cursive_n_bold(self.countToolTipSBoldVar, self.countToolTipSItalVar)
+		self.countToolTipSFontLabel.clear()
+		self.countToolTipSFontLabel.setText(self.tr._translate('<font color=' + self.countToolTipSColourVar + \
+				' face="' + self.countToolTipSFontVar + '">' + prefix + 'count\nToolTip :' + suffix + '</font>'))
+
+	def refreshSettings(self, parent = None):
+		global Settings
+		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+		if self.Parent.wallet is None :
+			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
+			return None
+
+		Settings.setValue('headerFont', QVariant(self.headerFontVar))
+		Settings.setValue('headerSize', QVariant(self.headerSizeVar))
+		Settings.setValue('headerBold', QVariant(self.headerBoldVar))
+		Settings.setValue('headerItal', QVariant(self.headerItalVar))
+		Settings.setValue('headerColour', QVariant(self.headerColourVar))
+
+		Settings.setValue('countFont', QVariant(self.countFontVar))
+		Settings.setValue('countSize', QVariant(self.countSizeVar))
+		Settings.setValue('countBold', QVariant(self.countBoldVar))
+		Settings.setValue('countItal', QVariant(self.countItalVar))
+		Settings.setValue('countColour', QVariant(self.countColourVar))
+		Settings.setValue('countSFont', QVariant(self.countSFontVar))
+		Settings.setValue('countSSize', QVariant(self.countSSizeVar))
+		Settings.setValue('countSBold', QVariant(self.countSBoldVar))
+		Settings.setValue('countSItal', QVariant(self.countSItalVar))
+		Settings.setValue('countSColour', QVariant(self.countSColourVar))
+
+		Settings.setValue('accountFont', QVariant(self.accountFontVar))
+		Settings.setValue('accountSize', QVariant(self.accountSizeVar))
+		Settings.setValue('accountBold', QVariant(self.accountBoldVar))
+		Settings.setValue('accountItal', QVariant(self.accountItalVar))
+		Settings.setValue('accountColour', QVariant(self.accountColourVar))
+		Settings.setValue('accountSFont', QVariant(self.accountSFontVar))
+		Settings.setValue('accountSSize', QVariant(self.accountSSizeVar))
+		Settings.setValue('accountSBold', QVariant(self.accountSBoldVar))
+		Settings.setValue('accountSItal', QVariant(self.accountSItalVar))
+		Settings.setValue('accountSColour', QVariant(self.accountSColourVar))
+
+		Settings.setValue('accountToolTipFont', QVariant(self.accountToolTipFontVar))
+		Settings.setValue('accountToolTipSize', QVariant(self.accountToolTipSizeVar))
+		Settings.setValue('accountToolTipBold', QVariant(self.accountToolTipBoldVar))
+		Settings.setValue('accountToolTipItal', QVariant(self.accountToolTipItalVar))
+		Settings.setValue('accountToolTipColour', QVariant(self.accountToolTipColourVar))
+		Settings.setValue('accountToolTipSFont', QVariant(self.accountToolTipSFontVar))
+		Settings.setValue('accountToolTipSSize', QVariant(self.accountToolTipSSizeVar))
+		Settings.setValue('accountToolTipSBold', QVariant(self.accountToolTipSBoldVar))
+		Settings.setValue('accountToolTipSItal', QVariant(self.accountToolTipSItalVar))
+		Settings.setValue('accountToolTipSColour', QVariant(self.accountToolTipSColourVar))
+
+		Settings.setValue('countToolTipFont', QVariant(self.countToolTipFontVar))
+		Settings.setValue('countToolTipSize', QVariant(self.countToolTipSizeVar))
+		Settings.setValue('countToolTipBold', QVariant(self.countToolTipBoldVar))
+		Settings.setValue('countToolTipItal', QVariant(self.countToolTipItalVar))
+		Settings.setValue('countToolTipColour', QVariant(self.countToolTipColourVar))
+		Settings.setValue('countToolTipSFont', QVariant(self.countToolTipSFontVar))
+		Settings.setValue('countToolTipSSize', QVariant(self.countToolTipSSizeVar))
+		Settings.setValue('countToolTipSBold', QVariant(self.countToolTipSBoldVar))
+		Settings.setValue('countToolTipSItal', QVariant(self.countToolTipSItalVar))
+		Settings.setValue('countToolTipSColour', QVariant(self.countToolTipSColourVar))
+
+		Settings.sync()
+
+	def eventClose(self, event):
+		self.Parent.done(0)
 
 try:
 	def CreateApplet(parent):
