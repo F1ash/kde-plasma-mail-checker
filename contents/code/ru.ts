@@ -127,34 +127,34 @@ Set Account Name!</source>
     <name>plasmaMailChecker</name>
     <message>
         <location filename="main.py" line="469"/>
-        <source>&lt;font color=blue&gt;&lt;b&gt;M@il Checker&lt;/b&gt;&lt;/font&gt;</source>
-        <translation>&lt;font color=blue&gt;&lt;b&gt;Почтовый @гент&lt;/b&gt;&lt;/font&gt;</translation>
+        <source>M@il Checker</source>
+        <translation>Почтовый @гент</translation>
     </message>
     <message>
         <location filename="main.py" line="528"/>
-        <source>&lt;font color=red&gt;&lt;b&gt;Account&lt;/b&gt;&lt;/font&gt;</source>
-        <translation>&lt;font color=red&gt;&lt;b&gt;Учётка&lt;/b&gt;&lt;/font&gt;</translation>
+        <source>Account</source>
+        <translation>Учётка</translation>
     </message>
     <message>
-        <location filename="main.py" line="804"/>
-        <source>&lt;font color=blue&gt;&lt;b&gt;Click for Start\Stop&lt;/b&gt;&lt;/font&gt;</source>
-        <translation>&lt;font color=blue&gt;&lt;b&gt;Пуск\Стоп&lt;/b&gt;&lt;/font&gt;</translation>
+        <location filename="main.py" line="521"/>
+        <source>Click for Start\Stop</source>
+        <translation>Пуск\Стоп</translation>
     </message>
     <message>
         <location filename="main.py" line="698"/>
-        <source>&lt;font color=red&gt;&lt;b&gt;..stopped..&lt;/b&gt;&lt;/font&gt;</source>
-        <translation>&lt;font color=red&gt;&lt;b&gt;..остановлено..&lt;/b&gt;&lt;/font&gt;</translation>
+        <source>..stopped..</source>
+        <translation>..остановлено..</translation>
     </message>
     <message>
         <location filename="main.py" line="623"/>
-        <source>&lt;font color=green&gt;&lt;b&gt;..running..&lt;/b&gt;&lt;/font&gt;</source>
-        <translation>&lt;font color=green&gt;&lt;b&gt;..запущено..&lt;/b&gt;&lt;/font&gt;</translation>
+        <source>..running..</source>
+        <translation>..запущено..</translation>
     </message>
     <message>
         <location filename="main.py" line="628"/>
-        <source>&lt;font color=blue&gt;&lt;b&gt;Mail
-Checking&lt;/b&gt;&lt;/font&gt;</source>
-        <translation>&lt;font color=blue&gt;&lt;b&gt;Проверка почты&lt;/b&gt;&lt;/font&gt;</translation>
+        <source>Mail
+Checking</source>
+        <translation>Проверка почты</translation>
     </message>
     <message>
         <location filename="main.py" line="768"/>
@@ -187,11 +187,58 @@ Checking&lt;/b&gt;&lt;/font&gt;</source>
         <translation>Управление паролем</translation>
     </message>
     <message>
+        <location filename="main.py" line="871"/>
+        <source>Font and Colour</source>
+        <translation>Шрифт и Цвет</translation>
+    </message>
+    <message>
         <location filename="main.py" line="839"/>
         <source>Warning :
 Access denied!</source>
         <translation>Внимание :
 Доступ запрещён !</translation>
+    </message>
+</context>
+<context>
+    <name>Font_n_Colour</name>
+    <message>
+        <location filename="main.py" line="1463"/>
+        <source>Normal</source>
+        <translation>Обычное</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="1464"/>
+        <source>Select</source>
+        <translation>Выделенное</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="1472"/>
+        <source>Header :</source>
+        <translation>Заголовок :</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="1487"/>
+        <source>Account :</source>
+        <translation>Учётка :</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="1517"/>
+        <source>Account
+ToolTip :</source>
+        <translation>Подсказка
+учётки :</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="1547"/>
+        <source>count :</source>
+        <translation>Количество :</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="1577"/>
+        <source>count
+ToolTip :</source>
+        <translation>Подсказка
+количества :</translation>
     </message>
 </context>
 </TS>
