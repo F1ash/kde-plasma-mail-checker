@@ -1019,6 +1019,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		finally:
 			pass
 		savePOP3Cache()
+		self.initPrefixAndSuffix()
 		del self.dialog
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 			self.createDialogWidget()
