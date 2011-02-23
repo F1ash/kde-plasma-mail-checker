@@ -24,8 +24,8 @@ try :
 	ErrorMsg = ''
 	warningMsg = ''
 	#sys.stderr = open('/dev/shm/errorMailChecker' + str(time.time()) + '.log','w')
-	#sys.stdout = open('/tmp/outMailChecker' + \
-	#					time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
+	sys.stdout = open('/tmp/outMailChecker' + \
+						time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
 except ImportError, warningMsg :
 	print "ImportError", warningMsg
 	logging.debug(warningMsg)
@@ -1571,7 +1571,23 @@ class Font_n_Colour(QWidget):
 		self.countToolTipSItalVar = self.initValue('countToolTipSItal')
 		self.countToolTipSColourVar = self.initValue('countToolTipSColour')
 
+		self.fontIconPath = self.user_or_sys('icons/font.png')
+		self.colourIconPath = self.user_or_sys('icons/color.png')
+		self.fontIcon = QIcon(self.fontIconPath)
+		self.colourIcon = QIcon(self.colourIconPath)
+
 		self.init()
+
+	def user_or_sys(self, path_):
+		kdehome = unicode(KGlobal.dirs().localkdedir())
+		var1 = kdehome + 'share/apps/plasma/plasmoids/plasmaMailChecker/contents/' + path_
+		var2 = '/usr/share/kde4/apps/plasma/plasmoids/plasmaMailChecker/contents/' + path_
+		if os.path.exists(var1) :
+			return var1
+		elif os.path.exists(var2) :
+			return var2
+		else :
+			return kdehome
 
 	def init(self):
 		self.layout = QGridLayout()
@@ -1588,13 +1604,13 @@ class Font_n_Colour(QWidget):
 											'">' + prefix + self.tr._translate('Header :') + suffix + '</font>')
 		self.layout.addWidget(self.headerFontLabel, 1, 0)
 
-		self.headerFontButton = QPushButton()
-		self.headerFontButton.setText('Font')
+		self.headerFontButton = QPushButton(self.fontIcon, '')
+		self.headerFontButton.setToolTip('Font')
 		self.headerFontButton.clicked.connect(self.headerFont)
 		self.layout.addWidget(self.headerFontButton, 1, 1)
 
-		self.headerColourButton = QPushButton()
-		self.headerColourButton.setText('Color')
+		self.headerColourButton = QPushButton(self.colourIcon, '')
+		self.headerColourButton.setToolTip('Color')
 		self.connect(self.headerColourButton, SIGNAL('clicked()'), self.headerColour)
 		self.layout.addWidget(self.headerColourButton, 1, 2)
 
@@ -1607,23 +1623,23 @@ class Font_n_Colour(QWidget):
 												'">' + prefix + self.tr._translate('Account :') + suffix + '</font>')
 		self.layout.addWidget(self.accountSFontLabel, 2, 5)
 
-		self.accountFontButton = QPushButton()
-		self.accountFontButton.setText('Font')
+		self.accountFontButton = QPushButton(QIcon(self.fontIconPath), '')
+		self.accountFontButton.setToolTip('Font')
 		self.connect(self.accountFontButton, SIGNAL('clicked()'), self.accountFont)
 		self.layout.addWidget(self.accountFontButton, 2, 1)
 
-		self.accountColourButton = QPushButton()
-		self.accountColourButton.setText('Color')
+		self.accountColourButton = QPushButton(QIcon(self.colourIconPath), '')
+		self.accountColourButton.setToolTip('Color')
 		self.connect(self.accountColourButton, SIGNAL('clicked()'), self.accountColour)
 		self.layout.addWidget(self.accountColourButton, 2, 2)
 
-		self.accountSFontButton = QPushButton()
-		self.accountSFontButton.setText('Font')
+		self.accountSFontButton = QPushButton(QIcon(self.fontIconPath), '')
+		self.accountSFontButton.setToolTip('Font')
 		self.connect(self.accountSFontButton, SIGNAL('clicked()'), self.accountSFont)
 		self.layout.addWidget(self.accountSFontButton, 2, 3)
 
-		self.accountSColourButton = QPushButton()
-		self.accountSColourButton.setText('Color')
+		self.accountSColourButton = QPushButton(QIcon(self.colourIconPath), '')
+		self.accountSColourButton.setToolTip('Color')
 		self.connect(self.accountSColourButton, SIGNAL('clicked()'), self.accountSColour)
 		self.layout.addWidget(self.accountSColourButton, 2, 4)
 
@@ -1638,23 +1654,23 @@ class Font_n_Colour(QWidget):
 											prefix + self.tr._translate('Account\nToolTip :') + suffix + '</font>')
 		self.layout.addWidget(self.accountToolTipSFontLabel, 3, 5)
 
-		self.accountToolTipFontButton = QPushButton()
-		self.accountToolTipFontButton.setText('Font')
+		self.accountToolTipFontButton = QPushButton(QIcon(self.fontIconPath), '')
+		self.accountToolTipFontButton.setToolTip('Font')
 		self.connect(self.accountToolTipFontButton, SIGNAL('clicked()'), self.accountToolTipFont)
 		self.layout.addWidget(self.accountToolTipFontButton, 3, 1)
 
-		self.accountToolTipColourButton = QPushButton()
-		self.accountToolTipColourButton.setText('Color')
+		self.accountToolTipColourButton = QPushButton(QIcon(self.colourIconPath), '')
+		self.accountToolTipColourButton.setToolTip('Color')
 		self.connect(self.accountToolTipColourButton, SIGNAL('clicked()'), self.accountToolTipColour)
 		self.layout.addWidget(self.accountToolTipColourButton, 3, 2)
 
-		self.accountToolTipSFontButton = QPushButton()
-		self.accountToolTipSFontButton.setText('Font')
+		self.accountToolTipSFontButton = QPushButton(QIcon(self.fontIconPath), '')
+		self.accountToolTipSFontButton.setToolTip('Font')
 		self.connect(self.accountToolTipSFontButton, SIGNAL('clicked()'), self.accountToolTipSFont)
 		self.layout.addWidget(self.accountToolTipSFontButton, 3, 3)
 
-		self.accountToolTipSColourButton = QPushButton()
-		self.accountToolTipSColourButton.setText('Color')
+		self.accountToolTipSColourButton = QPushButton(QIcon(self.colourIconPath), '')
+		self.accountToolTipSColourButton.setToolTip('Color')
 		self.connect(self.accountToolTipSColourButton, SIGNAL('clicked()'), self.accountToolTipSColour)
 		self.layout.addWidget(self.accountToolTipSColourButton, 3, 4)
 
@@ -1667,23 +1683,23 @@ class Font_n_Colour(QWidget):
 											'">' + prefix + self.tr._translate('count :') + suffix + '</font>')
 		self.layout.addWidget(self.countSFontLabel, 4, 5)
 
-		self.countFontButton = QPushButton()
-		self.countFontButton.setText('Font')
+		self.countFontButton = QPushButton(QIcon(self.fontIconPath), '')
+		self.countFontButton.setToolTip('Font')
 		self.connect(self.countFontButton, SIGNAL('clicked()'), self.countFont)
 		self.layout.addWidget(self.countFontButton, 4, 1)
 
-		self.countColourButton = QPushButton()
-		self.countColourButton.setText('Color')
+		self.countColourButton = QPushButton(QIcon(self.colourIconPath), '')
+		self.countColourButton.setToolTip('Color')
 		self.connect(self.countColourButton, SIGNAL('clicked()'), self.countColour)
 		self.layout.addWidget(self.countColourButton, 4, 2)
 
-		self.countSFontButton = QPushButton()
-		self.countSFontButton.setText('Font')
+		self.countSFontButton = QPushButton(QIcon(self.fontIconPath), '')
+		self.countSFontButton.setToolTip('Font')
 		self.connect(self.countSFontButton, SIGNAL('clicked()'), self.countSFont)
 		self.layout.addWidget(self.countSFontButton, 4, 3)
 
-		self.countSColourButton = QPushButton()
-		self.countSColourButton.setText('Color')
+		self.countSColourButton = QPushButton(QIcon(self.colourIconPath), '')
+		self.countSColourButton.setToolTip('Color')
 		self.connect(self.countSColourButton, SIGNAL('clicked()'), self.countSColour)
 		self.layout.addWidget(self.countSColourButton, 4, 4)
 
@@ -1698,23 +1714,23 @@ class Font_n_Colour(QWidget):
 											prefix + self.tr._translate('count\nToolTip :') + suffix + '</font>')
 		self.layout.addWidget(self.countToolTipSFontLabel, 5, 5)
 
-		self.countToolTipFontButton = QPushButton()
-		self.countToolTipFontButton.setText('Font')
+		self.countToolTipFontButton = QPushButton(QIcon(self.fontIconPath), '')
+		self.countToolTipFontButton.setToolTip('Font')
 		self.connect(self.countToolTipFontButton, SIGNAL('clicked()'), self.countToolTipFont)
 		self.layout.addWidget(self.countToolTipFontButton, 5, 1)
 
-		self.countToolTipColourButton = QPushButton()
-		self.countToolTipColourButton.setText('Color')
+		self.countToolTipColourButton = QPushButton(QIcon(self.colourIconPath), '')
+		self.countToolTipColourButton.setToolTip('Color')
 		self.connect(self.countToolTipColourButton, SIGNAL('clicked()'), self.countToolTipColour)
 		self.layout.addWidget(self.countToolTipColourButton, 5, 2)
 
-		self.countToolTipSFontButton = QPushButton()
-		self.countToolTipSFontButton.setText('Font')
+		self.countToolTipSFontButton = QPushButton(QIcon(self.fontIconPath), '')
+		self.countToolTipSFontButton.setToolTip('Font')
 		self.connect(self.countToolTipSFontButton, SIGNAL('clicked()'), self.countToolTipSFont)
 		self.layout.addWidget(self.countToolTipSFontButton, 5, 3)
 
-		self.countToolTipSColourButton = QPushButton()
-		self.countToolTipSColourButton.setText('Color')
+		self.countToolTipSColourButton = QPushButton(QIcon(self.colourIconPath), '')
+		self.countToolTipSColourButton.setToolTip('Color')
 		self.connect(self.countToolTipSColourButton, SIGNAL('clicked()'), self.countToolTipSColour)
 		self.layout.addWidget(self.countToolTipSColourButton, 5, 4)
 
