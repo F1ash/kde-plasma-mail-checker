@@ -1019,7 +1019,10 @@ class plasmaMailChecker(plasmascript.Applet):
 		finally:
 			pass
 		savePOP3Cache()
+		# refresh color & font Variables
 		self.initPrefixAndSuffix()
+		# refresh plasmoid Header
+		self.TitleDialog.setText(self.headerPref + self.tr._translate('M@il Checker') + self.headerSuff)
 		del self.dialog
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 			self.createDialogWidget()
