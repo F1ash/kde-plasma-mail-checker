@@ -1767,9 +1767,9 @@ class Font_n_Colour(QWidget):
 
 	def getColour(self, currentColour):
 		colour = QColorDialog()
-		selectColour = colour.getColor(currentColour)
+		selectColour, yes = colour.getRgba(currentColour)
 		colour.done(0)
-		return selectColour.name()
+		return '#' + str(QString().number(selectColour, 16))[2:], yes
 
 	def headerFont(self):
 		font, size, bold, ital, yes = self.getFont(QFont(self.headerFontVar))
@@ -1782,10 +1782,12 @@ class Font_n_Colour(QWidget):
 									'">' + prefix + self.tr._translate('Header :') + suffix + '</font>')
 
 	def headerColour(self):
-		self.headerColourVar = self.getColour(QColor(self.headerColourVar))
-		prefix, suffix = self.cursive_n_bold(self.headerBoldVar, self.headerItalVar)
-		self.headerFontLabel.clear()
-		self.headerFontLabel.setText('<font color=' + self.headerColourVar + ' face="' + self.headerFontVar + \
+		colour, yes = self.getColour(int(str('0x' + self.headerColourVar[1:]), 16))
+		if yes :
+			self.headerColourVar = colour
+			prefix, suffix = self.cursive_n_bold(self.headerBoldVar, self.headerItalVar)
+			self.headerFontLabel.clear()
+			self.headerFontLabel.setText('<font color=' + self.headerColourVar + ' face="' + self.headerFontVar + \
 							'">' + prefix + self.tr._translate('Header :') + suffix + '</font>')
 
 	def accountFont(self):
@@ -1800,10 +1802,12 @@ class Font_n_Colour(QWidget):
 									'">' + prefix + self.tr._translate('Account :') + suffix + '</font>')
 
 	def accountColour(self):
-		self.accountColourVar = self.getColour(QColor(self.accountColourVar))
-		prefix, suffix = self.cursive_n_bold(self.accountBoldVar, self.headerItalVar)
-		self.accountFontLabel.clear()
-		self.accountFontLabel.setText('<font color="' + self.accountColourVar + '" face="' + \
+		colour, yes = self.getColour(int(str('0x' + self.accountColourVar[1:]), 16))
+		if yes :
+			self.accountColourVar = colour
+			prefix, suffix = self.cursive_n_bold(self.accountBoldVar, self.headerItalVar)
+			self.accountFontLabel.clear()
+			self.accountFontLabel.setText('<font color="' + self.accountColourVar + '" face="' + \
 						self.accountFontVar + '">' + prefix + self.tr._translate('Account :') + suffix + '</font>')
 
 	def accountSFont(self):
@@ -1818,7 +1822,9 @@ class Font_n_Colour(QWidget):
 									prefix + self.tr._translate('Account :') + suffix + '</font>')
 
 	def accountSColour(self):
-		self.accountSColourVar = self.getColour(QColor(self.accountSColourVar))
+		colour, yes = self.getColour(int(str('0x' + self.accountSColourVar[1:]), 16))
+		if yes :
+			self.accountSColourVar = colour
 		prefix, suffix = self.cursive_n_bold(self.accountSBoldVar, self.accountSItalVar)
 		self.accountSFontLabel.clear()
 		self.accountSFontLabel.setText('<font color=' + self.accountSColourVar + ' face="' + self.accountSFontVar + \
@@ -1836,7 +1842,9 @@ class Font_n_Colour(QWidget):
 									prefix + self.tr._translate('Account\nToolTip :') + suffix + '</font>')
 
 	def accountToolTipColour(self):
-		self.accountToolTipColourVar = self.getColour(QColor(self.accountToolTipColourVar))
+		colour, yes = self.getColour(int(str('0x' + self.self.accountToolTipColourVar[1:]), 16))
+		if yes :
+			self.accountToolTipColourVar = colour
 		prefix, suffix = self.cursive_n_bold(self.accountToolTipBoldVar, self.accountToolTipItalVar)
 		self.accountToolTipFontLabel.clear()
 		self.accountToolTipFontLabel.setText('<font color=' + self.accountToolTipColourVar + \
@@ -1855,7 +1863,9 @@ class Font_n_Colour(QWidget):
 									prefix + self.tr._translate('Account\nToolTip :') + suffix + '</font>')
 
 	def accountToolTipSColour(self):
-		self.accountToolTipSColourVar = self.getColour(QColor(self.accountToolTipSColourVar))
+		colour, yes = self.getColour(int(str('0x' + self.accountToolTipSColourVar[1:]), 16))
+		if yes :
+			self.accountToolTipSColourVar = colour
 		prefix, suffix = self.cursive_n_bold(self.accountToolTipSBoldVar, self.accountToolTipSItalVar)
 		self.accountToolTipSFontLabel.clear()
 		self.accountToolTipSFontLabel.setText('<font color=' + self.accountToolTipSColourVar + \
@@ -1872,10 +1882,12 @@ class Font_n_Colour(QWidget):
 									'">' + prefix + self.tr._translate('count :') + suffix + '</font>')
 
 	def countColour(self):
-		self.countColourVar = self.getColour(QColor(self.countColourVar))
-		prefix, suffix = self.cursive_n_bold(self.countBoldVar, self.countItalVar)
-		self.countFontLabel.clear()
-		self.countFontLabel.setText('<font color="' + self.countColourVar + '" face="' + self.countFontVar + \
+		colour, yes = self.getColour(int(str('0x' + self.countColourVar[1:]), 16))
+		if yes :
+			self.countColourVar = colour
+			prefix, suffix = self.cursive_n_bold(self.countBoldVar, self.countItalVar)
+			self.countFontLabel.clear()
+			self.countFontLabel.setText('<font color="' + self.countColourVar + '" face="' + self.countFontVar + \
 											'">' + prefix + self.tr._translate('count :') + suffix + '</font>')
 
 	def countSFont(self):
@@ -1888,10 +1900,12 @@ class Font_n_Colour(QWidget):
 									'">' + prefix + self.tr._translate('count :') + suffix + '</font>')
 
 	def countSColour(self):
-		self.countSColourVar = self.getColour(QColor(self.countSColourVar))
-		prefix, suffix = self.cursive_n_bold(self.countSBoldVar, self.countSItalVar)
-		self.countSFontLabel.clear()
-		self.countSFontLabel.setText('<font color="' + self.countSColourVar + '" face="' + self.countSFontVar + \
+		colour, yes = self.getColour(int(str('0x' + self.countSColourVar[1:]), 16))
+		if yes :
+			self.countSColourVar = colour
+			prefix, suffix = self.cursive_n_bold(self.countSBoldVar, self.countSItalVar)
+			self.countSFontLabel.clear()
+			self.countSFontLabel.setText('<font color="' + self.countSColourVar + '" face="' + self.countSFontVar + \
 											'">' + prefix + self.tr._translate('count :') + suffix + '</font>')
 
 	def countToolTipFont(self):
@@ -1906,10 +1920,12 @@ class Font_n_Colour(QWidget):
 									prefix + self.tr._translate('count\nToolTip :') + suffix + '</font>')
 
 	def countToolTipColour(self):
-		self.countToolTipColourVar = self.getColour(QColor(self.countToolTipColourVar))
-		prefix, suffix = self.cursive_n_bold(self.countToolTipBoldVar, self.countToolTipItalVar)
-		self.countToolTipFontLabel.clear()
-		self.countToolTipFontLabel.setText('<font color=' + self.countToolTipColourVar + \
+		colour, yes = self.getColour(int(str('0x' + self.countToolTipColourVar[1:]), 16))
+		if yes :
+			self.countToolTipColourVar = colour
+			prefix, suffix = self.cursive_n_bold(self.countToolTipBoldVar, self.countToolTipItalVar)
+			self.countToolTipFontLabel.clear()
+			self.countToolTipFontLabel.setText('<font color=' + self.countToolTipColourVar + \
 											' face="' + self.countToolTipFontVar + '">' + \
 											prefix + self.tr._translate('count\nToolTip :') + suffix + '</font>')
 
@@ -1925,10 +1941,12 @@ class Font_n_Colour(QWidget):
 									prefix + self.tr._translate('count\nToolTip :') + suffix + '</font>')
 
 	def countToolTipSColour(self):
-		self.countToolTipSColourVar = self.getColour(QColor(self.countToolTipSColourVar))
-		prefix, suffix = self.cursive_n_bold(self.countToolTipSBoldVar, self.countToolTipSItalVar)
-		self.countToolTipSFontLabel.clear()
-		self.countToolTipSFontLabel.setText('<font color=' + self.countToolTipSColourVar + \
+		colour, yes = self.getColour(int(str('0x' + self.countToolTipSColourVar[1:]), 16))
+		if yes :
+			self.countToolTipSColourVar = colour
+			prefix, suffix = self.cursive_n_bold(self.countToolTipSBoldVar, self.countToolTipSItalVar)
+			self.countToolTipSFontLabel.clear()
+			self.countToolTipSFontLabel.setText('<font color=' + self.countToolTipSColourVar + \
 											' face="' + self.countToolTipSFontVar + '">' + \
 											prefix + self.tr._translate('count\nToolTip :') + suffix + '</font>')
 
