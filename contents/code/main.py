@@ -38,11 +38,12 @@ LOCK = QReadWriteLock()
 def to_unicode(_str):
 	str_ = '<=junk_string=>'
 	try:
-		str_ = str(_str)
-	except UnicodeEncodeError:
+		#print _str, '---'
 		str_ = unicode(_str, 'UTF-8')
 	except TypeError:
 		str_ = _str
+	#except UnicodeEncodeError:
+	#	str_ = str(_str)
 	finally:
 		return str_
 
@@ -50,11 +51,11 @@ def addAccount(account, data_ = ['']):
 	LOCK.lockForWrite()
 	global Settings
 	accounts_ = Settings.value('Accounts').toString()
-	Settings.setValue('Accounts', accounts_ + ';' + str(account))
-	Settings.beginGroup(str(account))
+	Settings.setValue('Accounts', accounts_ + ';' + account)
+	Settings.beginGroup(account)
 	Settings.setValue('server', str(data_[0]))
 	Settings.setValue('port', str(data_[1]))
-	Settings.setValue('login', str(data_[2]))
+	Settings.setValue('login', data_[2])
 	Settings.setValue('authentificationMethod', str(data_[4]))
 	Settings.setValue('connectMethod', str(data_[5]))
 	if str(data_[6]) != '0' :
@@ -70,13 +71,14 @@ def readAccountData(account = ''):
 	Settings.beginGroup(account)
 	serv_ = Settings.value('server').toString()
 	port_ = Settings.value('port').toString()
+	if port_ == '' : port_ =  '0'
 	login_ = Settings.value('login').toString()
 	authMethod_ = Settings.value('authentificationMethod').toString()
 	connMethod_ = Settings.value('connectMethod').toString()
 	last_ = Settings.value('lastElemValue').toString()
 	Settings.endGroup()
 	LOCK.unlock()
-	return [str(serv_), str(port_), str(login_), '', str(authMethod_), str(connMethod_), str(last_)]
+	return [str(serv_), str(port_), login_, '', str(authMethod_), str(connMethod_), str(last_)]
 
 def initPOP3Cache():
 	LOCK.lockForWrite()
@@ -85,13 +87,13 @@ def initPOP3Cache():
 	if  not os.path.isdir(dir_) :
 		os.mkdir(dir_)
 	for accountName in string.split( Settings.value('Accounts').toString(), ';' ):
-		Settings.beginGroup(str(accountName))
+		Settings.beginGroup(accountName)
 		if Settings.value('connectMethod').toString() == 'pop' :
-			if not os.path.isfile(dir_ + '/' + str(accountName) + '.cache') :
-				f = open(dir_ + '/' + str(accountName) + '.cache', 'w')
+			if not os.path.isfile(dir_ + '/' + accountName + '.cache') :
+				f = open(dir_ + '/' + accountName + '.cache', 'w')
 				f.close()
-			f = open(dir_ +  '/' + str(accountName) + '.cache', 'r')
-			c = open('/dev/shm/' + str(accountName) + '.cache', 'w')
+			f = open(dir_ +  '/' + accountName + '.cache', 'r')
+			c = open('/dev/shm/' + accountName + '.cache', 'w')
 			c.writelines(f.readlines())
 			f.close()
 			c.close()
@@ -103,11 +105,11 @@ def savePOP3Cache():
 	global Settings
 	dir_ = os.path.expanduser('~/.cache/plasmaMailChecker')
 	for accountName in string.split( Settings.value('Accounts').toString(), ';' ):
-		Settings.beginGroup(str(accountName))
+		Settings.beginGroup(accountName)
 		if Settings.value('connectMethod').toString() == 'pop' :
-			f = open(dir_ + '/' + str(accountName) + '.cache', 'w')
-			if os.path.isfile('/dev/shm/' + str(accountName) + '.cache') :
-				c = open('/dev/shm/' + str(accountName) + '.cache', 'r')
+			f = open(dir_ + '/' + accountName + '.cache', 'w')
+			if os.path.isfile('/dev/shm/' + accountName + '.cache') :
+				c = open('/dev/shm/' + accountName + '.cache', 'r')
 				f.writelines(c.readlines())
 				c.close()
 			f.close()
@@ -120,8 +122,9 @@ def defineUIDL(accountName = '', str_ = ''):
 	x = ''
 	STR = []
 	try :
-		f = open('/dev/shm/' + str(accountName) + '.cache', 'r')
+		f = open('/dev/shm/' + accountName + '.cache', 'r')
 		STR = f.readlines()
+		f.close()
 		# print STR
 	except x :
 		print x, '  defUidl'
@@ -131,7 +134,6 @@ def defineUIDL(accountName = '', str_ = ''):
 			if str_ == string.split(uid_, '\n')[0] :
 				Result = False
 				break
-		f.close()
 	return Result
 
 def checkNewMailPOP3(accountData = ['', '']):
@@ -183,7 +185,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 
 		m.quit()
 
-		c = open('/dev/shm/' + str(accountData[0]) + '.cache', 'w')
+		c = open('/dev/shm/' + accountData[0] + '.cache', 'w')
 		# print mailUidls
 		c.writelines( mailUidls )
 		c.close()
@@ -392,7 +394,7 @@ def checkMail(accountData = ['', '']):
 			Msg = 'connectMethod Error\n'
 	else:
 		Msg = 'accountName Error\n'
-	return False, None, None, Msg
+	return False, 0, 0, Msg
 
 class Translator(QTranslator):
 	def __init__(self, context = '', parent=None):
@@ -1280,7 +1282,7 @@ class EditAccounts(QWidget):
 			i = 0
 			str_ = ''
 			while i < len(self.accountList) :
-				str_ += str(self.accountList[i]) + ';'
+				str_ += self.accountList[i] + ';'
 				i += 1
 			Settings.setValue('Accounts', str_)
 			self.clearFields()
@@ -1303,7 +1305,7 @@ class EditAccounts(QWidget):
 		self.Status = 'BUSY'
 		accountName = self.accountListBox.currentItem().text()
 		self.oldAccountName = accountName
-		parameterList = readAccountData(str(accountName))
+		parameterList = readAccountData(accountName)
 		self.stringEditor.setText(accountName)
 		self.serverLineEdit.setText(str(parameterList[0]))
 		i = 0
@@ -1328,7 +1330,7 @@ class EditAccounts(QWidget):
 			i += 1
 		#print parameterList[1]
 		self.portBox.setValue(int(parameterList[1]))
-		self.userNameLineEdit.setText(str(parameterList[2]))
+		self.userNameLineEdit.setText(parameterList[2])
 		if self.Parent.wallet.hasEntry(self.oldAccountName) :
 			self.passwordLineEdit.setText( '***EncriptedPassWord***' )
 		else:
@@ -1345,7 +1347,7 @@ class EditAccounts(QWidget):
 		if self.Status != 'FREE' :
 			return None
 		str_ = self.stringEditor.userText()
-		if str(str_) != '' :
+		if to_unicode(str_) != '' :
 			self.accountListBox.addItem(str_)
 			accountName, authData = self.parsingValues()
 			self.Parent.wallet.writePassword(accountName, authData[3])
@@ -1362,7 +1364,7 @@ class EditAccounts(QWidget):
 		port_ = self.portBox.value()
 		userName = self.userNameLineEdit.userText()
 		userPassword = self.passwordLineEdit.userText()
-		# print accountName,accountServer,port_,connectMethod,cryptMethod, userName,userPassword, 'parsingVal'
+		# print (accountName,accountServer,port_,connectMethod,cryptMethod, userName,userPassword, 'parsingVal')
 		return accountName,\
 				[ accountServer, port_, userName, userPassword, cryptMethod, connectMethod, '0' ]
 
@@ -1384,7 +1386,7 @@ class EditAccounts(QWidget):
 		else:
 			i = 0
 			while i < self.accountListBox.count() :
-				if accountName == str(self.accountListBox.item(i).text()) :
+				if accountName == self.accountListBox.item(i).text() :
 					self.accountListBox.takeItem(i)
 					break
 				i += 1
@@ -1403,7 +1405,7 @@ class EditAccounts(QWidget):
 		i = 0
 		str_ = ''
 		while i < len(self.accountList) :
-			str_ += str(self.accountList[i]) + ';'
+			str_ += self.accountList[i] + ';'
 			i += 1
 		Settings.setValue('Accounts', str_)
 
