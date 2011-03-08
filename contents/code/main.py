@@ -6,7 +6,6 @@ try :
 	global RESULT
 	global NewMailAttributes
 	global ErrorMsg
-	global g
 	global LOG_FILENAME
 	LOG_FILENAME = 'mailChecker.log'
 	from PyQt4.QtCore import *
@@ -471,8 +470,8 @@ class ThreadCheckMail(QThread):
 		print 'Mail thread timeout terminating...'
 		self.Timer.stop()
 		GeneralLOCK.unlock()
-		self.Parent.emit(SIGNAL('refresh'))
-		self.terminate()
+		#self.Parent.emit(SIGNAL('refresh'))
+		self.quit()
 
 class plasmaMailChecker(plasmascript.Applet):
 	def __init__(self, parent = None):
@@ -487,6 +486,68 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.connectIconsFlag = False
 		self.tr = Translator('plasmaMailChecker')
 		self.initPrefixAndSuffix()
+
+	def init(self):
+		global Settings
+		self.setHasConfigurationInterface(True)
+		self.T = ThreadCheckMail(obj = self)
+		self.loop = QEventLoop()
+
+		self.Timer = QTimer()
+		self.Timer.timeout.connect(self._refreshData)
+
+		self.layout = QGraphicsLinearLayout(self.applet)
+		self.layout.setContentsMargins(1, 1, 1, 1)
+		self.layout.setSpacing(0)
+		self.connect(self.applet, SIGNAL('destroyed()'), self.eventClose)
+		self.connect(self, SIGNAL('refresh'), self.refreshData)
+		self.connect(self, SIGNAL('access'), self.processInit)
+		self.connect(self, SIGNAL('finished()'), self.loop , SLOT(self.T._terminate()))
+
+		self.kdehome = unicode(KGlobal.dirs().localkdedir())
+
+		if not os.path.exists(self.kdehome+"share/apps/plasmaMailChecker/plasmaMailChecker.notifyrc"):
+			if os.path.exists(self.kdehome+"share/apps"):
+				self.createNotifyrc(self.kdehome)
+		self.stopIconPath = self.user_or_sys('icons/mailChecker_stop.png')
+		self.webIconPath = self.user_or_sys('icons/mailChecker_web.png')
+		self.usualIconPath = self.user_or_sys('icons/mailChecker.png')
+
+		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+			self.titleLayout = QGraphicsLinearLayout()
+			self.titleLayout.setOrientation(Qt.Horizontal)
+
+			self.TitleDialog = Plasma.Label()
+			self.TitleDialog.setStyleSheet(self.headerColourStyle)
+			self.TitleDialog.setText(self.headerPref + self.tr._translate('M@il Checker') + self.headerSuff)
+			self.titleLayout.addItem(self.TitleDialog)
+
+			self.icon.setIcon(self.stopIconPath)
+			self.icon.setMaximumSize(35.0, 35.0)
+			self.icon.setToolTip(self.headerPref + self.tr._translate('Click for Start\Stop') + self.headerSuff)
+			self.connectIconsFlag = self.connect(self.icon, SIGNAL('clicked()'), self._enterPassword)
+			self.titleLayout.addItem(self.icon)
+
+			self.layout.setOrientation(Qt.Vertical)
+			self.layout.addItem(self.titleLayout)
+			self.setMinimumSize(150.0,75.0)
+			self.createDialogWidget()
+		else:
+			self.createIconWidget()
+
+		self.setLayout(self.layout)
+
+		AutoRun = Settings.value('AutoRun').toString()
+		try:
+			int(AutoRun)
+		except ValueError, x:
+			print x, '  AutoRun'
+			#logging.debug(x)
+			AutoRun = '0'
+		finally:
+			pass
+		if AutoRun != '0' :
+			QApplication.postEvent(self, QEvent(QEvent.User))
 
 	def initColourAndFont(self):
 		self.headerFontVar = self.initValue('headerFont')
@@ -614,65 +675,6 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.countTTSPref, self.countTTSSuff = self.getPrefixAndSuffix( \
 							self.countToolTipSBoldVar, self.countToolTipSItalVar, \
 							self.countToolTipSFontVar, True, self.countToolTipSColourVar)
-
-	def init(self):
-		global Settings
-		self.setHasConfigurationInterface(True)
-
-		self.Timer = QTimer()
-		self.Timer.timeout.connect(self._refreshData)
-
-		self.layout = QGraphicsLinearLayout(self.applet)
-		self.layout.setContentsMargins(1, 1, 1, 1)
-		self.layout.setSpacing(0)
-		self.connect(self.applet, SIGNAL('destroyed()'), self.eventClose)
-		self.connect(self, SIGNAL('refresh'), self.refreshData)
-		self.connect(self, SIGNAL('access'), self.processInit)
-
-		self.kdehome = unicode(KGlobal.dirs().localkdedir())
-
-		if not os.path.exists(self.kdehome+"share/apps/plasmaMailChecker/plasmaMailChecker.notifyrc"):
-			if os.path.exists(self.kdehome+"share/apps"):
-				self.createNotifyrc(self.kdehome)
-		self.stopIconPath = self.user_or_sys('icons/mailChecker_stop.png')
-		self.webIconPath = self.user_or_sys('icons/mailChecker_web.png')
-		self.usualIconPath = self.user_or_sys('icons/mailChecker.png')
-
-		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
-			self.titleLayout = QGraphicsLinearLayout()
-			self.titleLayout.setOrientation(Qt.Horizontal)
-
-			self.TitleDialog = Plasma.Label()
-			self.TitleDialog.setStyleSheet(self.headerColourStyle)
-			self.TitleDialog.setText(self.headerPref + self.tr._translate('M@il Checker') + self.headerSuff)
-			self.titleLayout.addItem(self.TitleDialog)
-
-			self.icon.setIcon(self.stopIconPath)
-			self.icon.setMaximumSize(35.0, 35.0)
-			self.icon.setToolTip(self.headerPref + self.tr._translate('Click for Start\Stop') + self.headerSuff)
-			self.connectIconsFlag = self.connect(self.icon, SIGNAL('clicked()'), self._enterPassword)
-			self.titleLayout.addItem(self.icon)
-
-			self.layout.setOrientation(Qt.Vertical)
-			self.layout.addItem(self.titleLayout)
-			self.setMinimumSize(150.0,75.0)
-			self.createDialogWidget()
-		else:
-			self.createIconWidget()
-
-		self.setLayout(self.layout)
-
-		AutoRun = Settings.value('AutoRun').toString()
-		try:
-			int(AutoRun)
-		except ValueError, x:
-			print x, '  AutoRun'
-			#logging.debug(x)
-			AutoRun = '0'
-		finally:
-			pass
-		if AutoRun != '0' :
-			QApplication.postEvent(self, QEvent(QEvent.User))
 
 	def customEvent(self, event):
 		if event.type() == QEvent.User :
@@ -838,18 +840,15 @@ class plasmaMailChecker(plasmascript.Applet):
 					self.panelIcon.icon() ) )
 			return None
 
-		global g
 		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if not (self.wallet is None) :
-			if not g.isRunning() :
+			if not self.T.isRunning() :
 				# print 'start'
 				accData = []
 				for accountName in string.split(Settings.value('Accounts').toString(),';') :
 					accData += [(accountName, self.wallet.readPassword(accountName)[1])]
-				g = ThreadCheckMail(self, accData, self.waitThread)
-				#_res = pdb.runcall(g.start)
-				#logging.debug(_res)
-				g.start()
+				self.T = ThreadCheckMail(self, accData, self.waitThread)
+				self.T.start()
 			else :
 				# print 'isRunning'
 				pass
@@ -871,7 +870,8 @@ class plasmaMailChecker(plasmascript.Applet):
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 				self.labelStat.setText("<font color=green><b>" + self.tr._translate('..running..') + "</b></font>")
 				self.icon.setIcon(path_)
-				self.icon.setToolTip(self.headerPref + self.tr._translate('Click for Start\Stop') +  self.headerSuff)
+				self.icon.setToolTip(self.headerPref + self.tr._translate('Click for Start\Stop') + \
+																						self.headerSuff)
 			else :
 				self.panelIcon.setIcon(path_)
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
@@ -884,7 +884,8 @@ class plasmaMailChecker(plasmascript.Applet):
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 				self.labelStat.setText("<font color=red><b>" + self.tr._translate('..stopped..') + "</b></font>")
 				self.icon.setIcon(path_)
-				self.icon.setToolTip(self.headerPref + self.tr._translate('Click for Start\Stop') +  self.headerSuff)
+				self.icon.setToolTip(self.headerPref + self.tr._translate('Click for Start\Stop') + \
+																					self.headerSuff)
 			else :
 				self.panelIcon.setIcon(path_)
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
@@ -1032,14 +1033,11 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.appletSettings.refreshSettings(self)
 		self.fontsNcolour.refreshSettings(self)
 		#print self.formFactor(), '---'
-		global g
 		x = ''
 		try:
 			self.Timer.stop()
 			# останов потока проверки почты перед изменением GUI
-			g.exit()
-			while not g.wait() :
-				time.sleep(0.5)
+			self.loop.quit()
 		except AttributeError, x:
 			print x, '  acceptConf_1'
 			#logging.debug(x)
@@ -1078,9 +1076,8 @@ class plasmaMailChecker(plasmascript.Applet):
 			x = ''
 			try:
 				self.Timer.stop()
-				g.quit()
-				while not g.wait() :
-					time.sleep(0.5)
+				if self.T.isRunning() :
+					self.loop.quit()
 			except AttributeError, x :
 				print x, '  _entP_1'
 				pass
@@ -1105,7 +1102,6 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.initStat = False
 
 	def eventClose(self):
-		global g
 		self.disconnect(self, SIGNAL('refresh'), self.refreshData)
 		self.disconnect(self, SIGNAL('access'), self.processInit)
 		x = ''
@@ -1120,9 +1116,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			pass
 		finally :
 			pass
-		g.terminate()
-		while not g.wait() :
-			time.sleep(0.5)
+		self.loop.quit()
 		GeneralLOCK.unlock()
 		try :
 			savePOP3Cache()
@@ -2086,7 +2080,6 @@ try:
 	def CreateApplet(parent):
 		return plasmaMailChecker(parent)
 	x = ''
-	g = ThreadCheckMail()
 	#gc.set_debug(gc.DEBUG_LEAK)
 except x :
 	print x, '  main method'
