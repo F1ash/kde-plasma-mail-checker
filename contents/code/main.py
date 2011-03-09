@@ -470,7 +470,7 @@ class ThreadCheckMail(QThread):
 		print 'Mail thread timeout terminating...'
 		self.Timer.stop()
 		GeneralLOCK.unlock()
-		#self.Parent.emit(SIGNAL('refresh'))
+		self.Parent.emit(SIGNAL('refresh'))
 		self.quit()
 
 class plasmaMailChecker(plasmascript.Applet):
@@ -499,10 +499,6 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.layout = QGraphicsLinearLayout(self.applet)
 		self.layout.setContentsMargins(1, 1, 1, 1)
 		self.layout.setSpacing(0)
-		self.connect(self.applet, SIGNAL('destroyed()'), self.eventClose)
-		self.connect(self, SIGNAL('refresh'), self.refreshData)
-		self.connect(self, SIGNAL('access'), self.processInit)
-		self.connect(self, SIGNAL('finished()'), self.loop , SLOT(self.T._terminate()))
 
 		self.kdehome = unicode(KGlobal.dirs().localkdedir())
 
@@ -536,6 +532,11 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.createIconWidget()
 
 		self.setLayout(self.layout)
+
+		self.connect(self.applet, SIGNAL('destroyed()'), self.eventClose)
+		self.connect(self, SIGNAL('refresh'), self.refreshData)
+		self.connect(self, SIGNAL('access'), self.processInit)
+		self.connect(self, SIGNAL('finished()'), self.loop , SLOT(self.T._terminate()))
 
 		AutoRun = Settings.value('AutoRun').toString()
 		try:
