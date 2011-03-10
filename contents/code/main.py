@@ -416,7 +416,7 @@ def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', '']):
 	i = 0
 	while i < probe_ :
 		#GeneralLOCK.lock()
-		print 'Probe ', i + 1, to_unicode(authData[0])
+		#print 'Probe ', i + 1, to_unicode(authData[0])
 		test_, all_, new_ = checkNewMail(authData)
 		#GeneralLOCK.unlock()
 		if test_ :
@@ -529,7 +529,6 @@ class ThreadCheckMail(QThread):
 			self.dataList = []
 			self.Timer.start(self.timeout)
 			path = self.user_or_sys('code/mail.py')
-			print path
 			for accountData in self.accData :
 				#RESULT += [checkMail(accountData)]
 				if WAIT :
@@ -1115,13 +1114,13 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.setLayout(self.layout)
 
 	def createConfigurationInterface(self, parent):
-		self.editAccounts = EditAccounts(parent)
+		self.editAccounts = EditAccounts(self, parent)
 		parent.addPage(self.editAccounts,self.tr._translate("Accounts"))
-		self.appletSettings = AppletSettings(parent)
+		self.appletSettings = AppletSettings(self, parent)
 		parent.addPage(self.appletSettings, self.tr._translate("Settings"))
-		self.passwordManipulate = PasswordManipulate(parent)
+		self.passwordManipulate = PasswordManipulate(self, parent)
 		parent.addPage(self.passwordManipulate, self.tr._translate("Password Manipulation"))
-		self.fontsNcolour = Font_n_Colour(parent)
+		self.fontsNcolour = Font_n_Colour(self, parent)
 		parent.addPage(self.fontsNcolour, self.tr._translate("Font and Colour"))
 		self.connect(parent, SIGNAL("okClicked()"), self.configAccepted)
 		self.connect(parent, SIGNAL("cancelClicked()"), self.configDenied)
