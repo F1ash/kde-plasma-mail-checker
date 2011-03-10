@@ -7,6 +7,7 @@ try :
 	global NewMailAttributes
 	global ErrorMsg
 	global LOG_FILENAME
+	global WAIT
 	LOG_FILENAME = 'mailChecker.log'
 	from PyQt4.QtCore import *
 	from PyQt4.QtGui import *
@@ -33,6 +34,24 @@ finally:
 
 GeneralLOCK = QMutex()
 LOCK = QReadWriteLock()
+
+def dataToSTR(path_ = ''):
+	if os.path.isfile(path_) :
+		f = open(path_, 'rb')
+		l = f.read()
+		f.close()
+		os.remove(path_)
+		return to_unicode(l)
+	else :
+		return 0
+
+def readDataFiles(fileName):
+	path_ = '/dev/shm/' + fileName
+	return bool(dataToSTR(path_ + '.Result')), int(dataToSTR(path_ + '.all')), \
+						int(dataToSTR(path_ + '.new')), str(dataToSTR(path_ + '.msg'))
+
+def randomString(j = 1):
+	return "".join( [random.choice(string.letters) for i in xrange(j)] )
 
 def to_unicode(_str):
 	str_ = '<=junk_string=>'
@@ -137,7 +156,8 @@ def defineUIDL(accountName = '', str_ = ''):
 
 def checkNewMailPOP3(accountData = ['', '']):
 	global ErrorMsg
-	global WAIT
+	#global WAIT
+	WAIT = True
 	x = ''
 	try:
 		global NewMailAttributes
@@ -149,23 +169,33 @@ def checkNewMailPOP3(accountData = ['', '']):
 		authentificationData = readAccountData(accountData[0])
 		lastElemUid = authentificationData[6]
 
-		if authentificationData[4] == 'SSL' :
-			m = poplib.POP3_SSL(authentificationData[0], authentificationData[1])
-		else:
-			m = poplib.POP3(authentificationData[0], authentificationData[1])
+		if WAIT :
+			if authentificationData[4] == 'SSL' :
+				#print to_unicode(accountData[0]), '  connect server', WAIT
+				m = poplib.POP3_SSL(authentificationData[0], authentificationData[1])
+			else:
+				#print to_unicode(accountData[0]), '  connect server', WAIT
+				m = poplib.POP3(authentificationData[0], authentificationData[1])
+		else :
+			#print to_unicode(accountData[0]), '  thread don`t WAIT', WAIT
+			return probeError, countAll, countNew
 
-		auth_login = m.user(authentificationData[2])
-		if auth_login[:3] == '+OK' and WAIT :
-			auth_passw = m.pass_( accountData[1] )
-			if auth_passw[:3] == '+OK' and WAIT :
+		#auth_login = m.user(authentificationData[2])
+		if WAIT and m.user(authentificationData[2])[:3] == '+OK' :
+			#print to_unicode(accountData[0]), '  login to server', WAIT
+			#auth_passw = m.pass_( accountData[1] )
+			if WAIT and m.pass_( accountData[1] )[:3] == '+OK' :
+				#print to_unicode(accountData[0]), '  passw_ to server', WAIT
 
 				countAll = int(m.stat()[0])
+				#print to_unicode(accountData[0]), '  reqwest UIDLs from server', WAIT
 				for uidl_ in m.uidl()[1] :
 					currentElemUid = string.split(uidl_,' ')[1]
 					mailUidls += [currentElemUid + '\n']
-					if defineUIDL(accountData[0], currentElemUid) and WAIT :
+					if WAIT and defineUIDL(accountData[0], currentElemUid) :
 						From = ''
 						Subj = ''
+						#print to_unicode(accountData[0]), '  reqwest TOP from server', WAIT
 						for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
 							if str_[:5] == 'From:' :
 								_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
@@ -181,17 +211,27 @@ def checkNewMailPOP3(accountData = ['', '']):
 										Subj += part_str[0] + ' '
 									else :
 										Subj += part_str[0].decode(part_str[1]) + ' '
-						# print Result
+						# print Result, WAIT
 						NewMailAttributes += [to_unicode(From) + '\n' + to_unicode(Subj)]
 						newMailExist = newMailExist or True
 						countNew += 1
-
-				m.quit()
+					elif not WAIT :
+						m.quit()
+						#print to_unicode(accountData[0]), '  close connect', WAIT
+						return probeError, countAll, countNew
 
 				c = open('/dev/shm/' + accountData[0] + '.cache', 'w')
-				# print mailUidls
+				# print mailUidls, WAIT
 				c.writelines( mailUidls )
 				c.close()
+
+			elif not WAIT :
+				m.quit()
+				#print to_unicode(accountData[0]), '  close connect', WAIT
+				return probeError, countAll, countNew
+
+		m.quit()
+		#print to_unicode(accountData[0]), '  close connect', WAIT
 
 	except poplib.error_proto, x :
 		print x, '  POP3_1'
@@ -231,28 +271,39 @@ def checkNewMailPOP3(accountData = ['', '']):
 def checkNewMailIMAP4(accountData = ['', '']):
 	global ErrorMsg
 	global Settings
-	global WAIT
+	#global WAIT
+	WAIT = True
 	x = ''
 	try:
 		global NewMailAttributes
 		newMailExist = False
 		probeError = True
+		countNew = 0
+		countAll = 0
 		authentificationData = readAccountData(accountData[0])
 		lastElemTime = authentificationData[6]
 
-		if authentificationData[4] == 'SSL' :
-			m = imaplib.IMAP4_SSL(authentificationData[0], authentificationData[1])
-		else:
-			m = imaplib.IMAP4(authentificationData[0], authentificationData[1])
+		if WAIT :
+			if authentificationData[4] == 'SSL' :
+				#print to_unicode(accountData[0]), '  connect server', WAIT
+				m = imaplib.IMAP4_SSL(authentificationData[0], authentificationData[1])
+			else:
+				#print to_unicode(accountData[0]), '  connect server', WAIT
+				m = imaplib.IMAP4(authentificationData[0], authentificationData[1])
+		else :
+			#print to_unicode(accountData[0]), '  thread don`t WAIT', WAIT
+			return probeError, countAll, countNew
 
-		if m.login( authentificationData[2], accountData[1] )[0] == 'OK' and WAIT :
+		if WAIT and m.login( authentificationData[2], accountData[1] )[0] == 'OK' :
+			#print to_unicode(accountData[0]), '  login to server', WAIT
 			answer = m.select()
-			if answer[0] == 'OK'  and WAIT:
+			if WAIT and answer[0] == 'OK':
+				#print to_unicode(accountData[0]), '  passw_ to server', WAIT
 				countAll = int(answer[1][0])
-				countNew = 0
 				i = countAll
 				while i > 0 and WAIT :
 					currentElemTime_raw = string.split(m.fetch(i,"INTERNALDATE")[1][0],' ')
+					#print to_unicode(accountData[0]), '  fetch DATA from server', WAIT
 					currentElemTime_Internal = currentElemTime_raw[1] + ' ' \
 												+ currentElemTime_raw[2] + ' ' \
 												+ currentElemTime_raw[3] + ' ' \
@@ -264,6 +315,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 					if currentElemTime > lastElemTime :
 						From = ''
 						Subj = ''
+						#print to_unicode(accountData[0]), '  reqwest TOP from server', WAIT
 						for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
 							if str_[:5] == 'From:' :
 								_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
@@ -277,7 +329,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 										Subj += part_str[0] + ' '
 									else :
 										Subj += part_str[0].decode(part_str[1]) + ' '
-						# print Result
+						#  print Result, WAIT
 						NewMailAttributes += [to_unicode(From) + '\n' + to_unicode(Subj)]
 						newMailExist = newMailExist or True
 						countNew += 1
@@ -285,16 +337,17 @@ def checkNewMailIMAP4(accountData = ['', '']):
 						break
 					i += -1
 			else:
-				#print 'selectDirError'
+				#print 'selectDirError', WAIT
 				logging.debug('selectDirError')
 				probeError, countAll, countNew = False, 0, 0
 		else:
-			#print 'AuthError'
+			#print 'AuthError', WAIT
 			logging.debug('AuthError')
 			probeError, countAll, countNew = False, 0, 0
 			pass
 
 		if newMailExist :
+			#print to_unicode(accountData[0]), '  reqwest fetchDATA from server', WAIT
 			lastElemTime_raw = string.split(m.fetch(countAll,"INTERNALDATE")[1][0],' ')
 			lastElemTime_Internal = lastElemTime_raw[1] + ' ' \
 									+ lastElemTime_raw[2] + ' ' \
@@ -316,6 +369,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 
 		m.close()
 		m.logout()
+		#print to_unicode(accountData[0]), '  close', WAIT
 
 		Settings.sync()
 
@@ -354,33 +408,35 @@ def checkNewMailIMAP4(accountData = ['', '']):
 
 	return probeError, countAll, countNew
 
-def connectProbe(probe_ = 3, checkNewMail = None, authentificationData = ['', '']):
+def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', '']):
 	global ErrorMsg
-	global WAIT
 	Result = False
 	all_ = 0
 	new_ = 0
 	i = 0
-	while i < probe_ and WAIT :
-		# print 'Probe ', i + 1
-		test_, all_, new_ = checkNewMail(authentificationData)
+	while i < probe_ :
+		#GeneralLOCK.lock()
+		print 'Probe ', i + 1, to_unicode(authData[0])
+		test_, all_, new_ = checkNewMail(authData)
+		#GeneralLOCK.unlock()
 		if test_ :
 			Result = True
 			break
 		i += 1
 		if i == probe_ :
-			ErrorMsg += "\nCan`t connect to server\non Account : " + authentificationData[0] +'\n'
+			ErrorMsg += "\nCan`t connect to server\non Account : " + to_unicode(authData[0]) +'\n'
 	return Result, all_, new_, ''
 
 def checkMail(accountData = ['', '']):
 	global Settings
 	Msg = ''
 	if accountData[0] != '' :
-		# print accountName
+		#print accountData[0]
 		countProbe_raw = Settings.value('CountProbe')
-		# print countProbe_raw.toString()
-		Settings.beginGroup(accountData[0])
-		connectMethod = Settings.value('connectMethod')
+		#print countProbe_raw.toString()
+		account = QString().fromUtf8(accountData[0])
+		Settings.beginGroup(account)
+		connectMethod = Settings.value('connectMethod').toString()
 		Settings.endGroup()
 		try:
 			countProbe = int(countProbe_raw.toString())
@@ -389,12 +445,12 @@ def checkMail(accountData = ['', '']):
 			countProbe = 3
 		finally:
 			pass
-		# print str(connectMethod.toString()),'---'
-		# print countProbe
-		if str(connectMethod.toString()) == 'pop' :
-			return  connectProbe(countProbe, checkNewMailPOP3, accountData)
-		elif str(connectMethod.toString()) == 'imap' :
-			return connectProbe(countProbe, checkNewMailIMAP4, accountData)
+		#print str(connectMethod),'---'
+		#print countProbe
+		if str(connectMethod) == 'pop' :
+			return  connectProbe(countProbe, checkNewMailPOP3, [account, accountData[1]])
+		elif str(connectMethod) == 'imap' :
+			return connectProbe(countProbe, checkNewMailIMAP4, [account, accountData[1]])
 		else:
 			Msg = 'connectMethod Error\n'
 	else:
@@ -442,49 +498,88 @@ class ThreadCheckMail(QThread):
 		global WAIT
 		WAIT = True
 
+	def __del__(self):
+		self.timeout = None
+		self.Timer = None
+		self.accData = None
+		self.Parent = None
+
 	def run(self):
 		try:
-			GeneralLOCK.lock()
 
 			global ErrorMsg
 			global NewMailAttributes
-			global Settings
 			global RESULT
 			NewMailAttributes = []
 			newMailExist = False
 			ErrorMsg = ''
 			x = ''
 			RESULT = []
+			self.dataList = []
 			self.Timer.start(self.timeout)
+			path = "/usr/share/kde4/apps/plasma/plasmoids/plasmaMailChecker/contents/code/mail.py"
 			for accountData in self.accData :
-				RESULT += [checkMail(accountData)]
+				#RESULT += [checkMail(accountData)]
+				if WAIT :
+					str_ = str(randomString(24))
+				#Data = QStringList()
+				#Data.append(path); Data.append(accountData[0])
+				#Data.append(accountData[1]); Data.append(str_)
+					accountThread = KProcess()
+					accountThread.setShellCommand('/usr/bin/python '+ path + ' \'' + accountData[0] + \
+												'\' \'' + accountData[1] + '\' \'' + str_ + '\'')
+				#thread = accountThread.execute(QString('/usr/bin/python '+ path), Data, self.timeout)
+				#accountThread.setProgram(QString('/usr/bin/python '), Data)
+				#accountThread.setShellCommand('echo 1')
+				#print accountThread.pid(), str_
+					accountThread.execute(self.timeout)
+				#accountThread.start()
+					self.dataList += [(accountThread.pid(), str_)]
+
+			#for i in xrange(len(self.accData)) :
+			#	try :
+			#		os.wait(dataList[i][0], 0)
+			#	except OSError:
+			#		pass
+			for i in xrange(len(self.dataList)) :
+				RESULT += [readDataFiles(self.dataList[i][1])]
 
 		except x :
+
+			self.Timer.stop()
 			print x, '  thread'
 			#tb = sys.exc_info()[2]
 			#pdb.post_mortem(tb)
 			logging.debug(x)
 		finally :
 			self.Timer.stop()
-			GeneralLOCK.unlock()
-			#QApplication.postEvent(self.Parent, QEvent(1010))
+			#print RESULT
 			self.Parent.emit(SIGNAL('refresh'))
+			#self.Parent.emit(SIGNAL('killThread'))
+			print ' send "killThread" to mainThread'
+			QApplication.postEvent(self.Parent, QEvent(1010))
 			pass
 		return
 
 	def signalToKillSelf(self):
-		GeneralLOCK.unlock()
 		global WAIT
 		global ErrorMsg
+		LOCK.lockForRead()
 		WAIT = False
+		LOCK.unlock()
+		print WAIT, '  changed WAIT'
 		ErrorMsg += 'Timeout thread error'
 		print 'Mail thread timeout terminating...'
 		self.Timer.stop()
-		self.Parent.emit(SIGNAL('refresh'))
-		self.Parent.emit(SIGNAL('killThread'))
+		#GeneralLOCK.unlock()
+		#self.Parent.emit(SIGNAL('refresh'))
+		#for i in xrange(len(self.dataList)) :
+		#	K = KProcess().setShellCommand('kill -9 ' + str(self.dataList[i][0]))
 
 	def _terminate(self):
-		self.exit(0)
+		print 'recive signal to kill...'
+		self.__del__()
+		self.exit()
 
 class plasmaMailChecker(plasmascript.Applet):
 	def __init__(self, parent = None):
@@ -696,6 +791,8 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.enterPassword()
 		elif event.type() == 1011 :
 			self._refreshData()
+		elif event.type() == 1010 :
+			self.emit(SIGNAL('killThread'))
 		pass
 
 	def user_or_sys(self, path_):
@@ -843,14 +940,16 @@ class plasmaMailChecker(plasmascript.Applet):
 		if not (self.wallet is None) :
 			if not self.T.isRunning() :
 				# print 'start'
+				self.T.__del__()
 				accData = []
 				for accountName in string.split(Settings.value('Accounts').toString(),';') :
 					accData += [(accountName, self.wallet.readPassword(accountName)[1])]
-				self.T = ThreadCheckMail(self, accData, self.waitThread)
+				self.T = ThreadCheckMail(self, accData, self.waitThread, self)
 				print 'time for wait thread : ', self.waitThread
 				self.T.start()
 			else :
-				# print 'isRunning'
+				print 'isRunning : send signal to kill...'
+				self.emit(SIGNAL('killThread'))
 				pass
 		else:
 			self.emit(SIGNAL('refresh'))
@@ -1130,7 +1229,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		sys.stdout.close()
 
 	def killMailCheckerThread(self):
-		self.loop.quit()
+		self.loop.exit()
 
 	def mouseDoubleClickEvent(self, ev):
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -2050,5 +2149,14 @@ class Font_n_Colour(QWidget):
 	def eventClose(self, event):
 		self.Parent.done(0)
 
-def CreateApplet(parent):
-	return plasmaMailChecker(parent)
+try:
+	def CreateApplet(parent):
+		return plasmaMailChecker(parent)
+	x = ''
+	#gc.set_debug(gc.DEBUG_LEAK)
+except x :
+	print x, '  main method'
+	#tb = sys.exc_info()[2]
+	#pdb.post_mortem(tb)
+finally :
+	pass
