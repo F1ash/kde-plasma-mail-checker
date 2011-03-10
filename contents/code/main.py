@@ -504,6 +504,17 @@ class ThreadCheckMail(QThread):
 		self.accData = None
 		self.Parent = None
 
+	def user_or_sys(self, path_):
+		kdehome = unicode(KGlobal.dirs().localkdedir())
+		var1 = kdehome + 'share/apps/plasma/plasmoids/plasmaMailChecker/contents/' + path_
+		var2 = '/usr/share/kde4/apps/plasma/plasmoids/plasmaMailChecker/contents/' + path_
+		if os.path.exists(var1) :
+			return var1
+		elif os.path.exists(var2) :
+			return var2
+		else :
+			return kdehome
+
 	def run(self):
 		try:
 
@@ -517,7 +528,8 @@ class ThreadCheckMail(QThread):
 			RESULT = []
 			self.dataList = []
 			self.Timer.start(self.timeout)
-			path = "/usr/share/kde4/apps/plasma/plasmoids/plasmaMailChecker/contents/code/mail.py"
+			path = self.user_or_sys('code/mail.py')
+			print path
 			for accountData in self.accData :
 				#RESULT += [checkMail(accountData)]
 				if WAIT :
