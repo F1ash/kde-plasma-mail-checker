@@ -24,8 +24,8 @@ try :
 	ErrorMsg = ''
 	warningMsg = ''
 	#sys.stderr = open('/dev/shm/errorMailChecker' + str(time.time()) + '.log','w')
-	#sys.stdout = open('/tmp/outMailChecker' + \
-	#					time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
+	sys.stdout = open('/tmp/outMailChecker' + \
+						time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
 except ImportError, warningMsg :
 	print "ImportError", warningMsg
 	logging.debug(warningMsg)
@@ -41,14 +41,15 @@ def dataToSTR(path_ = ''):
 		l = f.read()
 		f.close()
 		os.remove(path_)
-		return to_unicode(l)
+		return l
 	else :
 		return 0
 
 def readDataFiles(fileName):
 	path_ = '/dev/shm/' + fileName
 	return bool(dataToSTR(path_ + '.Result')), int(dataToSTR(path_ + '.all')), \
-						int(dataToSTR(path_ + '.new')), str(dataToSTR(path_ + '.msg'))
+						int(dataToSTR(path_ + '.new')), str(dataToSTR(path_ + '.msg')), \
+						dataToSTR(path_ + '.content')
 
 def randomString(j = 1):
 	return "".join( [random.choice(string.letters) for i in xrange(j)] )
@@ -160,7 +161,8 @@ def checkNewMailPOP3(accountData = ['', '']):
 	WAIT = True
 	x = ''
 	try:
-		global NewMailAttributes
+		#global NewMailAttributes
+		NewMailAttributes = ''
 		newMailExist = False
 		probeError = True
 		countNew = 0
@@ -204,6 +206,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 										From += part_str[0] + ' '
 									else :
 										From += part_str[0].decode(part_str[1]) + ' '
+								#print From
 							if str_[:5] == 'Subje' :
 								_str = string.replace(str_, '"', '')
 								for part_str in email.header.decode_header(_str) :
@@ -211,8 +214,10 @@ def checkNewMailPOP3(accountData = ['', '']):
 										Subj += part_str[0] + ' '
 									else :
 										Subj += part_str[0].decode(part_str[1]) + ' '
+								#print Subj
 						# print Result, WAIT
-						NewMailAttributes += [to_unicode(From) + '\n' + to_unicode(Subj)]
+						NewMailAttributes += to_unicode(From) + '\n' + to_unicode(Subj) + '\n'
+						#print NewMailAttributes, '   ------'
 						newMailExist = newMailExist or True
 						countNew += 1
 					elif not WAIT :
@@ -266,7 +271,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 	finally:
 		pass
 
-	return probeError, countAll, countNew
+	return probeError, countAll, countNew, NewMailAttributes
 
 def checkNewMailIMAP4(accountData = ['', '']):
 	global ErrorMsg
@@ -275,7 +280,8 @@ def checkNewMailIMAP4(accountData = ['', '']):
 	WAIT = True
 	x = ''
 	try:
-		global NewMailAttributes
+		#global NewMailAttributes
+		NewMailAttributes = ''
 		newMailExist = False
 		probeError = True
 		countNew = 0
@@ -316,7 +322,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 						From = ''
 						Subj = ''
 						#print to_unicode(accountData[0]), '  reqwest TOP from server', WAIT
-						for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
+						for str_ in string.split(m.fetch(i,"(BODY[HEADER])")[1][0][1],'\r\n') :
 							if str_[:5] == 'From:' :
 								_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
 								for part_str in email.header.decode_header(_str) :
@@ -324,13 +330,18 @@ def checkNewMailIMAP4(accountData = ['', '']):
 										From += part_str[0] + ' '
 									else :
 										From += part_str[0].decode(part_str[1]) + ' '
+								#print From
 							if str_[:5] == 'Subje' :
+								_str = string.replace(str_, '"', '')
+								for part_str in email.header.decode_header(_str) :
 									if part_str[1] is None :
 										Subj += part_str[0] + ' '
 									else :
 										Subj += part_str[0].decode(part_str[1]) + ' '
+								#print Subj
 						#  print Result, WAIT
-						NewMailAttributes += [to_unicode(From) + '\n' + to_unicode(Subj)]
+						NewMailAttributes += to_unicode(From) + '\n' + to_unicode(Subj) + '\n'
+						#print NewMailAttributes, '   ----==------'
 						newMailExist = newMailExist or True
 						countNew += 1
 					else:
@@ -406,7 +417,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 	finally:
 		pass
 
-	return probeError, countAll, countNew
+	return probeError, countAll, countNew, NewMailAttributes
 
 def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', '']):
 	global ErrorMsg
@@ -417,7 +428,7 @@ def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', '']):
 	while i < probe_ :
 		#GeneralLOCK.lock()
 		#print 'Probe ', i + 1, to_unicode(authData[0])
-		test_, all_, new_ = checkNewMail(authData)
+		test_, all_, new_, content = checkNewMail(authData)
 		#GeneralLOCK.unlock()
 		if test_ :
 			Result = True
@@ -425,9 +436,10 @@ def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', '']):
 		i += 1
 		if i == probe_ :
 			ErrorMsg += "\nCan`t connect to server\non Account : " + to_unicode(authData[0]) +'\n'
-	return Result, all_, new_, ''
+	return Result, all_, new_, '', QString(content).toUtf8()
 
 def checkMail(accountData = ['', '']):
+	#global NewMailAttributes
 	global Settings
 	Msg = ''
 	if accountData[0] != '' :
@@ -455,7 +467,7 @@ def checkMail(accountData = ['', '']):
 			Msg = 'connectMethod Error\n'
 	else:
 		Msg = 'accountName Error\n'
-	return False, 0, 0, Msg
+	return False, 0, 0, Msg, ''
 
 class Translator(QTranslator):
 	def __init__(self, context = '', parent=None):
@@ -519,7 +531,6 @@ class ThreadCheckMail(QThread):
 		try:
 
 			global ErrorMsg
-			global NewMailAttributes
 			global RESULT
 			NewMailAttributes = []
 			newMailExist = False
@@ -582,12 +593,12 @@ class ThreadCheckMail(QThread):
 		ErrorMsg += 'Timeout thread error'
 		print 'Mail thread timeout terminating...'
 		self.Timer.stop()
-		#GeneralLOCK.unlock()
-		#self.Parent.emit(SIGNAL('refresh'))
-		#for i in xrange(len(self.dataList)) :
-		#	K = KProcess().setShellCommand('kill -9 ' + str(self.dataList[i][0]))
 
 	def _terminate(self):
+		global WAIT
+		LOCK.lockForRead()
+		WAIT = False
+		LOCK.unlock()
 		print 'recive signal to kill...'
 		self.__del__()
 		self.exit()
@@ -1061,8 +1072,11 @@ class plasmaMailChecker(plasmascript.Applet):
 		if newMailExist and not noCheck :
 			STR_ = ''
 			i = 0
-			while i < len(NewMailAttributes) :
-				STR_ += '\n' + NewMailAttributes[i]
+			while i < len(self.checkResult) :
+				str_ = self.checkResult[i][4]
+				if str_ not in ['', ' '] :
+					#print str_
+					STR_ += '\n' + to_unicode(str_)
 				i += 1
 			# print 'newM@ilExist'
 			# KNotification.beep()
@@ -1084,7 +1098,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		except x :
 			print x, '  refresh_6'
 		finally :
-			if ErrorMsg != '' :
+			if ErrorMsg not in ['', ' ', '0'] :
 				if Settings.value('ShowError').toString() != '0' and not noCheck :
 					self.eventNotification( ErrorMsg )
 
@@ -1236,7 +1250,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			pass
 		logging.debug("MailChecker destroyed manually.")
 		print "MailChecker destroyed manually."
-		#sys.stderr.close()
+		sys.stderr.close()
 		sys.stdout.close()
 
 	def killMailCheckerThread(self):
