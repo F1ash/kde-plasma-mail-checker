@@ -600,6 +600,7 @@ class ThreadCheckMail(QThread):
 		WAIT = False
 		LOCK.unlock()
 		print 'recive signal to kill...'
+		self.Parent.emit(SIGNAL('refresh'))
 		self.__del__()
 		self.exit()
 
@@ -669,17 +670,13 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.connect(self, SIGNAL('killThread'), self.killMailCheckerThread)
 		self.connect(self, SIGNAL('finished()'), self.loop , SLOT(self.T._terminate()))
 
-		AutoRun = Settings.value('AutoRun').toString()
-		try:
-			int(AutoRun)
-		except ValueError, x:
-			print x, '  AutoRun'
-			#logging.debug(x)
-			AutoRun = '0'
-		finally:
-			pass
+		AutoRun = self.initValue('AutoRun')
 		if AutoRun != '0' :
-			QApplication.postEvent(self, QEvent(QEvent.User))
+			#QApplication.postEvent(self, QEvent(QEvent.User))
+			self.Timer1 = QTimer()
+			self.Timer1.setSingleShot(True)
+			self.Timer1.timeout.connect(self.enterPassword)
+			self.Timer1.start(2000)
 
 	def initColourAndFont(self):
 		self.headerFontVar = self.initValue('headerFont')
@@ -918,7 +915,7 @@ class plasmaMailChecker(plasmascript.Applet):
 	def eventNotification(self, str_ = ''):
 		KNotification.event("new-notification-arrived",\
 		str_,
-		QPixmap(),
+		QPixmap(self.usualIconPath),
 		None,
 		KNotification.CloseOnTimeout,
 		KComponentData('plasmaMailChecker','plasmaMailChecker',\
@@ -1173,10 +1170,10 @@ class plasmaMailChecker(plasmascript.Applet):
 		savePOP3Cache()
 		# refresh color & font Variables
 		self.initPrefixAndSuffix()
-		# refresh plasmoid Header
-		self.TitleDialog.setText(self.headerPref + self.tr._translate('M@il Checker') + self.headerSuff)
 		del self.dialog
+		# refresh plasmoid Header
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+			self.TitleDialog.setText(self.headerPref + self.tr._translate('M@il Checker') + self.headerSuff)
 			self.createDialogWidget()
 		logging.debug('Settings refreshed. Timer stopped.')
 		self.initStat = False
@@ -2174,14 +2171,5 @@ class Font_n_Colour(QWidget):
 	def eventClose(self, event):
 		self.Parent.done(0)
 
-try:
-	def CreateApplet(parent):
-		return plasmaMailChecker(parent)
-	x = ''
-	#gc.set_debug(gc.DEBUG_LEAK)
-except x :
-	print x, '  main method'
-	#tb = sys.exc_info()[2]
-	#pdb.post_mortem(tb)
-finally :
-	pass
+def CreateApplet(parent):
+	return plasmaMailChecker(parent)
