@@ -978,7 +978,6 @@ class plasmaMailChecker(plasmascript.Applet):
 		#print 'refresh'
 		GeneralLOCK.lock()
 		global ErrorMsg
-		global NewMailAttributes
 		global RESULT
 		global Settings
 
@@ -1008,7 +1007,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.panelIcon.setIcon(path_)
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
 					self.panelIcon.toolTip(), \
-					self.headerPref + self.tr._translate('Click for Start\Stop') +  self.headerSuff, \
+					self.headerPref + self.tr._translate('Click for Start\Stop') + self.headerSuff, \
 					self.panelIcon.icon() ) )
 
 		self.checkResult = RESULT
@@ -1020,6 +1019,8 @@ class plasmaMailChecker(plasmascript.Applet):
 		for accountName in string.split(Settings.value('Accounts').toString(),';') :
 			try :
 				if int(self.checkResult[i][2]) > 0 :
+					self.listNewMail += '<pre>' + accountName + '&#09;' + str(self.checkResult[i][2]) + '</pre>'
+					newMailExist = True
 					self.label[i].setStyleSheet(self.accountSColourStyle)
 					self.countList[i].setStyleSheet(self.countSColourStyle)
 					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -1029,8 +1030,6 @@ class plasmaMailChecker(plasmascript.Applet):
 						text_1 = self.countSPref + str(self.checkResult[i][1]) + self.countSSuff
 						text_2 = self.countTTSPref + self.tr._translate('New : ') + \
 													str(self.checkResult[i][2]) + self.countTTSSuff
-					self.listNewMail += '<pre>' + accountName + '&#09;' + str(self.checkResult[i][2]) + '</pre>'
-					newMailExist = True
 				else:
 					self.label[i].setStyleSheet(self.accountColourStyle)
 					self.countList[i].setStyleSheet(self.countColourStyle)
@@ -1066,6 +1065,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				pass
 			i += 1
 
+		#print newMailExist and not noCheck
 		if newMailExist and not noCheck :
 			STR_ = ''
 			i = 0
@@ -1085,7 +1085,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.listNewMail = self.tr._translate("No new mail")
 			Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
 								self.panelIcon.toolTip(), \
-								"<font color=lime><b>" + self.listNewMail + "</b></font>", \
+								self.headerPref + self.listNewMail + self.headerSuff, \
 								self.panelIcon.icon() ) )
 
 		try :
