@@ -9,23 +9,23 @@ try :
 	global LOG_FILENAME
 	global WAIT
 	LOG_FILENAME = 'mailChecker.log'
+	from Functions import *
 	from PyQt4.QtCore import *
 	from PyQt4.QtGui import *
 	from PyKDE4.kdecore import *
 	from PyKDE4.kdeui import *
 	from PyKDE4.plasma import Plasma
 	from PyKDE4 import plasmascript
-	import poplib, imaplib, string, socket, time, os.path, logging, random, sys, email.header, gc, locale
-	#logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s', \
-	#										datefmt='%Y-%m-%d %H:%M:%S', filename=LOG_FILENAME)
+	import poplib, imaplib, string, socket, time, os.path, logging, random, sys, email.header, locale, signal
+	logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s', \
+											datefmt='%Y-%m-%d %H:%M:%S', filename=LOG_FILENAME)
 	RESULT = []
 	Settings = QSettings('mailChecker','mailChecker')
 	NewMailAttributes = []
 	ErrorMsg = ''
 	warningMsg = ''
 	#sys.stderr = open('/dev/shm/errorMailChecker' + str(time.time()) + '.log','w')
-	sys.stdout = open('/tmp/outMailChecker' + \
-						time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
+	sys.stdout = open('/tmp/outMailChecker' + time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
 except ImportError, warningMsg :
 	print "ImportError", warningMsg
 	logging.debug(warningMsg)
@@ -34,440 +34,6 @@ finally:
 
 GeneralLOCK = QMutex()
 LOCK = QReadWriteLock()
-
-def dataToSTR(path_ = ''):
-	if os.path.isfile(path_) :
-		f = open(path_, 'rb')
-		l = f.read()
-		f.close()
-		os.remove(path_)
-		return l
-	else :
-		return 0
-
-def readDataFiles(fileName):
-	path_ = '/dev/shm/' + fileName
-	return bool(dataToSTR(path_ + '.Result')), int(dataToSTR(path_ + '.all')), \
-						int(dataToSTR(path_ + '.new')), str(dataToSTR(path_ + '.msg')), \
-						dataToSTR(path_ + '.content')
-
-def randomString(j = 1):
-	return "".join( [random.choice(string.letters) for i in xrange(j)] )
-
-def to_unicode(_str):
-	str_ = '<=junk_string=>'
-	try:
-		#print _str, '---'
-		str_ = unicode(_str, 'UTF-8')
-	except TypeError:
-		str_ = _str
-	#except UnicodeEncodeError:
-	#	str_ = str(_str)
-	finally:
-		return str_
-
-def addAccount(account, data_ = ['']):
-	LOCK.lockForWrite()
-	global Settings
-	accounts_ = Settings.value('Accounts').toString()
-	Settings.setValue('Accounts', accounts_ + ';' + account)
-	Settings.beginGroup(account)
-	Settings.setValue('server', str(data_[0]))
-	Settings.setValue('port', str(data_[1]))
-	Settings.setValue('login', data_[2])
-	Settings.setValue('authentificationMethod', str(data_[4]))
-	Settings.setValue('connectMethod', str(data_[5]))
-	if str(data_[6]) != '0' :
-		Settings.setValue('lastElemValue', str(data_[6]))
-	Settings.endGroup()
-	Settings.sync()
-	LOCK.unlock()
-	pass
-
-def readAccountData(account = ''):
-	LOCK.lockForRead()
-	global Settings
-	Settings.beginGroup(account)
-	serv_ = Settings.value('server').toString()
-	port_ = Settings.value('port').toString()
-	if port_ == '' : port_ =  '0'
-	login_ = Settings.value('login').toString()
-	authMethod_ = Settings.value('authentificationMethod').toString()
-	connMethod_ = Settings.value('connectMethod').toString()
-	last_ = Settings.value('lastElemValue').toString()
-	Settings.endGroup()
-	LOCK.unlock()
-	return [str(serv_), str(port_), login_, '', str(authMethod_), str(connMethod_), str(last_)]
-
-def initPOP3Cache():
-	LOCK.lockForWrite()
-	global Settings
-	dir_ = os.path.expanduser('~/.cache/plasmaMailChecker')
-	if  not os.path.isdir(dir_) :
-		os.mkdir(dir_)
-	for accountName in string.split( Settings.value('Accounts').toString(), ';' ):
-		Settings.beginGroup(accountName)
-		if Settings.value('connectMethod').toString() == 'pop' :
-			if not os.path.isfile(dir_ + '/' + accountName + '.cache') :
-				f = open(dir_ + '/' + accountName + '.cache', 'w')
-				f.close()
-			f = open(dir_ +  '/' + accountName + '.cache', 'r')
-			c = open('/dev/shm/' + accountName + '.cache', 'w')
-			c.writelines(f.readlines())
-			f.close()
-			c.close()
-		Settings.endGroup()
-	LOCK.unlock()
-
-def savePOP3Cache():
-	LOCK.lockForWrite()
-	global Settings
-	dir_ = os.path.expanduser('~/.cache/plasmaMailChecker')
-	for accountName in string.split( Settings.value('Accounts').toString(), ';' ):
-		Settings.beginGroup(accountName)
-		if Settings.value('connectMethod').toString() == 'pop' :
-			f = open(dir_ + '/' + accountName + '.cache', 'w')
-			if os.path.isfile('/dev/shm/' + accountName + '.cache') :
-				c = open('/dev/shm/' + accountName + '.cache', 'r')
-				f.writelines(c.readlines())
-				c.close()
-			f.close()
-		Settings.endGroup()
-	LOCK.unlock()
-
-def defineUIDL(accountName = '', str_ = ''):
-	Result = True
-	# print accountName
-	x = ''
-	STR = []
-	try :
-		f = open('/dev/shm/' + accountName + '.cache', 'r')
-		STR = f.readlines()
-		f.close()
-		# print STR
-	except x :
-		print x, '  defUidl'
-	finally :
-		for uid_ in STR :
-			# print string.split(uid_, '\n')[0] , '--- ', str_
-			if str_ == string.split(uid_, '\n')[0] :
-				Result = False
-				break
-	return Result
-
-def checkNewMailPOP3(accountData = ['', '']):
-	global ErrorMsg
-	#global WAIT
-	WAIT = True
-	x = ''
-	try:
-		#global NewMailAttributes
-		NewMailAttributes = ''
-		newMailExist = False
-		probeError = True
-		countNew = 0
-		mailUidls = []
-		countAll = 0
-		authentificationData = readAccountData(accountData[0])
-		lastElemUid = authentificationData[6]
-
-		if WAIT :
-			if authentificationData[4] == 'SSL' :
-				#print to_unicode(accountData[0]), '  connect server', WAIT
-				m = poplib.POP3_SSL(authentificationData[0], authentificationData[1])
-			else:
-				#print to_unicode(accountData[0]), '  connect server', WAIT
-				m = poplib.POP3(authentificationData[0], authentificationData[1])
-		else :
-			#print to_unicode(accountData[0]), '  thread don`t WAIT', WAIT
-			return probeError, countAll, countNew
-
-		#auth_login = m.user(authentificationData[2])
-		if WAIT and m.user(authentificationData[2])[:3] == '+OK' :
-			#print to_unicode(accountData[0]), '  login to server', WAIT
-			#auth_passw = m.pass_( accountData[1] )
-			if WAIT and m.pass_( accountData[1] )[:3] == '+OK' :
-				#print to_unicode(accountData[0]), '  passw_ to server', WAIT
-
-				countAll = int(m.stat()[0])
-				#print to_unicode(accountData[0]), '  reqwest UIDLs from server', WAIT
-				for uidl_ in m.uidl()[1] :
-					currentElemUid = string.split(uidl_,' ')[1]
-					mailUidls += [currentElemUid + '\n']
-					if WAIT and defineUIDL(accountData[0], currentElemUid) :
-						From = ''
-						Subj = ''
-						#print to_unicode(accountData[0]), '  reqwest TOP from server', WAIT
-						for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
-							if str_[:5] == 'From:' :
-								_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
-								for part_str in email.header.decode_header(_str) :
-									if part_str[1] is None :
-										From += part_str[0] + ' '
-									else :
-										From += part_str[0].decode(part_str[1]) + ' '
-								#print From
-							if str_[:5] == 'Subje' :
-								_str = string.replace(str_, '"', '')
-								for part_str in email.header.decode_header(_str) :
-									if part_str[1] is None :
-										Subj += part_str[0] + ' '
-									else :
-										Subj += part_str[0].decode(part_str[1]) + ' '
-								#print Subj
-						# print Result, WAIT
-						NewMailAttributes += to_unicode(From) + '\n' + to_unicode(Subj) + '\n'
-						#print NewMailAttributes, '   ------'
-						newMailExist = newMailExist or True
-						countNew += 1
-					elif not WAIT :
-						m.quit()
-						#print to_unicode(accountData[0]), '  close connect', WAIT
-						return probeError, countAll, countNew
-
-				c = open('/dev/shm/' + accountData[0] + '.cache', 'w')
-				# print mailUidls, WAIT
-				c.writelines( mailUidls )
-				c.close()
-
-			elif not WAIT :
-				m.quit()
-				#print to_unicode(accountData[0]), '  close connect', WAIT
-				return probeError, countAll, countNew
-
-		m.quit()
-		#print to_unicode(accountData[0]), '  close connect', WAIT
-
-	except poplib.error_proto, x :
-		print x, '  POP3_1'
-		ErrorMsg += '\n' + unicode(x[0],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except socket.error, x :
-		print x, '  POP3_2'
-		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except socket.gaierror, x :
-		print x, '  POP3_3'
-		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except UnicodeDecodeError, x :
-		print x, '  POP3_4'
-		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except x:
-		print x, '  POP3_5'
-		ErrorMsg += 'Unknown Error\n'
-		probeError = False
-		countAll = 0
-		countNew = 0
-	finally:
-		pass
-
-	return probeError, countAll, countNew, NewMailAttributes
-
-def checkNewMailIMAP4(accountData = ['', '']):
-	global ErrorMsg
-	global Settings
-	#global WAIT
-	WAIT = True
-	x = ''
-	try:
-		#global NewMailAttributes
-		NewMailAttributes = ''
-		newMailExist = False
-		probeError = True
-		countNew = 0
-		countAll = 0
-		authentificationData = readAccountData(accountData[0])
-		lastElemTime = authentificationData[6]
-
-		if WAIT :
-			if authentificationData[4] == 'SSL' :
-				#print to_unicode(accountData[0]), '  connect server', WAIT
-				m = imaplib.IMAP4_SSL(authentificationData[0], authentificationData[1])
-			else:
-				#print to_unicode(accountData[0]), '  connect server', WAIT
-				m = imaplib.IMAP4(authentificationData[0], authentificationData[1])
-		else :
-			#print to_unicode(accountData[0]), '  thread don`t WAIT', WAIT
-			return probeError, countAll, countNew
-
-		if WAIT and m.login( authentificationData[2], accountData[1] )[0] == 'OK' :
-			#print to_unicode(accountData[0]), '  login to server', WAIT
-			answer = m.select()
-			if WAIT and answer[0] == 'OK':
-				#print to_unicode(accountData[0]), '  passw_ to server', WAIT
-				countAll = int(answer[1][0])
-				i = countAll
-				while i > 0 and WAIT :
-					currentElemTime_raw = string.split(m.fetch(i,"INTERNALDATE")[1][0],' ')
-					#print to_unicode(accountData[0]), '  fetch DATA from server', WAIT
-					currentElemTime_Internal = currentElemTime_raw[1] + ' ' \
-												+ currentElemTime_raw[2] + ' ' \
-												+ currentElemTime_raw[3] + ' ' \
-												+ currentElemTime_raw[4]
-					# print currentElemTime_Internal
-					date_ = imaplib.Internaldate2tuple(currentElemTime_Internal)
-					currentElemTime = str(time.mktime(date_))
-					# print currentElemTime
-					if currentElemTime > lastElemTime :
-						From = ''
-						Subj = ''
-						#print to_unicode(accountData[0]), '  reqwest TOP from server', WAIT
-						for str_ in string.split(m.fetch(i,"(BODY[HEADER])")[1][0][1],'\r\n') :
-							if str_[:5] == 'From:' :
-								_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
-								for part_str in email.header.decode_header(_str) :
-									if part_str[1] is None :
-										From += part_str[0] + ' '
-									else :
-										From += part_str[0].decode(part_str[1]) + ' '
-								#print From
-							if str_[:5] == 'Subje' :
-								_str = string.replace(str_, '"', '')
-								for part_str in email.header.decode_header(_str) :
-									if part_str[1] is None :
-										Subj += part_str[0] + ' '
-									else :
-										Subj += part_str[0].decode(part_str[1]) + ' '
-								#print Subj
-						#  print Result, WAIT
-						NewMailAttributes += to_unicode(From) + '\n' + to_unicode(Subj) + '\n'
-						#print NewMailAttributes, '   ----==------'
-						newMailExist = newMailExist or True
-						countNew += 1
-					else:
-						break
-					i += -1
-			else:
-				#print 'selectDirError', WAIT
-				logging.debug('selectDirError')
-				probeError, countAll, countNew = False, 0, 0
-		else:
-			#print 'AuthError', WAIT
-			logging.debug('AuthError')
-			probeError, countAll, countNew = False, 0, 0
-			pass
-
-		if newMailExist :
-			#print to_unicode(accountData[0]), '  reqwest fetchDATA from server', WAIT
-			lastElemTime_raw = string.split(m.fetch(countAll,"INTERNALDATE")[1][0],' ')
-			lastElemTime_Internal = lastElemTime_raw[1] + ' ' \
-									+ lastElemTime_raw[2] + ' ' \
-									+ lastElemTime_raw[3] + ' ' \
-									+ lastElemTime_raw[4]
-			# print lastElemTime_Internal
-			date_ = imaplib.Internaldate2tuple(lastElemTime_Internal)
-			lastElemTime = str(time.mktime(date_))
-			# print lastElemTime
-			Settings.beginGroup(accountData[0])
-			Settings.setValue('lastElemValue', lastElemTime)
-			Settings.endGroup()
-		else:
-			# print 'New message(s) not found.'
-			if countAll == 0 :
-				Settings.beginGroup(accountData[0])
-				Settings.setValue('lastElemValue', '0')
-				Settings.endGroup()
-
-		m.close()
-		m.logout()
-		#print to_unicode(accountData[0]), '  close', WAIT
-
-		Settings.sync()
-
-	except imaplib.IMAP4.error, x :
-		print x, '  IMAP4_1'
-		ErrorMsg += '\n' + unicode(x[0],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except socket.error, x :
-		print x, '  IMAP4_2'
-		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except socket.gaierror, x :
-		print x, '  IMAP4_3'
-		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except UnicodeDecodeError, x :
-		print x, '  IMAP4_4'
-		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except x:
-		print x, '  IMAP4_5'
-		ErrorMsg += 'Unknown Error\n'
-		probeError = False
-		countAll = 0
-		countNew = 0
-	finally:
-		pass
-
-	return probeError, countAll, countNew, NewMailAttributes
-
-def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', '']):
-	global ErrorMsg
-	Result = False
-	all_ = 0
-	new_ = 0
-	i = 0
-	while i < probe_ :
-		#GeneralLOCK.lock()
-		#print 'Probe ', i + 1, to_unicode(authData[0])
-		test_, all_, new_, content = checkNewMail(authData)
-		#GeneralLOCK.unlock()
-		if test_ :
-			Result = True
-			break
-		i += 1
-		if i == probe_ :
-			ErrorMsg += "\nCan`t connect to server\non Account : " + to_unicode(authData[0]) +'\n'
-	return Result, all_, new_, '', QString(content).toUtf8()
-
-def checkMail(accountData = ['', '']):
-	#global NewMailAttributes
-	global Settings
-	Msg = ''
-	if accountData[0] != '' :
-		#print accountData[0]
-		countProbe_raw = Settings.value('CountProbe')
-		#print countProbe_raw.toString()
-		account = QString().fromUtf8(accountData[0])
-		Settings.beginGroup(account)
-		connectMethod = Settings.value('connectMethod').toString()
-		Settings.endGroup()
-		try:
-			countProbe = int(countProbe_raw.toString())
-		except ValueError:
-			print x, '  checkMail'
-			countProbe = 3
-		finally:
-			pass
-		#print str(connectMethod),'---'
-		#print countProbe
-		if str(connectMethod) == 'pop' :
-			return  connectProbe(countProbe, checkNewMailPOP3, [account, accountData[1]])
-		elif str(connectMethod) == 'imap' :
-			return connectProbe(countProbe, checkNewMailIMAP4, [account, accountData[1]])
-		else:
-			Msg = 'connectMethod Error\n'
-	else:
-		Msg = 'accountName Error\n'
-	return False, 0, 0, Msg, ''
 
 class Translator(QTranslator):
 	def __init__(self, context = '', parent=None):
@@ -507,14 +73,13 @@ class ThreadCheckMail(QThread):
 		self.Timer.timeout.connect(self.signalToKillSelf)
 		self.timeout = int(timeout) * 1000
 		self.accData = accountData
+		self.accountThread = []
+		self.dataList = []
+		RESULT = []
+		global ErrorMsg
+		ErrorMsg = ''
 		global WAIT
 		WAIT = True
-
-	def __del__(self):
-		self.timeout = None
-		self.Timer = None
-		self.accData = None
-		self.Parent = None
 
 	def user_or_sys(self, path_):
 		kdehome = unicode(KGlobal.dirs().localkdedir())
@@ -527,60 +92,54 @@ class ThreadCheckMail(QThread):
 		else :
 			return kdehome
 
+	def readResult(self):
+		global RESULT
+		for i in xrange(len(self.accountThread)) :
+			RESULT += [readDataFiles(self.dataList[i][1])]
+		#print RESULT
+
 	def run(self):
 		try:
-
-			global ErrorMsg
-			global RESULT
-			NewMailAttributes = []
-			newMailExist = False
-			ErrorMsg = ''
 			x = ''
-			RESULT = []
-			self.dataList = []
 			self.Timer.start(self.timeout)
 			path = self.user_or_sys('code/mail.py')
+			i = 0
 			for accountData in self.accData :
 				#RESULT += [checkMail(accountData)]
 				if WAIT :
 					str_ = str(randomString(24))
-				#Data = QStringList()
-				#Data.append(path); Data.append(accountData[0])
-				#Data.append(accountData[1]); Data.append(str_)
-					accountThread = KProcess()
-					accountThread.setShellCommand('/usr/bin/python '+ path + ' \'' + accountData[0] + \
-												'\' \'' + accountData[1] + '\' \'' + str_ + '\'')
-				#thread = accountThread.execute(QString('/usr/bin/python '+ path), Data, self.timeout)
-				#accountThread.setProgram(QString('/usr/bin/python '), Data)
-				#accountThread.setShellCommand('echo 1')
-				#print accountThread.pid(), str_
-					accountThread.execute(self.timeout)
-				#accountThread.start()
-					self.dataList += [(accountThread.pid(), str_)]
+					Data = QStringList()
+					Data.append(path);
+					Data.append(accountData[0])
+					Data.append(accountData[1])
+					Data.append(str_)
+					self.accountThread += ['']
+					self.accountThread[i] = QProcess()
+					start, pid = self.accountThread[i].startDetached('/usr/bin/python', Data, os.getcwd())
+					self.dataList += [(pid, str_)]
+					#print start, pid, Data.join(' ').toUtf8().data()
+				else :
+					break
+				i += 1
 
-			#for i in xrange(len(self.accData)) :
-			#	try :
-			#		os.wait(dataList[i][0], 0)
-			#	except OSError:
-			#		pass
-			for i in xrange(len(self.dataList)) :
-				RESULT += [readDataFiles(self.dataList[i][1])]
+			# waiting mailcheckihg processes
+			key_ = True
+			while key_ and WAIT :
+				time.sleep(0.1)
+				key_ = False
+				for node in self.dataList :
+					key_ = key_ or pid_exists(node[0], 0)
 
 		except x :
-
 			self.Timer.stop()
 			print x, '  thread'
-			#tb = sys.exc_info()[2]
-			#pdb.post_mortem(tb)
 			logging.debug(x)
 		finally :
 			self.Timer.stop()
-			#print RESULT
-			self.Parent.emit(SIGNAL('refresh'))
-			#self.Parent.emit(SIGNAL('killThread'))
-			print ' send "killThread" to mainThread'
-			QApplication.postEvent(self.Parent, QEvent(1010))
-			pass
+			if WAIT :
+				self.readResult()
+				self.Parent.emit(SIGNAL('refresh'))
+				self.quit()
 		return
 
 	def signalToKillSelf(self):
@@ -590,19 +149,28 @@ class ThreadCheckMail(QThread):
 		WAIT = False
 		LOCK.unlock()
 		print WAIT, '  changed WAIT'
-		ErrorMsg += 'Timeout thread error'
+		ErrorMsg += 'Timeout thread error\n'
 		print 'Mail thread timeout terminating...'
 		self.Timer.stop()
+		#QApplication.postEvent(self.Parent, QEvent(1010))
+		self._terminate()
 
 	def _terminate(self):
 		global WAIT
 		LOCK.lockForRead()
 		WAIT = False
 		LOCK.unlock()
+		for i in xrange(len(self.dataList)) :
+			if pid_exists(self.dataList[i][0], signal.SIGKILL) :
+				#print self.dataList[i][0], '  killed'
+				pass
+			else :
+				#print self.dataList[i][0], '  not exist'
+				pass
 		print 'recive signal to kill...'
+		self.readResult()
 		self.Parent.emit(SIGNAL('refresh'))
-		self.__del__()
-		self.exit()
+		self.quit()
 
 class plasmaMailChecker(plasmascript.Applet):
 	def __init__(self, parent = None):
@@ -621,8 +189,8 @@ class plasmaMailChecker(plasmascript.Applet):
 	def init(self):
 		global Settings
 		self.setHasConfigurationInterface(True)
-		self.T = ThreadCheckMail(obj = self)
-		self.loop = QEventLoop()
+		self.T = ThreadCheckMail(self)
+		#self.loop = QEventLoop()
 
 		self.Timer = QTimer()
 		self.Timer.timeout.connect(self._refreshData)
@@ -668,7 +236,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.connect(self, SIGNAL('refresh'), self.refreshData)
 		self.connect(self, SIGNAL('access'), self.processInit)
 		self.connect(self, SIGNAL('killThread'), self.killMailCheckerThread)
-		self.connect(self, SIGNAL('finished()'), self.loop , SLOT(self.T._terminate()))
+		#self.connect(self, SIGNAL('finished()'), self.loop , SLOT(self.T._terminate()))
 
 		AutoRun = self.initValue('AutoRun')
 		if AutoRun != '0' :
@@ -957,18 +525,18 @@ class plasmaMailChecker(plasmascript.Applet):
 
 		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
 		if not (self.wallet is None) :
+			#global T
 			if not self.T.isRunning() :
 				# print 'start'
-				self.T.__del__()
 				accData = []
 				for accountName in string.split(Settings.value('Accounts').toString(),';') :
 					accData += [(accountName, self.wallet.readPassword(accountName)[1])]
-				self.T = ThreadCheckMail(self, accData, self.waitThread, self)
+				self.T = ThreadCheckMail(self, accData, self.waitThread)
 				print 'time for wait thread : ', self.waitThread
 				self.T.start()
 			else :
-				print 'isRunning : send signal to kill...'
-				self.emit(SIGNAL('killThread'))
+				#print 'isRunning : send signal to kill...'
+				#self.emit(SIGNAL('killThread'))
 				pass
 		else:
 			self.emit(SIGNAL('refresh'))
@@ -1011,7 +579,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					self.panelIcon.icon() ) )
 
 		self.checkResult = RESULT
-		#print self.checkResult
+		#print self.checkResult, '  received Result'
 		i = 0
 		newMailExist = False
 		self.listNewMail = ''
@@ -1071,7 +639,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			i = 0
 			while i < len(self.checkResult) :
 				str_ = self.checkResult[i][4]
-				if str_ not in ['', ' '] :
+				if str_ not in ['', ' ', '0'] :
 					#print str_
 					STR_ += '\n' + to_unicode(str_)
 				i += 1
@@ -1197,8 +765,6 @@ class plasmaMailChecker(plasmascript.Applet):
 			x = ''
 			try:
 				self.Timer.stop()
-				if self.T.isRunning() :
-					self.emit(SIGNAL('killThread'))
 			except AttributeError, x :
 				print x, '  _entP_1'
 				pass
@@ -1206,6 +772,9 @@ class plasmaMailChecker(plasmascript.Applet):
 				print x, '  _entP_2'
 			finally:
 				pass
+			#global T
+			if self.T.isRunning() :
+				self.emit(SIGNAL('killThread'))
 			savePOP3Cache()
 			logging.debug('No enter password. Timer stopped.')
 			self.initStat = False
@@ -1223,13 +792,18 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.initStat = False
 
 	def eventClose(self):
+		print '  eventCloseMethod'
+		self.initStat = False
 		self.disconnect(self, SIGNAL('refresh'), self.refreshData)
 		self.disconnect(self, SIGNAL('access'), self.processInit)
+		self.disconnect(self, SIGNAL('destroyed()'), self.eventClose)
+		self.disconnect(self, SIGNAL('killThread'), self.killMailCheckerThread)
 		x = ''
 		try :
 			self.Timer.stop()
 			if not (self.wallet is None) :
 				self.wallet.closeWallet('plasmaMailChecker', True)
+				print ' wallet closed'
 		except AttributeError, x :
 			print x, '  eventClose_1'
 		except x :
@@ -1237,21 +811,24 @@ class plasmaMailChecker(plasmascript.Applet):
 			pass
 		finally :
 			pass
-		self.killMailCheckerThread()
-		GeneralLOCK.unlock()
 		try :
 			savePOP3Cache()
 		except IOError, x :
 			print x, '  eventClose_3'
 		finally :
 			pass
+		self.killMailCheckerThread()
+		GeneralLOCK.unlock()
 		logging.debug("MailChecker destroyed manually.")
 		print "MailChecker destroyed manually."
 		sys.stderr.close()
 		sys.stdout.close()
 
 	def killMailCheckerThread(self):
-		self.loop.exit()
+		#self.loop.quit()
+		if 'T' in dir(self):
+			#print '   killMetod Up'
+			self.T._terminate()
 
 	def mouseDoubleClickEvent(self, ev):
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -1263,6 +840,7 @@ class EditAccounts(QWidget):
 
 		self.Status = 'FREE'
 		self.Parent = obj
+		self.prnt = parent
 		self.tr = Translator('EditAccounts')
 		global Settings
 
@@ -1528,13 +1106,14 @@ class EditAccounts(QWidget):
 		Settings.setValue('Accounts', str_)
 
 	def eventClose(self, event):
-		self.Parent.done(0)
+		self.prnt.done(0)
 
 class AppletSettings(QWidget):
 	def __init__(self, obj = None, parent= None):
 		QWidget.__init__(self, parent)
 
 		self.Parent = obj
+		self.prnt = parent
 		self.tr = Translator('AppletSettings')
 		global Settings
 
@@ -1608,13 +1187,14 @@ class AppletSettings(QWidget):
 		Settings.sync()
 
 	def eventClose(self, event):
-		self.Parent.done(0)
+		self.prnt.done(0)
 
 class PasswordManipulate(QWidget):
 	def __init__(self, obj = None, parent = None):
 		QWidget.__init__(self)
 
 		self.Parent = obj
+		self.prnt = parent
 		self.tr = Translator('PasswordManipulate')
 
 		self.VBLayout = QVBoxLayout()
@@ -1630,13 +1210,14 @@ class PasswordManipulate(QWidget):
 		self.Parent.wallet.requestChangePassword(0)
 
 	def eventClose(self, event):
-		self.Parent.done(0)
+		self.prnt.done(0)
 
 class Font_n_Colour(QWidget):
 	def __init__(self, obj = None, parent = None):
 		QWidget.__init__(self)
 
 		self.Parent = obj
+		self.prnt = parent
 		self.tr = Translator('Font_n_Colour')
 		global Settings
 
@@ -1876,9 +1457,20 @@ class Font_n_Colour(QWidget):
 			#print key_, Settings.value(key_).toString()
 			return Settings.value(key_).toString()
 		else :
+			if defaultValue == '' :
+				defaultValue = self.getSystemColor('int')
 			Settings.setValue(key_, QVariant(defaultValue))
 			#print key_, Settings.value(key_).toString()
 			return defaultValue
+
+	def getSystemColor(self, key_ = ''):
+		currentBrush = QPalette().buttonText()
+		colour = currentBrush.color()
+		if key_ == 'int' :
+			# print colour.rgba()
+			return colour.rgba()
+		else :
+			return str(colour.getRgb())
 
 	def cursive_n_bold(self, bold, italic):
 		pref = ''
@@ -1903,7 +1495,7 @@ class Font_n_Colour(QWidget):
 		if yes :
 			style = 'QLabel { color: rgba' + str(QColor().fromRgba(colour).getRgb()) + ';} '
 		else :
-			style = 'QLabel { color: rgba(0, 0, 0, 125);} '
+			style = 'QLabel { color: rgba' + self.getSystemColor() + ';} '
 		return style
 
 	def getColour(self, (currentColour, yes)):
@@ -2169,7 +1761,8 @@ class Font_n_Colour(QWidget):
 		Settings.sync()
 
 	def eventClose(self, event):
-		self.Parent.done(0)
+		self.prnt.done(0)
 
 def CreateApplet(parent):
 	return plasmaMailChecker(parent)
+

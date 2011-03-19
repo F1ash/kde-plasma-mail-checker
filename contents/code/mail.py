@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from main import *
+from Functions import *
 
 if __name__ == '__main__':
 	account, passw, fileName = sys.argv[1], sys.argv[2], sys.argv[3]
