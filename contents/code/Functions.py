@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4.QtCore import QString, QSettings, QReadWriteLock
-import poplib, imaplib, string, socket, time, os.path, logging, random, sys, email.header
+import poplib, imaplib, string, socket, time, os.path, random, sys, email.header
 
 LOCK = QReadWriteLock()
 Settings = QSettings('mailChecker','mailChecker')
@@ -325,11 +325,9 @@ def checkNewMailIMAP4(accountData = ['', '']):
 					i += -1
 			else:
 				#print 'selectDirError', WAIT
-				logging.debug('selectDirError')
 				probeError, countAll, countNew = False, 0, 0
 		else:
 			#print 'AuthError', WAIT
-			logging.debug('AuthError')
 			probeError, countAll, countNew = False, 0, 0
 			pass
 
