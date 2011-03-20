@@ -68,7 +68,6 @@ class ThreadCheckMail(QThread):
 		self.accData = accountData
 		self.accountThread = []
 		self.dataList = []
-		RESULT = []
 		global ErrorMsg
 		ErrorMsg = ''
 		global WAIT
@@ -87,6 +86,7 @@ class ThreadCheckMail(QThread):
 
 	def readResult(self):
 		global RESULT
+		RESULT = []
 		for i in xrange(len(self.accountThread)) :
 			RESULT += [readDataFiles(self.dataList[i][1])]
 		#print RESULT
