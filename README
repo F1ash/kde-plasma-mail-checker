@@ -1,0 +1,36 @@
+# LANG=en_US.UTF-8
+
+Dependencies:
+	kdebase-workspace-python-applet (Fedora package name)
+	You need a create new wallet (or use existing) (KWallet) for correct work plasmoid.
+
+Paths and files:
+	Error log file: $HOME/.xsession-errors
+	Debug log file: /tmp/outMailChecker_%Y_%m_%d_%H:%S.log
+	Configuration file: $HOME/.config/plasmaMailChecker/plasmaMailChecker.conf
+
+Path for your POP3 accounts uidl cache:
+		$HOME/.cache/plasmaMailChecker/<accountName>.cache
+	temporary cache:
+		/dev/shm/<accountName>.cache
+
+Start/stop mail checking in plasmoid.
+	Click on mailers icon to start or stop checking.
+
+
+Description:
+	Plasmoid should periodic check for new messages in configured accounts.
+	Supported protocols: POP3/POP3S/IMAP4/IMAP4S.
+	Passwords for accounts stored in encrypted container.
+	Plasmoid use KDE-notification for events about new mail.
+	It one maybe contain in plasma workspace and in plasma panel.
+
+Notes:
+	In Plasmoid built Translator with autodetect of locale. Installation
+	new language simply by adding the appropriate *.qm file.
+	(For example: ru.qm, de.qm, ge.qm). By default, the language is English.
+
+Known issues:
+	If you internet connection is too slow, you need increase time value in "Autoexit of connect" parameter.
+
+Tested on Fedora 14 (kdebase-workspace-python-applet-4.5.3-3.fc14.x86_64)

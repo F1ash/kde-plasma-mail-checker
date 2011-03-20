@@ -1147,7 +1147,7 @@ class AppletSettings(QWidget):
 			self.showErrorBox.setCheckState(2)
 		self.layout.addWidget(self.showErrorBox,3,1)
 
-		self.waitThreadLabel = QLabel(self.tr._translate("Autoexit connect (sec.):"))
+		self.waitThreadLabel = QLabel(self.tr._translate("Autoexit of connect (sec.):"))
 		self.layout.addWidget(self.waitThreadLabel,4,0)
 		self.waitThreadBox = KIntSpinBox(3, 7200, 1, int(waitThread), self)
 		self.layout.addWidget(self.waitThreadBox, 4, 1)

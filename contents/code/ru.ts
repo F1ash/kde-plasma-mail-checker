@@ -27,7 +27,7 @@ to mail server:</source>
     </message>
     <message>
         <location filename="main.py" line="1295"/>
-        <source>Autoexit connect (sec.):</source>
+        <source>Autoexit of connect (sec.):</source>
         <translation>Автозавершение проверки через (сек.) :</translation>
     </message>
     <message>
