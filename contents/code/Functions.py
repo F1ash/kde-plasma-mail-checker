@@ -4,7 +4,7 @@ from PyQt4.QtCore import QString, QSettings, QReadWriteLock
 import poplib, imaplib, string, socket, time, os.path, random, sys, email.header
 
 LOCK = QReadWriteLock()
-Settings = QSettings('mailChecker','mailChecker')
+Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 
 def pid_exists(pid, sig):
 	try:
@@ -135,8 +135,6 @@ def defineUIDL(accountName = '', str_ = ''):
 
 def checkNewMailPOP3(accountData = ['', '']):
 	global ErrorMsg
-	#global WAIT
-	WAIT = True
 	x = ''
 	try:
 		NewMailAttributes = ''
@@ -148,33 +146,23 @@ def checkNewMailPOP3(accountData = ['', '']):
 		authentificationData = readAccountData(accountData[0])
 		lastElemUid = authentificationData[6]
 
-		if WAIT :
-			if authentificationData[4] == 'SSL' :
-				#print to_unicode(accountData[0]), '  connect server', WAIT
+		if authentificationData[4] == 'SSL' :
 				m = poplib.POP3_SSL(authentificationData[0], authentificationData[1])
-			else:
-				#print to_unicode(accountData[0]), '  connect server', WAIT
-				m = poplib.POP3(authentificationData[0], authentificationData[1])
-		else :
-			#print to_unicode(accountData[0]), '  thread don`t WAIT', WAIT
-			return probeError, countAll, countNew, NewMailAttributes
+		else:
+			m = poplib.POP3(authentificationData[0], authentificationData[1])
 
 		#auth_login = m.user(authentificationData[2])
-		if WAIT and m.user(authentificationData[2])[:3] == '+OK' :
-			#print to_unicode(accountData[0]), '  login to server', WAIT
+		if m.user(authentificationData[2])[:3] == '+OK' :
 			#auth_passw = m.pass_( accountData[1] )
-			if WAIT and m.pass_( accountData[1] )[:3] == '+OK' :
-				#print to_unicode(accountData[0]), '  passw_ to server', WAIT
+			if m.pass_( accountData[1] )[:3] == '+OK' :
 
 				countAll = int(m.stat()[0])
-				#print to_unicode(accountData[0]), '  reqwest UIDLs from server', WAIT
 				for uidl_ in m.uidl()[1] :
 					currentElemUid = string.split(uidl_,' ')[1]
 					mailUidls += [currentElemUid + '\n']
-					if WAIT and defineUIDL(accountData[0], currentElemUid) :
+					if defineUIDL(accountData[0], currentElemUid) :
 						From = ''
 						Subj = ''
-						#print to_unicode(accountData[0]), '  reqwest TOP from server', WAIT
 						for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
 							if str_[:5] == 'From:' :
 								_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
@@ -192,28 +180,16 @@ def checkNewMailPOP3(accountData = ['', '']):
 									else :
 										Subj += part_str[0].decode(part_str[1]) + ' '
 								#print Subj
-						# print Result, WAIT
 						NewMailAttributes += to_unicode(From) + '\n' + to_unicode(Subj) + '\n'
 						#print NewMailAttributes, '   ------'
 						newMailExist = newMailExist or True
 						countNew += 1
-					elif not WAIT :
-						m.quit()
-						#print to_unicode(accountData[0]), '  close connect', WAIT
-						return probeError, countAll, countNew, NewMailAttributes
 
 				c = open('/dev/shm/' + accountData[0] + '.cache', 'w')
-				# print mailUidls, WAIT
 				c.writelines( mailUidls )
 				c.close()
 
-			elif not WAIT :
-				m.quit()
-				#print to_unicode(accountData[0]), '  close connect', WAIT
-				return probeError, countAll, countNew, NewMailAttributes
-
 		m.quit()
-		#print to_unicode(accountData[0]), '  close connect', WAIT
 
 	except poplib.error_proto, x :
 		print x, '  POP3_1'
@@ -253,8 +229,6 @@ def checkNewMailPOP3(accountData = ['', '']):
 def checkNewMailIMAP4(accountData = ['', '']):
 	global ErrorMsg
 	global Settings
-	#global WAIT
-	WAIT = True
 	x = ''
 	try:
 		NewMailAttributes = ''
@@ -265,27 +239,18 @@ def checkNewMailIMAP4(accountData = ['', '']):
 		authentificationData = readAccountData(accountData[0])
 		lastElemTime = authentificationData[6]
 
-		if WAIT :
-			if authentificationData[4] == 'SSL' :
-				#print to_unicode(accountData[0]), '  connect server', WAIT
-				m = imaplib.IMAP4_SSL(authentificationData[0], authentificationData[1])
-			else:
-				#print to_unicode(accountData[0]), '  connect server', WAIT
-				m = imaplib.IMAP4(authentificationData[0], authentificationData[1])
-		else :
-			#print to_unicode(accountData[0]), '  thread don`t WAIT', WAIT
-			return probeError, countAll, countNew, NewMailAttributes
+		if authentificationData[4] == 'SSL' :
+			m = imaplib.IMAP4_SSL(authentificationData[0], authentificationData[1])
+		else:
+			m = imaplib.IMAP4(authentificationData[0], authentificationData[1])
 
-		if WAIT and m.login( authentificationData[2], accountData[1] )[0] == 'OK' :
-			#print to_unicode(accountData[0]), '  login to server', WAIT
+		if m.login( authentificationData[2], accountData[1] )[0] == 'OK' :
 			answer = m.select()
-			if WAIT and answer[0] == 'OK':
-				#print to_unicode(accountData[0]), '  passw_ to server', WAIT
+			if answer[0] == 'OK':
 				countAll = int(answer[1][0])
 				i = countAll
-				while i > 0 and WAIT :
+				while i > 0 :
 					currentElemTime_raw = string.split(m.fetch(i,"INTERNALDATE")[1][0],' ')
-					#print to_unicode(accountData[0]), '  fetch DATA from server', WAIT
 					currentElemTime_Internal = currentElemTime_raw[1] + ' ' \
 												+ currentElemTime_raw[2] + ' ' \
 												+ currentElemTime_raw[3] + ' ' \
@@ -297,7 +262,6 @@ def checkNewMailIMAP4(accountData = ['', '']):
 					if currentElemTime > lastElemTime :
 						From = ''
 						Subj = ''
-						#print to_unicode(accountData[0]), '  reqwest TOP from server', WAIT
 						for str_ in string.split(m.fetch(i,"(BODY[HEADER])")[1][0][1],'\r\n') :
 							if str_[:5] == 'From:' :
 								_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
@@ -315,7 +279,6 @@ def checkNewMailIMAP4(accountData = ['', '']):
 									else :
 										Subj += part_str[0].decode(part_str[1]) + ' '
 								#print Subj
-						#  print Result, WAIT
 						NewMailAttributes += to_unicode(From) + '\n' + to_unicode(Subj) + '\n'
 						#print NewMailAttributes, '   ----==------'
 						newMailExist = newMailExist or True
@@ -324,15 +287,13 @@ def checkNewMailIMAP4(accountData = ['', '']):
 						break
 					i += -1
 			else:
-				#print 'selectDirError', WAIT
+				#print 'selectDirError'
 				probeError, countAll, countNew = False, 0, 0
 		else:
-			#print 'AuthError', WAIT
+			#print 'AuthError'
 			probeError, countAll, countNew = False, 0, 0
-			pass
 
 		if newMailExist :
-			#print to_unicode(accountData[0]), '  reqwest fetchDATA from server', WAIT
 			lastElemTime_raw = string.split(m.fetch(countAll,"INTERNALDATE")[1][0],' ')
 			lastElemTime_Internal = lastElemTime_raw[1] + ' ' \
 									+ lastElemTime_raw[2] + ' ' \
@@ -354,7 +315,6 @@ def checkNewMailIMAP4(accountData = ['', '']):
 
 		m.close()
 		m.logout()
-		#print to_unicode(accountData[0]), '  close', WAIT
 
 		Settings.sync()
 
@@ -426,7 +386,7 @@ def checkMail(accountData = ['', '']):
 		try:
 			countProbe = int(countProbe_raw.toString())
 		except ValueError:
-			print x, '  checkMail'
+			print '  checkMail'
 			countProbe = 3
 		finally:
 			pass

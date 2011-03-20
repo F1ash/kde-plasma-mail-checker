@@ -4,11 +4,8 @@ try :
 	global warningMsg
 	global Settings
 	global RESULT
-	global NewMailAttributes
 	global ErrorMsg
-	global LOG_FILENAME
 	global WAIT
-	LOG_FILENAME = 'mailChecker.log'
 	from Functions import *
 	from PyQt4.QtCore import *
 	from PyQt4.QtGui import *
@@ -16,19 +13,15 @@ try :
 	from PyKDE4.kdeui import *
 	from PyKDE4.plasma import Plasma
 	from PyKDE4 import plasmascript
-	import poplib, imaplib, string, socket, time, os.path, logging, random, sys, email.header, locale, signal
-	logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s', \
-											datefmt='%Y-%m-%d %H:%M:%S', filename=LOG_FILENAME)
+	import string, time, os.path, sys, locale, signal
 	RESULT = []
-	Settings = QSettings('mailChecker','mailChecker')
-	NewMailAttributes = []
+	Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 	ErrorMsg = ''
 	warningMsg = ''
 	#sys.stderr = open('/dev/shm/errorMailChecker' + str(time.time()) + '.log','w')
 	sys.stdout = open('/tmp/outMailChecker' + time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
 except ImportError, warningMsg :
 	print "ImportError", warningMsg
-	logging.debug(warningMsg)
 finally:
 	'O`key'
 
@@ -133,7 +126,6 @@ class ThreadCheckMail(QThread):
 		except x :
 			self.Timer.stop()
 			print x, '  thread'
-			logging.debug(x)
 		finally :
 			self.Timer.stop()
 			if WAIT :
@@ -311,18 +303,30 @@ class plasmaMailChecker(plasmascript.Applet):
 		if yes :
 			style = 'QLabel { color: rgba' + str(QColor().fromRgba(colour).getRgb()) + ';} '
 		else :
-			style = 'QLabel { color: rgba(0, 0, 0, 125);} '
+			style = 'QLabel { color: rgba' + self.getSystemColor() + ';} '
 		return style
 
-	def initValue(self, key_, default = '0'):
+	def initValue(self, key_, defaultValue = ''):
 		global Settings
 		if Settings.contains(key_) :
 			#print key_, Settings.value(key_).toString()
 			return Settings.value(key_).toString()
 		else :
-			Settings.setValue(key_, QVariant(default))
+			if defaultValue == '' :
+				defaultValue = self.getSystemColor('int')
+			Settings.setValue(key_, QVariant(defaultValue))
 			#print key_, Settings.value(key_).toString()
-			return default
+			return defaultValue
+
+	def getSystemColor(self, key_ = ''):
+		currentBrush = QPalette().buttonText()
+		colour = currentBrush.color()
+		if key_ == 'int' :
+			#print colour.rgba()
+			return str(colour.rgba())
+		else :
+			#print str(colour.getRgb())
+			return str(colour.getRgb())
 
 	def cursive_n_bold(self, bold, italic):
 		pref = ''
@@ -439,7 +443,6 @@ class plasmaMailChecker(plasmascript.Applet):
 		initPOP3Cache()
 
 		self.Timer.start(int(timeOut) * 1000)
-		logging.debug('Timer started.')
 		print 'processInit'
 		QApplication.postEvent(self, QEvent(1011))
 
@@ -621,7 +624,6 @@ class plasmaMailChecker(plasmascript.Applet):
 				print x, '  refresh_2'
 			except AttributeError, x:
 				#print x, '  refresh_3'
-				#logging.debug(x)
 				pass
 			except UnboundLocalError, x :
 				print x, '  refresh_4'
@@ -729,7 +731,6 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.emit(SIGNAL('killThread'))
 		except AttributeError, x:
 			print x, '  acceptConf_1'
-			#logging.debug(x)
 			pass
 		except x :
 			print x, '  acceptConf_2'
@@ -741,9 +742,9 @@ class plasmaMailChecker(plasmascript.Applet):
 		del self.dialog
 		# refresh plasmoid Header
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+			self.TitleDialog.setStyleSheet(self.headerColourStyle)
 			self.TitleDialog.setText(self.headerPref + self.tr._translate('M@il Checker') + self.headerSuff)
 			self.createDialogWidget()
-		logging.debug('Settings refreshed. Timer stopped.')
 		self.initStat = False
 		self.connect(self, SIGNAL('refresh'), self.refreshData)
 		self.emit(SIGNAL('refresh'))
@@ -776,7 +777,6 @@ class plasmaMailChecker(plasmascript.Applet):
 			if self.T.isRunning() :
 				self.emit(SIGNAL('killThread'))
 			savePOP3Cache()
-			logging.debug('No enter password. Timer stopped.')
 			self.initStat = False
 			print 'stop_eP'
 			self.emit(SIGNAL('refresh'))
@@ -819,9 +819,8 @@ class plasmaMailChecker(plasmascript.Applet):
 			pass
 		self.killMailCheckerThread()
 		GeneralLOCK.unlock()
-		logging.debug("MailChecker destroyed manually.")
 		print "MailChecker destroyed manually."
-		sys.stderr.close()
+		#sys.stderr.close()
 		sys.stdout.close()
 
 	def killMailCheckerThread(self):
@@ -1094,7 +1093,6 @@ class EditAccounts(QWidget):
 			self.accountList.remove(accountName)
 		except ValueError, x :
 			print x, '  delAcc'
-			#logging.debug(x)
 			pass
 		finally:
 			pass
@@ -1467,9 +1465,10 @@ class Font_n_Colour(QWidget):
 		currentBrush = QPalette().buttonText()
 		colour = currentBrush.color()
 		if key_ == 'int' :
-			# print colour.rgba()
-			return colour.rgba()
+			#print colour.rgba()
+			return str(colour.rgba())
 		else :
+			#print str(colour.getRgb())
 			return str(colour.getRgb())
 
 	def cursive_n_bold(self, bold, italic):
