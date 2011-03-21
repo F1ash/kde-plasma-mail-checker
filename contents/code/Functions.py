@@ -389,7 +389,7 @@ def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', '']):
 		i += 1
 		if i == probe_ :
 			ErrorMsg += "\nCan`t connect to server\non Account : " + to_unicode(authData[0]) +'\n'
-	return Result, all_, new_, '', QString(content).toUtf8()
+	return Result, all_, new_, ErrorMsg, QString(content).toUtf8()
 
 def checkMail(accountData = ['', '']):
 	global Settings
