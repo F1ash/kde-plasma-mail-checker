@@ -1,12 +1,27 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4.QtCore import QString, QSettings, QReadWriteLock
-import poplib, imaplib, string, socket, time, os.path, random, sys, email.header
+import poplib, imaplib, os, string, socket, time, os.path, random, sys, email.header
 
 global ErrorMsg
 ErrorMsg = ''
 LOCK = QReadWriteLock()
 Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
+
+def cleanDebugOutputLogFiles(stay = 1):
+	LIST = []
+	uid = os.geteuid()
+	for name_ in os.listdir('/tmp') :
+		name = '/tmp/' + name_
+		if os.path.isfile(name) and name[:19] == '/tmp/outMailChecker' and os.stat(name).st_uid == uid :
+				LIST += [name]
+	while len(LIST) > stay :
+		try :
+			minItem = min(LIST)
+			os.remove(minItem)
+			LIST.remove(minItem)
+		except OSError:
+			pass
 
 def pid_exists(pid, sig):
 	try:

@@ -818,6 +818,8 @@ class plasmaMailChecker(plasmascript.Applet):
 			pass
 		self.killMailCheckerThread()
 		GeneralLOCK.unlock()
+		count = self.initValue('stayDebLog', '5')
+		cleanDebugOutputLogFiles(int(count))
 		print "MailChecker destroyed manually."
 		#sys.stderr.close()
 		sys.stdout.close()
@@ -1119,37 +1121,45 @@ class AppletSettings(QWidget):
 		countProbe = self.initValue('CountProbe', '3')
 		showError = self.initValue('ShowError', '1')
 		waitThread = self.initValue('WaitThread', '120')
+		stayDebLog = self.initValue('stayDebLog', '5')
 
 		self.layout = QGridLayout()
 
 		self.timeOutLabel = QLabel(self.tr._translate("Timeout checking (sec.):"))
 		self.layout.addWidget(self.timeOutLabel,0,0)
 		self.timeOutBox = KIntSpinBox(10, 7200, 1, int(timeOut), self)
-		self.layout.addWidget(self.timeOutBox, 0, 1)
+		self.timeOutBox.setMaximumWidth(75)
+		self.layout.addWidget(self.timeOutBox, 0, 5)
 
 		self.autoRunLabel = QLabel(self.tr._translate("Autorun mail checking :"))
 		self.layout.addWidget(self.autoRunLabel,1,0)
 		self.AutoRunBox = QCheckBox()
 		if int(AutoRun) > 0 :
 			self.AutoRunBox.setCheckState(2)
-		self.layout.addWidget(self.AutoRunBox,1,1)
+		self.layout.addWidget(self.AutoRunBox,1,5)
 
 		self.countProbe = QLabel(self.tr._translate("Count of connect probe\nto mail server:"))
 		self.layout.addWidget(self.countProbe,2,0)
 		self.countProbeBox = KIntSpinBox(1, 10, 1, int(countProbe), self)
-		self.layout.addWidget(self.countProbeBox, 2, 1)
+		self.layout.addWidget(self.countProbeBox, 2, 5)
 
 		self.showError = QLabel(self.tr._translate("Show error messages :"))
 		self.layout.addWidget(self.showError,3,0)
 		self.showErrorBox = QCheckBox()
 		if int(showError) > 0 :
 			self.showErrorBox.setCheckState(2)
-		self.layout.addWidget(self.showErrorBox,3,1)
+		self.layout.addWidget(self.showErrorBox,3,5)
 
 		self.waitThreadLabel = QLabel(self.tr._translate("Autoexit of connect (sec.):"))
 		self.layout.addWidget(self.waitThreadLabel,4,0)
 		self.waitThreadBox = KIntSpinBox(3, 7200, 1, int(waitThread), self)
-		self.layout.addWidget(self.waitThreadBox, 4, 1)
+		self.layout.addWidget(self.waitThreadBox, 4, 5)
+
+		self.stayDebLogLabel = QLabel(self.tr._translate("Stay Debug output Log :"))
+		self.layout.addWidget(self.stayDebLogLabel,5,0)
+		self.stayDebLogBox = KIntSpinBox(1, 50, 1, int(stayDebLog), self)
+		self.stayDebLogBox.setMaximumWidth(75)
+		self.layout.addWidget(self.stayDebLogBox, 5, 5)
 
 		self.setLayout(self.layout)
 
@@ -1172,6 +1182,7 @@ class AppletSettings(QWidget):
 		Settings.setValue('TimeOut', str(self.timeOutBox.value()))
 		Settings.setValue('CountProbe', str(self.countProbeBox.value()))
 		Settings.setValue('WaitThread', str(self.waitThreadBox.value()))
+		Settings.setValue('stayDebLog', str(self.stayDebLogBox.value()))
 		if self.AutoRunBox.isChecked() :
 			Settings.setValue('AutoRun', '1')
 		else:

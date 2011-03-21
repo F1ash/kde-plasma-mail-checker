@@ -31,6 +31,11 @@ to mail server:</source>
         <translation>Автозавершение проверки через (сек.) :</translation>
     </message>
     <message>
+        <location filename="main.py" line="1295"/>
+        <source>Stay Debug output Log :</source>
+        <translation>Оставлять логов отладочного вывода :</translation>
+    </message>
+    <message>
         <location filename="main.py" line="1306"/>
         <source>Warning :
 Access denied!</source>
