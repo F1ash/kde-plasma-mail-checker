@@ -319,7 +319,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			return defaultValue
 
 	def getSystemColor(self, key_ = ''):
-		currentBrush = QPalette().buttonText()
+		currentBrush = QPalette().windowText()
 		colour = currentBrush.color()
 		if key_ == 'int' :
 			#print colour.rgba()
@@ -751,7 +751,6 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def configDenied(self):
 		del self.dialog
-		pass
 
 	def _enterPassword(self):
 		if not self.initStat :
@@ -1462,7 +1461,7 @@ class Font_n_Colour(QWidget):
 			return defaultValue
 
 	def getSystemColor(self, key_ = ''):
-		currentBrush = QPalette().buttonText()
+		currentBrush = QPalette().windowText()
 		colour = currentBrush.color()
 		if key_ == 'int' :
 			#print colour.rgba()

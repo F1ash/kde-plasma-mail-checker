@@ -3,6 +3,8 @@
 from PyQt4.QtCore import QString, QSettings, QReadWriteLock
 import poplib, imaplib, string, socket, time, os.path, random, sys, email.header
 
+global ErrorMsg
+ErrorMsg = ''
 LOCK = QReadWriteLock()
 Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 
@@ -135,6 +137,7 @@ def defineUIDL(accountName = '', str_ = ''):
 
 def checkNewMailPOP3(accountData = ['', '']):
 	global ErrorMsg
+	ErrorMsg = ''
 	x = ''
 	try:
 		NewMailAttributes = ''
@@ -227,8 +230,9 @@ def checkNewMailPOP3(accountData = ['', '']):
 	return probeError, countAll, countNew, NewMailAttributes
 
 def checkNewMailIMAP4(accountData = ['', '']):
-	global ErrorMsg
 	global Settings
+	global ErrorMsg
+	ErrorMsg = ''
 	x = ''
 	try:
 		NewMailAttributes = ''
