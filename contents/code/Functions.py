@@ -106,11 +106,11 @@ def initPOP3Cache():
 	for accountName in string.split( Settings.value('Accounts').toString(), ';' ):
 		Settings.beginGroup(accountName)
 		if Settings.value('connectMethod').toString() == 'pop' :
-			if not os.path.isfile(dir_ + '/' + accountName + '.cache') :
-				f = open(dir_ + '/' + accountName + '.cache', 'w')
+			if not os.path.isfile(dir_ + '/' + QString(accountName).toUtf8().data() + '.cache') :
+				f = open(dir_ + '/' + QString(accountName).toUtf8().data() + '.cache', 'w')
 				f.close()
-			f = open(dir_ +  '/' + accountName + '.cache', 'r')
-			c = open('/dev/shm/' + accountName + '.cache', 'w')
+			f = open(dir_ +  '/' + QString(accountName).toUtf8().data() + '.cache', 'r')
+			c = open('/dev/shm/' + QString(accountName).toUtf8().data() + '.cache', 'w')
 			c.writelines(f.readlines())
 			f.close()
 			c.close()
@@ -124,9 +124,9 @@ def savePOP3Cache():
 	for accountName in string.split( Settings.value('Accounts').toString(), ';' ):
 		Settings.beginGroup(accountName)
 		if Settings.value('connectMethod').toString() == 'pop' :
-			f = open(dir_ + '/' + accountName + '.cache', 'w')
-			if os.path.isfile('/dev/shm/' + accountName + '.cache') :
-				c = open('/dev/shm/' + accountName + '.cache', 'r')
+			f = open(dir_ + '/' + QString(accountName).toUtf8().data() + '.cache', 'w')
+			if os.path.isfile('/dev/shm/' + QString(accountName).toUtf8().data() + '.cache') :
+				c = open('/dev/shm/' + QString(accountName).toUtf8().data() + '.cache', 'r')
 				f.writelines(c.readlines())
 				c.close()
 			f.close()
@@ -139,7 +139,7 @@ def defineUIDL(accountName = '', str_ = ''):
 	x = ''
 	STR = []
 	try :
-		f = open('/dev/shm/' + accountName + '.cache', 'r')
+		f = open('/dev/shm/' + QString(accountName).toUtf8().data() + '.cache', 'r')
 		STR = f.readlines()
 		f.close()
 		# print dataStamp(), STR
@@ -155,7 +155,6 @@ def defineUIDL(accountName = '', str_ = ''):
 
 def checkNewMailPOP3(accountData = ['', '']):
 	global ErrorMsg
-	#ErrorMsg = ''
 	x = ''
 	try:
 		NewMailAttributes = ''
@@ -168,7 +167,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 		lastElemUid = authentificationData[6]
 
 		if authentificationData[4] == 'SSL' :
-				m = poplib.POP3_SSL(authentificationData[0], authentificationData[1])
+			m = poplib.POP3_SSL(authentificationData[0], authentificationData[1])
 		else:
 			m = poplib.POP3(authentificationData[0], authentificationData[1])
 
@@ -206,7 +205,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 						newMailExist = newMailExist or True
 						countNew += 1
 
-				c = open('/dev/shm/' + accountData[0] + '.cache', 'w')
+				c = open('/dev/shm/' + QString(accountData[0]).toUtf8().data() + '.cache', 'w')
 				c.writelines( mailUidls )
 				c.close()
 
@@ -250,7 +249,6 @@ def checkNewMailPOP3(accountData = ['', '']):
 def checkNewMailIMAP4(accountData = ['', '']):
 	global Settings
 	global ErrorMsg
-	#ErrorMsg = ''
 	x = ''
 	try:
 		NewMailAttributes = ''
