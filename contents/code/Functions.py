@@ -351,7 +351,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 
 	except imaplib.IMAP4.error, x :
 		print dataStamp(), x, '  IMAP4_1'
-		ErrorMsg += '\n' + unicode(x[0],'UTF-8')
+		ErrorMsg += '\n' + unicode(str(x),'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
