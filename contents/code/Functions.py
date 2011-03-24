@@ -100,6 +100,9 @@ def readAccountData(account = ''):
 def initPOP3Cache():
 	LOCK.lockForWrite()
 	global Settings
+	dir_cache = os.path.expanduser('~/.cache')
+	if  not os.path.isdir(dir_cache) :
+		os.mkdir(dir_cache)
 	dir_ = os.path.expanduser('~/.cache/plasmaMailChecker')
 	if  not os.path.isdir(dir_) :
 		os.mkdir(dir_)
