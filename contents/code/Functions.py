@@ -183,6 +183,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 					if defineUIDL(accountData[0], currentElemUid) :
 						From = ''
 						Subj = ''
+						Date = ''
 						for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
 							if str_[:5] == 'From:' :
 								_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
@@ -200,7 +201,10 @@ def checkNewMailPOP3(accountData = ['', '']):
 									else :
 										Subj += part_str[0].decode(part_str[1]) + ' '
 								#print dataStamp(), Subj
-						NewMailAttributes += to_unicode(From) + '\n' + to_unicode(Subj) + '\n'
+							if str_[:5] == 'Date:' :
+								Date += str_
+								#print dataStamp(), Date
+						NewMailAttributes += to_unicode(From) + '\n' + to_unicode(Subj) + '\n' + Date + '\n'
 						#print dataStamp(), NewMailAttributes, '   ------'
 						newMailExist = newMailExist or True
 						countNew += 1
@@ -282,6 +286,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 					if currentElemTime > lastElemTime :
 						From = ''
 						Subj = ''
+						Date = ''
 						for str_ in string.split(m.fetch(i,"(BODY[HEADER])")[1][0][1],'\r\n') :
 							if str_[:5] == 'From:' :
 								_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
@@ -299,7 +304,10 @@ def checkNewMailIMAP4(accountData = ['', '']):
 									else :
 										Subj += part_str[0].decode(part_str[1]) + ' '
 								#print dataStamp(), Subj
-						NewMailAttributes += to_unicode(From) + '\n' + to_unicode(Subj) + '\n'
+							if str_[:5] == 'Date:' :
+								Date = str_
+								#print dataStamp(), Date
+						NewMailAttributes += to_unicode(From) + '\n' + to_unicode(Subj) + '\n' + Date + '\n'
 						#print dataStamp(), NewMailAttributes, '   ----==------'
 						newMailExist = newMailExist or True
 						countNew += 1
