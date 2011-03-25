@@ -42,6 +42,11 @@ Access denied!</source>
         <translation>Внимание:
 Доступ запрещён !</translation>
     </message>
+    <message>
+        <location filename="main.py" line="1212"/>
+        <source>Show Version :</source>
+        <translation>Показывать версию :</translation>
+    </message>
 </context>
 <context>
     <name>EditAccounts</name>
@@ -74,6 +79,11 @@ Access denied!</source>
         <location filename="main.py" line="997"/>
         <source>Port : </source>
         <translation>Порт :</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="982"/>
+        <source>Enable : </source>
+        <translation>Включено : </translation>
     </message>
     <message>
         <location filename="main.py" line="1001"/>

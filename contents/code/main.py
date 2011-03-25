@@ -6,6 +6,7 @@ try :
 	global RESULT
 	global ErrorMsg
 	global WAIT
+	global VERSION
 	from Functions import *
 	from PyQt4.QtCore import *
 	from PyQt4.QtGui import *
@@ -15,6 +16,7 @@ try :
 	from PyKDE4 import plasmascript
 	import string, time, os.path, sys, locale, signal
 	RESULT = []
+	VERSION = '0.15'
 	Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 	ErrorMsg = ''
 	warningMsg = ''
@@ -206,7 +208,8 @@ class plasmaMailChecker(plasmascript.Applet):
 
 			self.TitleDialog = Plasma.Label()
 			self.TitleDialog.setStyleSheet(self.headerColourStyle)
-			self.TitleDialog.setText(self.headerPref + self.tr._translate('M@il Checker') + self.headerSuff)
+			self.initTitle()
+			self.TitleDialog.setText(self.headerPref + self.title + self.headerSuff)
 			self.titleLayout.addItem(self.TitleDialog)
 
 			self.icon.setIcon(self.stopIconPath)
@@ -237,6 +240,15 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.Timer1.setSingleShot(True)
 			self.Timer1.timeout.connect(self.enterPassword)
 			self.Timer1.start(2000)
+
+	def initTitle(self):
+		global VERSION
+		self.version = self.initValue('ShowVersion', '1')
+		if int(self.version) > 0 :
+			self.title = self.tr._translate('M@il Checker') + '\n' + VERSION
+		else :
+			self.title = self.tr._translate('M@il Checker')
+		self.TitleDialog.setText(self.headerPref + self.title + self.headerSuff)
 
 	def initColourAndFont(self):
 		self.headerFontVar = self.initValue('headerFont')
@@ -533,7 +545,13 @@ class plasmaMailChecker(plasmascript.Applet):
 				# print dataStamp() ,  'start'
 				accData = []
 				for accountName in string.split(Settings.value('Accounts').toString(),';') :
-					accData += [(accountName, self.wallet.readPassword(accountName)[1])]
+					Settings.beginGroup(accountName)
+					enable = Settings.value('Enabled').toString()
+					Settings.endGroup()
+					if str(enable) == '1' :
+						accData += [(accountName, self.wallet.readPassword(accountName)[1])]
+					else :
+						accData += [('','')]
 				self.T = ThreadCheckMail(self, accData, self.waitThread)
 				print dataStamp() ,  'time for wait thread : ', self.waitThread
 				self.T.start()
@@ -741,7 +759,8 @@ class plasmaMailChecker(plasmascript.Applet):
 		# refresh plasmoid Header
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 			self.TitleDialog.setStyleSheet(self.headerColourStyle)
-			self.TitleDialog.setText(self.headerPref + self.tr._translate('M@il Checker') + self.headerSuff)
+			self.initTitle()
+			self.TitleDialog.setText(self.headerPref + self.title + self.headerSuff)
 			self.createDialogWidget()
 		self.initStat = False
 		self.connect(self, SIGNAL('refresh'), self.refreshData)
@@ -884,16 +903,22 @@ class EditAccounts(QWidget):
 		self.HB1Layout = QGridLayout()
 
 		self.HB1Layout.addWidget(QLabel(self.tr._translate("Server : ")),0,0)
-
 		self.HB1Layout.addWidget(QLabel(self.tr._translate("Port : ")),0,1)
+		self.HB1Layout.addWidget(QLabel(self.tr._translate("Enable : ")),0,2)
 
 		self.serverLineEdit = KLineEdit()
 		self.serverLineEdit.setContextMenuEnabled(True)
 		self.serverLineEdit.setToolTip(self.tr._translate("Example : imap.gmail.com, pop.mail.ru"))
 		self.HB1Layout.addWidget(self.serverLineEdit,1,0)
 
-		self.portBox = KIntSpinBox(0, 65000, 1, 0, self)
+		self.portBox = KIntSpinBox(0, 65535, 1, 0, self)
 		self.HB1Layout.addWidget(self.portBox, 1, 1)
+
+		self.enabledBox = QCheckBox()
+		Enabled = AppletSettings().initValue('Enabled', '1')
+		self.enabledBox.setCheckState(Qt.Unchecked)
+		#self.enabledBox.hide()
+		self.HB1Layout.addWidget(self.enabledBox,1,2, Qt.AlignHCenter)
 
 		self.VBLayout.addLayout(self.HB1Layout)
 
@@ -1003,6 +1028,7 @@ class EditAccounts(QWidget):
 		self.portBox.setValue(0)
 		self.connectMethodBox.setCurrentIndex(0)
 		self.cryptBox.setCurrentIndex(0)
+		self.enabledBox.setCheckState(Qt.Unchecked)
 
 	def editCurrentAccount(self):
 		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
@@ -1015,6 +1041,8 @@ class EditAccounts(QWidget):
 		parameterList = readAccountData(accountName)
 		self.stringEditor.setText(accountName)
 		self.serverLineEdit.setText(str(parameterList[0]))
+		if str(parameterList[7]) == '1' :
+			self.enabledBox.setCheckState(Qt.Checked)
 		i = 0
 		count_ = int(self.connectMethodBox.count())
 		while i < count_ :
@@ -1074,10 +1102,14 @@ class EditAccounts(QWidget):
 		port_ = self.portBox.value()
 		userName = self.userNameLineEdit.userText()
 		userPassword = self.passwordLineEdit.userText()
+		if self.enabledBox.isChecked() :
+			enable = '1'
+		else:
+			enable = '0'
 		# print dataStamp() ,  (accountName,accountServer,port_,connectMethod,cryptMethod, \
 		#												userName,userPassword, 'parsingVal')
 		return accountName,\
-				[ accountServer, port_, userName, userPassword, cryptMethod, connectMethod, '0' ]
+				[ accountServer, port_, userName, userPassword, cryptMethod, connectMethod, '0', enable]
 
 	def delCurrentAccount(self, accountName = ''):
 		global Settings
@@ -1137,6 +1169,7 @@ class AppletSettings(QWidget):
 		showError = self.initValue('ShowError', '1')
 		waitThread = self.initValue('WaitThread', '120')
 		stayDebLog = self.initValue('stayDebLog', '5')
+		showVersion = self.initValue('ShowVersion', '1')
 
 		self.layout = QGridLayout()
 
@@ -1150,7 +1183,7 @@ class AppletSettings(QWidget):
 		self.layout.addWidget(self.autoRunLabel,1,0)
 		self.AutoRunBox = QCheckBox()
 		if int(AutoRun) > 0 :
-			self.AutoRunBox.setCheckState(2)
+			self.AutoRunBox.setCheckState(Qt.Checked)
 		self.layout.addWidget(self.AutoRunBox,1,5)
 
 		self.countProbe = QLabel(self.tr._translate("Count of connect probe\nto mail server:"))
@@ -1162,7 +1195,7 @@ class AppletSettings(QWidget):
 		self.layout.addWidget(self.showError,3,0)
 		self.showErrorBox = QCheckBox()
 		if int(showError) > 0 :
-			self.showErrorBox.setCheckState(2)
+			self.showErrorBox.setCheckState(Qt.Checked)
 		self.layout.addWidget(self.showErrorBox,3,5)
 
 		self.waitThreadLabel = QLabel(self.tr._translate("Autoexit of connect (sec.):"))
@@ -1175,6 +1208,13 @@ class AppletSettings(QWidget):
 		self.stayDebLogBox = KIntSpinBox(1, 50, 1, int(stayDebLog), self)
 		self.stayDebLogBox.setMaximumWidth(75)
 		self.layout.addWidget(self.stayDebLogBox, 5, 5)
+
+		self.showVersion = QLabel(self.tr._translate("Show Version :"))
+		self.layout.addWidget(self.showVersion,6,0)
+		self.showVersionBox = QCheckBox()
+		if int(showVersion) > 0 :
+			self.showVersionBox.setCheckState(Qt.Checked)
+		self.layout.addWidget(self.showVersionBox,6,5)
 
 		self.setLayout(self.layout)
 
@@ -1206,6 +1246,10 @@ class AppletSettings(QWidget):
 			Settings.setValue('ShowError', '1')
 		else:
 			Settings.setValue('ShowError', '0')
+		if self.showVersionBox.isChecked() :
+			Settings.setValue('ShowVersion', '1')
+		else:
+			Settings.setValue('ShowVersion', '0')
 
 		Settings.sync()
 

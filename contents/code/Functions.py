@@ -77,6 +77,7 @@ def addAccount(account, data_ = ['']):
 	Settings.setValue('connectMethod', str(data_[5]))
 	if str(data_[6]) != '0' :
 		Settings.setValue('lastElemValue', str(data_[6]))
+	Settings.setValue('Enabled', str(data_[7]))
 	Settings.endGroup()
 	Settings.sync()
 	LOCK.unlock()
@@ -93,9 +94,10 @@ def readAccountData(account = ''):
 	authMethod_ = Settings.value('authentificationMethod').toString()
 	connMethod_ = Settings.value('connectMethod').toString()
 	last_ = Settings.value('lastElemValue').toString()
+	enable = Settings.value('Enabled').toString()
 	Settings.endGroup()
 	LOCK.unlock()
-	return [str(serv_), str(port_), login_, '', str(authMethod_), str(connMethod_), str(last_)]
+	return [str(serv_), str(port_), login_, '', str(authMethod_), str(connMethod_), str(last_), str(enable)]
 
 def initPOP3Cache():
 	LOCK.lockForWrite()
