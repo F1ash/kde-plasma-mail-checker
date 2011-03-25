@@ -226,7 +226,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 		countNew = 0
 	except socket.error, x :
 		print dataStamp(), x, '  POP3_2'
-		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
+		ErrorMsg += '\n' + unicode(str(x),'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
@@ -290,7 +290,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 						From = ''
 						Subj = ''
 						Date = ''
-						for str_ in string.split(m.fetch(i,"(BODY[HEADER])")[1][0][1],'\r\n') :
+						for str_ in string.split(m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date from subject)])")[1][0][1],'\r\n') :
 							if str_[:5] == 'From:' :
 								_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
 								for part_str in email.header.decode_header(_str) :
