@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from imapUTF7 import imapUTF7Decode, imapUTF7Encode
 from PyQt4.QtCore import QString, QSettings, QReadWriteLock
 import poplib, imaplib, os, string, socket, time, os.path, random, sys, email.header
 
@@ -78,6 +79,8 @@ def addAccount(account, data_ = ['']):
 	if str(data_[6]) != '0' :
 		Settings.setValue('lastElemValue', str(data_[6]))
 	Settings.setValue('Enabled', str(data_[7]))
+	if str(data_[5]) == 'imap' :
+		Settings.setValue('Inbox', data_[8])
 	Settings.endGroup()
 	Settings.sync()
 	LOCK.unlock()
@@ -95,9 +98,14 @@ def readAccountData(account = ''):
 	connMethod_ = Settings.value('connectMethod').toString()
 	last_ = Settings.value('lastElemValue').toString()
 	enable = Settings.value('Enabled').toString()
+	if str(connMethod_) == 'imap' :
+		inbox = Settings.value('Inbox').toString()
+	else :
+		inbox = ''
 	Settings.endGroup()
 	LOCK.unlock()
-	return [str(serv_), str(port_), login_, '', str(authMethod_), str(connMethod_), str(last_), str(enable)]
+	return [str(serv_), str(port_), login_, '', \
+			str(authMethod_), str(connMethod_), str(last_), str(enable), inbox]
 
 def initPOP3Cache():
 	LOCK.lockForWrite()
@@ -274,7 +282,12 @@ def checkNewMailIMAP4(accountData = ['', '']):
 			m = imaplib.IMAP4(authentificationData[0], authentificationData[1])
 
 		if m.login( authentificationData[2], accountData[1] )[0] == 'OK' :
-			answer = m.select()
+			if authentificationData[8] == '' :
+				mailBox = 'INBOX'
+			else :
+				mailBox = unicode(QString(authentificationData[8]).toUtf8().data(), 'utf-8')
+			#print dataStamp(), mailBox
+			answer = m.select(imapUTF7Encode(mailBox))
 			if answer[0] == 'OK':
 				countAll = int(answer[1][0])
 				i = countAll
@@ -346,7 +359,8 @@ def checkNewMailIMAP4(accountData = ['', '']):
 				Settings.setValue('lastElemValue', '0')
 				Settings.endGroup()
 
-		m.close()
+		if answer[0] == 'OK' :
+			m.close()
 		m.logout()
 
 		Settings.sync()

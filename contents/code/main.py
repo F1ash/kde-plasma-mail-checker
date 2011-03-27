@@ -16,7 +16,7 @@ try :
 	from PyKDE4 import plasmascript
 	import string, time, os.path, sys, locale, signal
 	RESULT = []
-	VERSION = '0.15'
+	VERSION = '0.17'
 	Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 	ErrorMsg = ''
 	warningMsg = ''
@@ -929,6 +929,7 @@ class EditAccounts(QWidget):
 		self.connectMethodBox = KComboBox()
 		self.connectMethodBox.addItem('POP3',QVariant('pop'))
 		self.connectMethodBox.addItem('IMAP4',QVariant('imap'))
+		self.connect(self.connectMethodBox, SIGNAL("currentIndexChanged(const QString&)"), self.showCatalogChoice)
 		self.HB2Layout.addWidget(self.connectMethodBox,1,0)
 
 		self.HB2Layout.addWidget(QLabel(self.tr._translate("Encrypt : ")),0,1)
@@ -969,6 +970,16 @@ class EditAccounts(QWidget):
 
 		self.setLayout(self.VBLayout)
 
+	def showCatalogChoice(self, str_):
+		#print dataStamp() , 'signal received'
+		if str_ == 'IMAP4' :
+			if 'resultString' not in dir(self) :
+				self.resultString = 'INBOX'
+			catalog = EnterMailBox(self.resultString, self)
+			catalog.move(self.Parent.popupPosition(catalog.sizeHint()))
+			catalog.exec_()
+			#print dataStamp() , QString.fromUtf8(self.resultString)
+
 	def changePasswFlag(self):
 		self.passwordLineEdit.userTextChanged.disconnect(self.changePasswFlag)
 		self.passwordLineEdit.setPasswordMode(True)
@@ -1003,7 +1014,7 @@ class EditAccounts(QWidget):
 			self.accountListBox.addItem(accountName)
 			if self.passwordChanged :
 				self.Parent.wallet.writePassword(accountName, authData[3])
-			authData[3] = ''
+				authData[3] = ''
 			addAccount(accountName, authData)
 
 			self.accountList += [accountName]
@@ -1029,6 +1040,8 @@ class EditAccounts(QWidget):
 		self.connectMethodBox.setCurrentIndex(0)
 		self.cryptBox.setCurrentIndex(0)
 		self.enabledBox.setCheckState(Qt.Unchecked)
+		if 'resultString' in dir(self) :
+			del self.resultString
 
 	def editCurrentAccount(self):
 		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
@@ -1045,6 +1058,7 @@ class EditAccounts(QWidget):
 			self.enabledBox.setCheckState(Qt.Checked)
 		i = 0
 		count_ = int(self.connectMethodBox.count())
+		self.resultString = parameterList[8]
 		while i < count_ :
 			str_ = self.connectMethodBox.itemData(i).toString()
 			#print dataStamp() ,  str_, '-', str(parameterList[5]), '-', i
@@ -1106,10 +1120,14 @@ class EditAccounts(QWidget):
 			enable = '1'
 		else:
 			enable = '0'
+		if str(connectMethod) == 'imap' :
+			inbox = self.resultString
+		else :
+			inbox = None
 		# print dataStamp() ,  (accountName,accountServer,port_,connectMethod,cryptMethod, \
 		#												userName,userPassword, 'parsingVal')
 		return accountName,\
-				[ accountServer, port_, userName, userPassword, cryptMethod, connectMethod, '0', enable]
+				[ accountServer, port_, userName, userPassword, cryptMethod, connectMethod, '0', enable, inbox]
 
 	def delCurrentAccount(self, accountName = ''):
 		global Settings
@@ -1136,7 +1154,7 @@ class EditAccounts(QWidget):
 			pass
 
 		Settings.remove(accountName)
-		self.Parent.wallet.removeEntry(accountName)
+		if self.Status != 'CLEAR' : self.Parent.wallet.removeEntry(accountName)
 		try:
 			self.accountList.remove(accountName)
 		except ValueError, x :
@@ -1830,6 +1848,33 @@ class Font_n_Colour(QWidget):
 
 	def eventClose(self, event):
 		self.prnt.done(0)
+
+class EnterMailBox(KDialog):
+	def __init__(self, text_, parent = None):
+		KDialog.__init__(self, parent)
+		self.prnt = parent
+		self.text = text_
+
+		self.setWindowTitle('Choice of MailBox')
+		self.setButtons( KDialog.ButtonCode(KDialog.Ok | KDialog.Cancel) )
+		self.connect(self, SIGNAL("okClicked()"), self.ok)
+		self.connect(self, SIGNAL("cancelClicked()"), self.cancel)
+
+		self.browseText = KLineEdit()
+		self.browseText.setToolTip(u'Defailt MailBox : Inbox\nFor example, GMail specified mailbox :\n[Gmail]/All\nor\n[Gmail]/Вся почта')
+		self.browseText.setText(self.text)
+		self.setMainWidget(self.browseText)
+
+	def ok(self):
+		self.prnt.resultString = self.browseText.userText()
+		self.done(0)
+
+	def cancel(self):
+		self.prnt.resultString = self.text
+		self.done(0)
+
+	def closeEvent(self, event):
+		event.ignore()
 
 def CreateApplet(parent):
 	return plasmaMailChecker(parent)
