@@ -1005,7 +1005,7 @@ class EditAccounts(QWidget):
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
-		self.wallet.setFolder('plasmaMailChecker')
+		self.Parent.wallet.setFolder('plasmaMailChecker')
 		if self.Status == 'BUSY' :
 			return None
 		self.clearFields()
@@ -1017,7 +1017,7 @@ class EditAccounts(QWidget):
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
-		self.wallet.setFolder('plasmaMailChecker')
+		self.Parent.wallet.setFolder('plasmaMailChecker')
 		if self.Status == 'READY' :
 			accountName, authData = self.parsingValues()
 			if accountName == '' :
@@ -1063,7 +1063,7 @@ class EditAccounts(QWidget):
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
-		self.wallet.setFolder('plasmaMailChecker')
+		self.Parent.wallet.setFolder('plasmaMailChecker')
 		self.Status = 'BUSY'
 		accountName = self.accountListBox.currentItem().text()
 		self.oldAccountName = accountName
@@ -1111,7 +1111,7 @@ class EditAccounts(QWidget):
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			self.Parent.configDenied()
 			return None
-		self.wallet.setFolder('plasmaMailChecker')
+		self.Parent.wallet.setFolder('plasmaMailChecker')
 		if self.Status != 'FREE' :
 			return None
 		self.passwordLineEdit.setPasswordMode(True)
@@ -1152,7 +1152,7 @@ class EditAccounts(QWidget):
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
-		self.wallet.setFolder('plasmaMailChecker')
+		self.Parent.wallet.setFolder('plasmaMailChecker')
 		if self.Status == 'FREE' :
 			item_ = self.accountListBox.currentRow()
 			#accountGroup = self.accountListBox.currentItem()
@@ -1270,7 +1270,7 @@ class AppletSettings(QWidget):
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
-		self.wallet.setFolder('plasmaMailChecker')
+		self.Parent.wallet.setFolder('plasmaMailChecker')
 		Settings.setValue('TimeOut', str(self.timeOutBox.value()))
 		Settings.setValue('CountProbe', str(self.countProbeBox.value()))
 		Settings.setValue('WaitThread', str(self.waitThreadBox.value()))
@@ -1812,7 +1812,7 @@ class Font_n_Colour(QWidget):
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
-		self.wallet.setFolder('plasmaMailChecker')
+		self.Parent.wallet.setFolder('plasmaMailChecker')
 
 		Settings.setValue('headerFont', self.headerFontVar)
 		Settings.setValue('headerSize', self.headerSizeVar)
