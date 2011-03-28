@@ -16,7 +16,7 @@ try :
 	from PyKDE4 import plasmascript
 	import string, time, os.path, sys, locale, signal
 	RESULT = []
-	VERSION = '0.17'
+	VERSION = '0.18'
 	Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 	ErrorMsg = ''
 	warningMsg = ''
@@ -538,9 +538,9 @@ class plasmaMailChecker(plasmascript.Applet):
 					self.panelIcon.icon() ) )
 			return None
 
-		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+		self.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
 		if not (self.wallet is None) :
-			#global T
+			self.wallet.setFolder('plasmaMailChecker')
 			if not self.T.isRunning() :
 				# print dataStamp() ,  'start'
 				accData = []
@@ -733,7 +733,7 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def configAccepted(self):
 		self.disconnect(self, SIGNAL('refresh'), self.refreshData)
-		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+		self.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
 		if self.wallet is None :
 			self.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
@@ -771,7 +771,7 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def _enterPassword(self):
 		if not self.initStat :
-			self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+			self.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
 			if not (self.wallet is None) :
 				#print dataStamp() ,  '_eP'
 				self.enterPassword()
@@ -798,10 +798,12 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.emit(SIGNAL('refresh'))
 
 	def enterPassword(self):
-		self.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+		self.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
 		if not (self.wallet is None) :
+			if not self.wallet.hasFolder('plasmaMailChecker') : self.wallet.createFolder('plasmaMailChecker')
 			#print dataStamp() ,  'eP'
-			self.wallet.setFolder('Passwords')
+			self.wallet.setFolder('plasmaMailChecker')
+			self.importAccPasswords()
 			self.emit(SIGNAL('access'))
 		else :
 			#print dataStamp() ,  'eP_1'
@@ -850,6 +852,15 @@ class plasmaMailChecker(plasmascript.Applet):
 	def mouseDoubleClickEvent(self, ev):
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 			self.showConfigurationInterface()
+
+	def importAccPasswords(self):
+		if 'plasmaMailChecker' in self.wallet.walletList() :
+			self.old_wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+			if not (self.old_wallet is None) :
+				entryList = self.old_wallet.entryList()
+				for item in entryList :
+					self.wallet.writePassword( item, self.old_wallet.readPassword(item)[1] )
+				self.wallet.deleteWallet('plasmaMailChecker')
 
 class EditAccounts(QWidget):
 	def __init__(self, obj = None, parent = None):
@@ -988,10 +999,11 @@ class EditAccounts(QWidget):
 		self.connectFlag = False
 
 	def clearChangedAccount(self):
-		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
+		self.wallet.setFolder('plasmaMailChecker')
 		if self.Status == 'BUSY' :
 			return None
 		self.clearFields()
@@ -999,10 +1011,11 @@ class EditAccounts(QWidget):
 
 	def saveChangedAccount(self):
 		global Settings
-		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
+		self.wallet.setFolder('plasmaMailChecker')
 		if self.Status == 'READY' :
 			accountName, authData = self.parsingValues()
 			if accountName == '' :
@@ -1044,10 +1057,11 @@ class EditAccounts(QWidget):
 			del self.resultString
 
 	def editCurrentAccount(self):
-		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
+		self.wallet.setFolder('plasmaMailChecker')
 		self.Status = 'BUSY'
 		accountName = self.accountListBox.currentItem().text()
 		self.oldAccountName = accountName
@@ -1090,11 +1104,12 @@ class EditAccounts(QWidget):
 		self.Status = 'READY'
 
 	def addNewAccount(self):
-		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			self.Parent.configDenied()
 			return None
+		self.wallet.setFolder('plasmaMailChecker')
 		if self.Status != 'FREE' :
 			return None
 		self.passwordLineEdit.setPasswordMode(True)
@@ -1131,10 +1146,11 @@ class EditAccounts(QWidget):
 
 	def delCurrentAccount(self, accountName = ''):
 		global Settings
-		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
+		self.wallet.setFolder('plasmaMailChecker')
 		if self.Status == 'FREE' :
 			item_ = self.accountListBox.currentRow()
 			#accountGroup = self.accountListBox.currentItem()
@@ -1248,10 +1264,11 @@ class AppletSettings(QWidget):
 
 	def refreshSettings(self, parent = None):
 		global Settings
-		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
+		self.wallet.setFolder('plasmaMailChecker')
 		Settings.setValue('TimeOut', str(self.timeOutBox.value()))
 		Settings.setValue('CountProbe', str(self.countProbeBox.value()))
 		Settings.setValue('WaitThread', str(self.waitThreadBox.value()))
@@ -1789,10 +1806,11 @@ class Font_n_Colour(QWidget):
 
 	def refreshSettings(self, parent = None):
 		global Settings
-		self.Parent.wallet = KWallet.Wallet.openWallet('plasmaMailChecker', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
+		self.wallet.setFolder('plasmaMailChecker')
 
 		Settings.setValue('headerFont', self.headerFontVar)
 		Settings.setValue('headerSize', self.headerSizeVar)
