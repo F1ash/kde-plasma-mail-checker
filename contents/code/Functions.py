@@ -9,6 +9,32 @@ ErrorMsg = ''
 LOCK = QReadWriteLock()
 Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 
+def mailAttrToSTR(_str):
+	From = ''
+	Subj = ''
+	Date = ''
+	for str_ in string.split(_str, '\r\n') :
+		if str_[:5] == 'From:' :
+			From = decodeMailSTR(str_) + ' '
+			#print dataStamp(), From
+		if str_[:5] == 'Subje' :
+			Subj = decodeMailSTR(str_) + ' '
+			#print dataStamp(), Subj
+		if str_[:5] == 'Date:' :
+			Date = str_
+			#print dataStamp(), Date
+	return From + '\n' + Subj + '\n' + Date + '\n'
+
+def decodeMailSTR(str_):
+	obj = ''
+	_str = string.replace(str_, '"', '')
+	for part_str in email.header.decode_header(_str) :
+		if part_str[1] is None :
+			obj += part_str[0] + ' '
+		else :
+			obj += part_str[0].decode(part_str[1]) + ' '
+	return obj
+
 def dataStamp():
 	return time.strftime("%Y.%m.%d_%H:%M:%S", time.localtime()) + ' : '
 
@@ -199,25 +225,15 @@ def checkNewMailPOP3(accountData = ['', '']):
 						Date = ''
 						for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
 							if str_[:5] == 'From:' :
-								_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
-								for part_str in email.header.decode_header(_str) :
-									if part_str[1] is None :
-										From += part_str[0] + ' '
-									else :
-										From += part_str[0].decode(part_str[1]) + ' '
+								From += str_
 								#print dataStamp(), From
 							if str_[:5] == 'Subje' :
-								_str = string.replace(str_, '"', '')
-								for part_str in email.header.decode_header(_str) :
-									if part_str[1] is None :
-										Subj += part_str[0] + ' '
-									else :
-										Subj += part_str[0].decode(part_str[1]) + ' '
+								Subj += str_
 								#print dataStamp(), Subj
 							if str_[:5] == 'Date:' :
 								Date += str_
 								#print dataStamp(), Date
-						NewMailAttributes += to_unicode(From) + '\n' + to_unicode(Subj) + '\n' + Date + '\n'
+						NewMailAttributes += From + '\r\n' + Subj + '\r\n' + Date + '\r\n\r\n'
 						#print dataStamp(), NewMailAttributes, '   ------'
 						newMailExist = newMailExist or True
 						countNew += 1
@@ -302,30 +318,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 					currentElemTime = str(time.mktime(date_))
 					# print dataStamp(), currentElemTime
 					if currentElemTime > lastElemTime :
-						From = ''
-						Subj = ''
-						Date = ''
-						for str_ in string.split(m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date from subject)])")[1][0][1],'\r\n') :
-							if str_[:5] == 'From:' :
-								_str = string.replace(str_, '"', '')  ## for using email.header.decode_header
-								for part_str in email.header.decode_header(_str) :
-									if part_str[1] is None :
-										From += part_str[0] + ' '
-									else :
-										From += part_str[0].decode(part_str[1]) + ' '
-								#print dataStamp(), From
-							if str_[:5] == 'Subje' :
-								_str = string.replace(str_, '"', '')
-								for part_str in email.header.decode_header(_str) :
-									if part_str[1] is None :
-										Subj += part_str[0] + ' '
-									else :
-										Subj += part_str[0].decode(part_str[1]) + ' '
-								#print dataStamp(), Subj
-							if str_[:5] == 'Date:' :
-								Date = str_
-								#print dataStamp(), Date
-						NewMailAttributes += to_unicode(From) + '\n' + to_unicode(Subj) + '\n' + Date + '\n'
+						NewMailAttributes += m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date from subject)])")[1][0][1]
 						#print dataStamp(), NewMailAttributes, '   ----==------'
 						newMailExist = newMailExist or True
 						countNew += 1

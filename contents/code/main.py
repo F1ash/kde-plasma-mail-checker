@@ -16,7 +16,7 @@ try :
 	from PyKDE4 import plasmascript
 	import string, time, os.path, sys, locale, signal
 	RESULT = []
-	VERSION = '0.18'
+	VERSION = '0.19'
 	Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 	ErrorMsg = ''
 	warningMsg = ''
@@ -661,7 +661,9 @@ class plasmaMailChecker(plasmascript.Applet):
 				str_ = self.checkResult[i][4]
 				if str_ not in ['', ' ', '0'] :
 					#print dataStamp() ,  str_
-					STR_ += '\n' + to_unicode(str_)
+					for _str in string.split(str_, '\r\n\r\n') :
+						if _str not in ['', ' ', '\n'] :
+							STR_ += '\n' + mailAttrToSTR(_str)
 				i += 1
 			# print dataStamp() ,  'newM@ilExist'
 			# KNotification.beep()
