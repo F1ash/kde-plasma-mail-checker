@@ -2,12 +2,34 @@
 
 from imapUTF7 import imapUTF7Decode, imapUTF7Encode
 from PyQt4.QtCore import QString, QSettings, QReadWriteLock
-import poplib, imaplib, os, string, socket, time, os.path, random, sys, email.header
+import poplib, imaplib, os, string, socket, time, os.path, random, sys, email.header, datetime, locale
 
 global ErrorMsg
 ErrorMsg = ''
 LOCK = QReadWriteLock()
 Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
+
+dltHours = time.localtime().tm_hour - time.gmtime().tm_hour
+dltMinutes = time.localtime().tm_min - time.gmtime().tm_min
+dltLocal = datetime.timedelta(hours = dltHours, minutes = dltMinutes)
+
+lang = locale.getdefaultlocale()
+
+def utcDelta(str_):
+	hours_ = int(str_[:3])
+	minutes_ = int(str_[:1] + str_[-2:])
+	return datetime.timedelta(hours = hours_, minutes = minutes_)
+
+def dateFormat(str_):
+	print str_
+	locale.setlocale(locale.LC_ALL, 'C')
+	localTime = datetime.datetime.strptime( str_[6:-6], "%a, %d %b %Y %H:%M:%S" ) - utcDelta(str_[-5:]) + dltLocal
+	data_ = localTime.timetuple()
+	#return time.ctime(time.mktime(localTime.timetuple()))
+	locale.setlocale(locale.LC_ALL, lang)
+	dateSTR = time.strftime("%a, %d.%m.%Y %H:%M:%S", time.localtime(time.mktime(data_)))
+	print dateSTR
+	return 'Date: ' + QString().fromUtf8(dateSTR)
 
 def mailAttrToSTR(_str):
 	From = ''
@@ -16,26 +38,25 @@ def mailAttrToSTR(_str):
 	for str_ in string.split(_str, '\r\n') :
 		if str_[:5] == 'From:' :
 			From = decodeMailSTR(str_) + ' '
-			#print dataStamp(), From
+			#print dateStamp(), From
 		if str_[:5] == 'Subje' :
 			Subj = decodeMailSTR(str_) + ' '
-			#print dataStamp(), Subj
+			#print dateStamp(), Subj
 		if str_[:5] == 'Date:' :
 			Date = str_
-			#print dataStamp(), Date
-	return From + '\n' + Subj + '\n' + Date + '\n'
+			#print dateStamp(), Date
+	return From + '\n' + Subj + '\n' + dateFormat(Date) + '\n'
 
 def decodeMailSTR(str_):
 	obj = ''
-	_str = string.replace(str_, '"', '')
-	for part_str in email.header.decode_header(_str) :
+	for part_str in email.header.decode_header(str_) :
 		if part_str[1] is None :
 			obj += part_str[0] + ' '
 		else :
 			obj += part_str[0].decode(part_str[1]) + ' '
 	return obj
 
-def dataStamp():
+def dateStamp():
 	return time.strftime("%Y.%m.%d_%H:%M:%S", time.localtime()) + ' : '
 
 def cleanDebugOutputLogFiles(stay = 1):
@@ -82,7 +103,7 @@ def randomString(j = 1):
 def to_unicode(_str):
 	str_ = '<=junk_string=>'
 	try:
-		#print dataStamp(), _str, '---'
+		#print dateStamp(), _str, '---'
 		str_ = unicode(_str, 'UTF-8')
 	except TypeError:
 		str_ = _str
@@ -174,19 +195,19 @@ def savePOP3Cache():
 
 def defineUIDL(accountName = '', str_ = ''):
 	Result = True
-	# print dataStamp(), accountName
+	# print dateStamp(), accountName
 	x = ''
 	STR = []
 	try :
 		f = open('/dev/shm/' + QString(accountName).toUtf8().data() + '.cache', 'r')
 		STR = f.readlines()
 		f.close()
-		# print dataStamp(), STR
+		# print dateStamp(), STR
 	except x :
-		print dataStamp(), x, '  defUidl'
+		print dateStamp(), x, '  defUidl'
 	finally :
 		for uid_ in STR :
-			# print dataStamp(), string.split(uid_, '\n')[0] , '--- ', str_
+			# print dateStamp(), string.split(uid_, '\n')[0] , '--- ', str_
 			if str_ == string.split(uid_, '\n')[0] :
 				Result = False
 				break
@@ -226,15 +247,15 @@ def checkNewMailPOP3(accountData = ['', '']):
 						for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
 							if str_[:5] == 'From:' :
 								From += str_
-								#print dataStamp(), From
+								#print dateStamp(), From
 							if str_[:5] == 'Subje' :
 								Subj += str_
-								#print dataStamp(), Subj
+								#print dateStamp(), Subj
 							if str_[:5] == 'Date:' :
 								Date += str_
-								#print dataStamp(), Date
+								#print dateStamp(), Date
 						NewMailAttributes += From + '\r\n' + Subj + '\r\n' + Date + '\r\n\r\n'
-						#print dataStamp(), NewMailAttributes, '   ------'
+						#print dateStamp(), NewMailAttributes, '   ------'
 						newMailExist = newMailExist or True
 						countNew += 1
 
@@ -245,31 +266,31 @@ def checkNewMailPOP3(accountData = ['', '']):
 		m.quit()
 
 	except poplib.error_proto, x :
-		print dataStamp(), x, '  POP3_1'
+		print dateStamp(), x, '  POP3_1'
 		ErrorMsg += '\n' + unicode(x[0],'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except socket.error, x :
-		print dataStamp(), x, '  POP3_2'
+		print dateStamp(), x, '  POP3_2'
 		ErrorMsg += '\n' + unicode(str(x),'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except socket.gaierror, x :
-		print dataStamp(), x, '  POP3_3'
+		print dateStamp(), x, '  POP3_3'
 		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except UnicodeDecodeError, x :
-		print dataStamp(), x, '  POP3_4'
+		print dateStamp(), x, '  POP3_4'
 		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except x:
-		print dataStamp(), x, '  POP3_5'
+		print dateStamp(), x, '  POP3_5'
 		ErrorMsg += 'Unknown Error\n'
 		probeError = False
 		countAll = 0
@@ -297,12 +318,12 @@ def checkNewMailIMAP4(accountData = ['', '']):
 		else:
 			m = imaplib.IMAP4(authentificationData[0], authentificationData[1])
 
-		if m.login( authentificationData[2], accountData[1] )[0] == 'OK' :
+		if m.login( authentificationData[2], '\'' + accountData[1] + '\'' )[0] == 'OK' :
 			if authentificationData[8] == '' :
 				mailBox = 'INBOX'
 			else :
 				mailBox = unicode(QString(authentificationData[8]).toUtf8().data(), 'utf-8')
-			#print dataStamp(), mailBox
+			#print dateStamp(), mailBox
 			answer = m.select(imapUTF7Encode(mailBox))
 			if answer[0] == 'OK':
 				countAll = int(answer[1][0])
@@ -313,23 +334,23 @@ def checkNewMailIMAP4(accountData = ['', '']):
 												+ currentElemTime_raw[2] + ' ' \
 												+ currentElemTime_raw[3] + ' ' \
 												+ currentElemTime_raw[4]
-					# print dataStamp(), currentElemTime_Internal
+					# print dateStamp(), currentElemTime_Internal
 					date_ = imaplib.Internaldate2tuple(currentElemTime_Internal)
 					currentElemTime = str(time.mktime(date_))
-					# print dataStamp(), currentElemTime
+					# print dateStamp(), currentElemTime
 					if currentElemTime > lastElemTime :
 						NewMailAttributes += m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date from subject)])")[1][0][1]
-						#print dataStamp(), NewMailAttributes, '   ----==------'
+						#print dateStamp(), NewMailAttributes, '   ----==------'
 						newMailExist = newMailExist or True
 						countNew += 1
 					else:
 						break
 					i += -1
 			else:
-				#print dataStamp(), 'selectDirError'
+				#print dateStamp(), 'selectDirError'
 				probeError, countAll, countNew = False, 0, 0
 		else:
-			#print dataStamp(), 'AuthError'
+			#print dateStamp(), 'AuthError'
 			probeError, countAll, countNew = False, 0, 0
 
 		if newMailExist :
@@ -338,15 +359,15 @@ def checkNewMailIMAP4(accountData = ['', '']):
 									+ lastElemTime_raw[2] + ' ' \
 									+ lastElemTime_raw[3] + ' ' \
 									+ lastElemTime_raw[4]
-			# print dataStamp(), lastElemTime_Internal
+			# print dateStamp(), lastElemTime_Internal
 			date_ = imaplib.Internaldate2tuple(lastElemTime_Internal)
 			lastElemTime = str(time.mktime(date_))
-			# print dataStamp(), lastElemTime
+			# print dateStamp(), lastElemTime
 			Settings.beginGroup(accountData[0])
 			Settings.setValue('lastElemValue', lastElemTime)
 			Settings.endGroup()
 		else:
-			# print dataStamp(), 'New message(s) not found.'
+			# print dateStamp(), 'New message(s) not found.'
 			if countAll == 0 :
 				Settings.beginGroup(accountData[0])
 				Settings.setValue('lastElemValue', '0')
@@ -359,31 +380,31 @@ def checkNewMailIMAP4(accountData = ['', '']):
 		Settings.sync()
 
 	except imaplib.IMAP4.error, x :
-		print dataStamp(), x, '  IMAP4_1'
+		print dateStamp(), x, '  IMAP4_1'
 		ErrorMsg += '\n' + unicode(str(x),'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except socket.error, x :
-		print dataStamp(), x, '  IMAP4_2'
+		print dateStamp(), x, '  IMAP4_2'
 		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except socket.gaierror, x :
-		print dataStamp(), x, '  IMAP4_3'
+		print dateStamp(), x, '  IMAP4_3'
 		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except UnicodeDecodeError, x :
-		print dataStamp(), x, '  IMAP4_4'
+		print dateStamp(), x, '  IMAP4_4'
 		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
 		probeError = False
 		countAll = 0
 		countNew = 0
 	except x:
-		print dataStamp(), x, '  IMAP4_5'
+		print dateStamp(), x, '  IMAP4_5'
 		ErrorMsg += 'Unknown Error\n'
 		probeError = False
 		countAll = 0
@@ -400,7 +421,7 @@ def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', ''], acc = '')
 	new_ = 0
 	i = 0
 	while i < probe_ :
-		#print dataStamp(), 'Probe ', i + 1, to_unicode(authData[0])
+		#print dateStamp(), 'Probe ', i + 1, to_unicode(authData[0])
 		test_, all_, new_, content = checkNewMail(authData)
 		if test_ :
 			Result = True
@@ -408,16 +429,16 @@ def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', ''], acc = '')
 		i += 1
 		if i == probe_ :
 			ErrorMsg += "\nCan`t connect to server\non Account : " + to_unicode(acc) + '\n'
-	#print dataStamp(), ErrorMsg, '  errors'
+	#print dateStamp(), ErrorMsg, '  errors'
 	return Result, all_, new_, ErrorMsg, QString(content).toUtf8()
 
 def checkMail(accountData = ['', '']):
 	global Settings
 	Msg = ''
 	if accountData[0] != '' :
-		#print dataStamp(), accountData[0]
+		#print dateStamp(), accountData[0]
 		countProbe_raw = Settings.value('CountProbe')
-		#print dataStamp(), countProbe_raw.toString()
+		#print dateStamp(), countProbe_raw.toString()
 		account = QString().fromUtf8(accountData[0])
 		Settings.beginGroup(account)
 		connectMethod = Settings.value('connectMethod').toString()
@@ -425,12 +446,12 @@ def checkMail(accountData = ['', '']):
 		try:
 			countProbe = int(countProbe_raw.toString())
 		except ValueError:
-			print dataStamp(), '  checkMail'
+			print dateStamp(), '  checkMail'
 			countProbe = 3
 		finally:
 			pass
-		#print dataStamp(), str(connectMethod),'---'
-		#print dataStamp(), countProbe
+		#print dateStamp(), str(connectMethod),'---'
+		#print dateStamp(), countProbe
 		if str(connectMethod) == 'pop' :
 			return  connectProbe(countProbe, checkNewMailPOP3, [account, accountData[1]], accountData[0])
 		elif str(connectMethod) == 'imap' :

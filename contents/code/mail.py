@@ -4,7 +4,7 @@ from Functions import *
 
 if __name__ == '__main__':
 	account, passw, fileName = sys.argv[1], sys.argv[2], sys.argv[3]
-	#print dataStamp(), account, passw, fileName, '  thread'
+	#print dateStamp(), account, passw, fileName, '  thread'
 	if (account, passw) == ('','') :
 		Result = (False, 0, 0, '', '')
 	else :

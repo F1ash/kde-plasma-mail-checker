@@ -16,16 +16,16 @@ try :
 	from PyKDE4 import plasmascript
 	import string, time, os.path, sys, locale, signal
 	RESULT = []
-	VERSION = '0.20'
 	Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 	ErrorMsg = ''
 	warningMsg = ''
 	#sys.stderr = open('/dev/shm/errorMailChecker' + str(time.time()) + '.log','w')
 	sys.stdout = open('/tmp/outMailChecker' + time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
 except ImportError, warningMsg :
-	print dataStamp() ,  "ImportError", warningMsg
+	print "ImportError", warningMsg
 finally:
 	'O`key'
+	pass
 
 GeneralLOCK = QMutex()
 LOCK = QReadWriteLock()
@@ -35,7 +35,7 @@ class Translator(QTranslator):
 		QTranslator.__init__(self, parent)
 
 		lang = locale.getdefaultlocale()[0][:2]
-		#print dataStamp() ,  lang
+		#print dateStamp() ,  lang
 		_Path = self.user_or_sys(lang + '.qm')
 		self.load(QString(lang), QString(_Path), QString('qm'))
 		self.context = context
@@ -91,7 +91,7 @@ class ThreadCheckMail(QThread):
 		RESULT = []
 		for i in xrange(len(self.accountThread)) :
 			RESULT += [readDataFiles(self.dataList[i][1])]
-		#print dataStamp() ,  RESULT
+		#print dateStamp() ,  RESULT
 
 	def run(self):
 		try:
@@ -112,7 +112,7 @@ class ThreadCheckMail(QThread):
 					self.accountThread[i] = QProcess()
 					start, pid = self.accountThread[i].startDetached('/usr/bin/python', Data, os.getcwd())
 					self.dataList += [(pid, str_)]
-					#print dataStamp() ,  start, pid, Data.join(' ').toUtf8().data()
+					#print dateStamp() ,  start, pid, Data.join(' ').toUtf8().data()
 				else :
 					break
 				i += 1
@@ -127,7 +127,7 @@ class ThreadCheckMail(QThread):
 
 		except x :
 			self.Timer.stop()
-			print dataStamp() ,  x, '  thread'
+			print dateStamp() ,  x, '  thread'
 		finally :
 			self.Timer.stop()
 			if WAIT :
@@ -142,9 +142,9 @@ class ThreadCheckMail(QThread):
 		LOCK.lockForRead()
 		WAIT = False
 		LOCK.unlock()
-		print dataStamp() ,  WAIT, '  changed WAIT'
+		print dateStamp() ,  WAIT, '  changed WAIT'
 		ErrorMsg += 'Timeout thread error\n'
-		print dataStamp() ,  'Mail thread timeout terminating...'
+		print dateStamp() ,  'Mail thread timeout terminating...'
 		self.Timer.stop()
 		#QApplication.postEvent(self.Parent, QEvent(1010))
 		self._terminate()
@@ -156,12 +156,12 @@ class ThreadCheckMail(QThread):
 		LOCK.unlock()
 		for i in xrange(len(self.dataList)) :
 			if pid_exists(self.dataList[i][0], signal.SIGKILL) :
-				#print dataStamp() ,  self.dataList[i][0], '  killed'
+				#print dateStamp() ,  self.dataList[i][0], '  killed'
 				pass
 			else :
-				#print dataStamp() ,  self.dataList[i][0], '  not exist'
+				#print dateStamp() ,  self.dataList[i][0], '  not exist'
 				pass
-		print dataStamp() ,  'recive signal to kill...'
+		print dateStamp() ,  'recive signal to kill...'
 		self.readResult()
 		self.Parent.emit(SIGNAL('refresh'))
 		self.quit()
@@ -243,6 +243,18 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def initTitle(self):
 		global VERSION
+		fileName = self.kdehome + 'share/apps/plasma/plasmoids/plasmaMailChecker/metadata.desktop'
+		if os.path.exists(fileName) :
+			with open(fileName) as f :
+				str_ = f.read()
+			list_ = string.split(str_, '\n')
+			for _str in list_ :
+				if 'X-KDE-PluginInfo-Version' in _str :
+					VERSION = string.split(_str, '=')[1]
+					break
+		else :
+			VERSION = '~'
+		#print dateStamp() , "VERSION : ", VERSION
 		self.version = self.initValue('ShowVersion', '1')
 		if int(self.version) > 0 :
 			self.title = self.tr._translate('M@il Checker') + '\n' + VERSION
@@ -321,23 +333,23 @@ class plasmaMailChecker(plasmascript.Applet):
 	def initValue(self, key_, defaultValue = ''):
 		global Settings
 		if Settings.contains(key_) :
-			#print dataStamp() ,  key_, Settings.value(key_).toString()
+			#print dateStamp() ,  key_, Settings.value(key_).toString()
 			return Settings.value(key_).toString()
 		else :
 			if defaultValue == '' :
 				defaultValue = self.getSystemColor('int')
 			Settings.setValue(key_, QVariant(defaultValue))
-			#print dataStamp() ,  key_, Settings.value(key_).toString()
+			#print dateStamp() ,  key_, Settings.value(key_).toString()
 			return defaultValue
 
 	def getSystemColor(self, key_ = ''):
 		currentBrush = QPalette().windowText()
 		colour = currentBrush.color()
 		if key_ == 'int' :
-			#print dataStamp() ,  colour.rgba()
+			#print dateStamp() ,  colour.rgba()
 			return str(colour.rgba())
 		else :
-			#print dataStamp() ,  str(colour.getRgb())
+			#print dateStamp() ,  str(colour.getRgb())
 			return str(colour.getRgb())
 
 	def cursive_n_bold(self, bold, italic):
@@ -416,7 +428,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			del self.countList
 			del self.labelStat
 			del self.Dialog
-			#print dataStamp() ,  're-createDialog'
+			#print dateStamp() ,  're-createDialog'
 		self.Dialog = QGraphicsGridLayout()
 		i = 0
 		self.label = []
@@ -455,20 +467,20 @@ class plasmaMailChecker(plasmascript.Applet):
 		initPOP3Cache()
 
 		self.Timer.start(int(timeOut) * 1000)
-		print dataStamp() ,  'processInit'
+		print dateStamp() ,  'processInit'
 		QApplication.postEvent(self, QEvent(1011))
 
 	def createNotifyrc(self, kdehome):
 		# Output the notifyrc file to the correct location
-		print dataStamp() ,  "Outputting notifyrc file"
+		print dateStamp() ,  "Outputting notifyrc file"
 
 		dir_ = kdehome+"share/apps/plasmaMailChecker"
 		if not os.path.isdir(dir_):
 			try:
 				os.mkdir(dir_)
 			except:
-				print dataStamp() ,  "Problem creating directory: " + dir_
-				print dataStamp() ,  "Unexpected error:", sys.exc_info()[0]
+				print dateStamp() ,  "Problem creating directory: " + dir_
+				print dateStamp() ,  "Unexpected error:", sys.exc_info()[0]
 
 		# File to create
 		fn = kdehome+"share/apps/plasmaMailChecker/plasmaMailChecker.notifyrc"
@@ -492,12 +504,12 @@ class plasmaMailChecker(plasmascript.Applet):
 			f.writelines(c)
 			f.close()
 		except:
-			print dataStamp() ,  "Problem writing to file: " + fn
-			print dataStamp() ,  "Unexpected error:", sys.exc_info()[0]
+			print dateStamp() ,  "Problem writing to file: " + fn
+			print dateStamp() ,  "Unexpected error:", sys.exc_info()[0]
 
 	def eventNotification(self, str_ = ''):
 		KNotification.event("new-notification-arrived",\
-		str_,
+		QString(str_),
 		QPixmap(self.usualIconPath),
 		None,
 		KNotification.CloseOnTimeout,
@@ -505,7 +517,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		KComponentData.SkipMainComponentRegistration))
 
 	def _refreshData(self):
-		print dataStamp() , '_refresh'
+		print dateStamp() , '_refresh'
 		if self.initStat :
 			path_ = self.webIconPath
 
@@ -542,7 +554,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		if not (self.wallet is None) :
 			self.wallet.setFolder('plasmaMailChecker')
 			if not self.T.isRunning() :
-				# print dataStamp() ,  'start'
+				# print dateStamp() ,  'start'
 				accData = []
 				for accountName in string.split(Settings.value('Accounts').toString(),';') :
 					Settings.beginGroup(accountName)
@@ -553,18 +565,18 @@ class plasmaMailChecker(plasmascript.Applet):
 					else :
 						accData += [('','')]
 				self.T = ThreadCheckMail(self, accData, self.waitThread)
-				print dataStamp() ,  'time for wait thread : ', self.waitThread
+				print dateStamp() ,  'time for wait thread : ', self.waitThread
 				self.T.start()
 			else :
-				#print dataStamp() ,  'isRunning : send signal to kill...'
+				#print dateStamp() ,  'isRunning : send signal to kill...'
 				#self.emit(SIGNAL('killThread'))
 				pass
 		else:
 			self.emit(SIGNAL('refresh'))
-			# print dataStamp() ,  'false start'
+			# print dateStamp() ,  'false start'
 
 	def refreshData(self):
-		#print dataStamp() ,  'refresh'
+		#print dateStamp() ,  'refresh'
 		GeneralLOCK.lock()
 		global ErrorMsg
 		global RESULT
@@ -600,7 +612,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					self.panelIcon.icon() ) )
 
 		self.checkResult = RESULT
-		#print dataStamp() ,  self.checkResult, '  received Result'
+		#print dateStamp() ,  self.checkResult, '  received Result'
 		i = 0
 		newMailExist = False
 		self.listNewMail = ''
@@ -637,37 +649,40 @@ class plasmaMailChecker(plasmascript.Applet):
 					self.countList[i].setToolTip(text_2)
 
 			except IndexError, x :
-				print dataStamp() ,  x, '  refresh_1'
+				print dateStamp() ,  x, '  refresh_1'
 			except x :
-				print dataStamp() ,  x, '  refresh_2'
+				print dateStamp() ,  x, '  refresh_2'
 			except AttributeError, x:
-				#print dataStamp() ,  x, '  refresh_3'
+				#print dateStamp() ,  x, '  refresh_3'
 				pass
 			except UnboundLocalError, x :
-				print dataStamp() ,  x, '  refresh_4'
+				print dateStamp() ,  x, '  refresh_4'
 				pass
 			except x :
-				print dataStamp() ,  x, '  refresh_5'
+				print dateStamp() ,  x, '  refresh_5'
 				pass
 			finally:
 				pass
 			i += 1
 
-		#print dataStamp() ,  newMailExist and not noCheck
+		#print dateStamp() ,  newMailExist and not noCheck
 		if newMailExist and not noCheck :
 			STR_ = ''
 			i = 0
 			while i < len(self.checkResult) :
 				str_ = self.checkResult[i][4]
 				if str_ not in ['', ' ', '0'] :
-					#print dataStamp() ,  str_
+					#print dateStamp() ,  str_
 					for _str in string.split(str_, '\r\n\r\n') :
-						if _str not in ['', ' ', '\n'] :
+						if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
 							STR_ += '\n' + mailAttrToSTR(_str)
 				i += 1
-			# print dataStamp() ,  'newM@ilExist'
+			# print dateStamp() ,  'newM@ilExist'
 			# KNotification.beep()
 			# KNotification.StandardEvent(KNotification.Notification)
+			#print dateStamp() , QString(STR_).toUtf8().data()
+			STR_.replace('<', '&lt;')
+			STR_.replace('>', '&gt;')
 			self.eventNotification(self.tr._translate('New Massage(s) :') + STR_)
 
 		if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
@@ -741,17 +756,17 @@ class plasmaMailChecker(plasmascript.Applet):
 			return None
 		self.appletSettings.refreshSettings(self)
 		self.fontsNcolour.refreshSettings(self)
-		#print dataStamp() ,  self.formFactor(), '---'
+		#print dateStamp() ,  self.formFactor(), '---'
 		x = ''
 		try:
 			self.Timer.stop()
 			# останов потока проверки почты перед изменением GUI
 			self.emit(SIGNAL('killThread'))
 		except AttributeError, x:
-			print dataStamp() ,  x, '  acceptConf_1'
+			print dateStamp() ,  x, '  acceptConf_1'
 			pass
 		except x :
-			print dataStamp() ,  x, '  acceptConf_2'
+			print dateStamp() ,  x, '  acceptConf_2'
 		finally:
 			pass
 		savePOP3Cache()
@@ -775,20 +790,20 @@ class plasmaMailChecker(plasmascript.Applet):
 		if not self.initStat :
 			self.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
 			if not (self.wallet is None) :
-				#print dataStamp() ,  '_eP'
+				#print dateStamp() ,  '_eP'
 				self.enterPassword()
 			else :
-				#print dataStamp() ,  '_eP_1'
+				#print dateStamp() ,  '_eP_1'
 				return None
 		else :
 			x = ''
 			try:
 				self.Timer.stop()
 			except AttributeError, x :
-				print dataStamp() ,  x, '  _entP_1'
+				print dateStamp() ,  x, '  _entP_1'
 				pass
 			except x :
-				print dataStamp() ,  x, '  _entP_2'
+				print dateStamp() ,  x, '  _entP_2'
 			finally:
 				pass
 			#global T
@@ -796,23 +811,23 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.emit(SIGNAL('killThread'))
 			savePOP3Cache()
 			self.initStat = False
-			print dataStamp() ,  'stop_eP'
+			print dateStamp() ,  'stop_eP'
 			self.emit(SIGNAL('refresh'))
 
 	def enterPassword(self):
 		self.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
 		if not (self.wallet is None) :
 			if not self.wallet.hasFolder('plasmaMailChecker') : self.wallet.createFolder('plasmaMailChecker')
-			#print dataStamp() ,  'eP'
+			#print dateStamp() ,  'eP'
 			self.wallet.setFolder('plasmaMailChecker')
 			self.importAccPasswords()
 			self.emit(SIGNAL('access'))
 		else :
-			#print dataStamp() ,  'eP_1'
+			#print dateStamp() ,  'eP_1'
 			self.initStat = False
 
 	def eventClose(self):
-		print dataStamp() ,  '  eventCloseMethod'
+		print dateStamp() ,  '  eventCloseMethod'
 		self.initStat = False
 		self.disconnect(self, SIGNAL('refresh'), self.refreshData)
 		self.disconnect(self, SIGNAL('access'), self.processInit)
@@ -823,32 +838,32 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.Timer.stop()
 			if not (self.wallet is None) :
 				self.wallet.closeWallet('plasmaMailChecker', True)
-				print dataStamp() ,  ' wallet closed'
+				print dateStamp() ,  ' wallet closed'
 		except AttributeError, x :
-			print dataStamp() , x, '  eventClose_1'
+			print dateStamp() , x, '  eventClose_1'
 		except x :
-			print dataStamp() , x, '  eventClose_2'
+			print dateStamp() , x, '  eventClose_2'
 			pass
 		finally :
 			pass
 		try :
 			savePOP3Cache()
 		except IOError, x :
-			print dataStamp() ,x, '  eventClose_3'
+			print dateStamp() ,x, '  eventClose_3'
 		finally :
 			pass
 		self.killMailCheckerThread()
 		GeneralLOCK.unlock()
 		count = self.initValue('stayDebLog', '5')
 		cleanDebugOutputLogFiles(int(count))
-		print dataStamp() , "MailChecker destroyed manually."
+		print dateStamp() , "MailChecker destroyed manually."
 		#sys.stderr.close()
 		sys.stdout.close()
 
 	def killMailCheckerThread(self):
 		#self.loop.quit()
 		if 'T' in dir(self):
-			#print dataStamp() ,'   killMetod Up'
+			#print dateStamp() ,'   killMetod Up'
 			self.T._terminate()
 
 	def mouseDoubleClickEvent(self, ev):
@@ -883,12 +898,12 @@ class EditAccounts(QWidget):
 		i = 0
 		self.accountList = []
 		while i < Settings.childGroups().count() :
-			#print dataStamp() ,  str(Settings.childGroups().__getitem__(i)), '-'
+			#print dateStamp() ,  str(Settings.childGroups().__getitem__(i)), '-'
 			accountName = Settings.childGroups().__getitem__(i)
 			self.accountListBox.addItem(accountName)
 			self.accountList += [accountName]
 			i += 1
-		#print dataStamp() ,  self.accountList
+		#print dateStamp() ,  self.accountList
 		self.layout.addWidget(self.accountListBox,0,0,2,3)
 
 		self.stringEditor = KLineEdit()
@@ -950,6 +965,7 @@ class EditAccounts(QWidget):
 		self.cryptBox = KComboBox()
 		self.cryptBox.addItem('None',QVariant('None'))
 		self.cryptBox.addItem('SSL',QVariant('SSL'))
+		#self.cryptBox.addItem('TLS',QVariant('TLS'))
 		self.HB2Layout.addWidget(self.cryptBox,1,1)
 
 		self.HB2Layout.addWidget(QLabel(self.tr._translate("Changes : ")),0,2)
@@ -984,14 +1000,14 @@ class EditAccounts(QWidget):
 		self.setLayout(self.VBLayout)
 
 	def showCatalogChoice(self, str_):
-		#print dataStamp() , 'signal received'
+		#print dateStamp() , 'signal received'
 		if str_ == 'IMAP4' :
 			if 'resultString' not in dir(self) :
 				self.resultString = 'INBOX'
 			catalog = EnterMailBox(self.resultString, self)
 			catalog.move(self.Parent.popupPosition(catalog.sizeHint()))
 			catalog.exec_()
-			#print dataStamp() , QString.fromUtf8(self.resultString)
+			#print dateStamp() , QString.fromUtf8(self.resultString)
 
 	def changePasswFlag(self):
 		self.passwordLineEdit.userTextChanged.disconnect(self.changePasswFlag)
@@ -1077,7 +1093,7 @@ class EditAccounts(QWidget):
 		self.resultString = parameterList[8]
 		while i < count_ :
 			str_ = self.connectMethodBox.itemData(i).toString()
-			#print dataStamp() ,  str_, '-', str(parameterList[5]), '-', i
+			#print dateStamp() ,  str_, '-', str(parameterList[5]), '-', i
 			if str_ == str(parameterList[5]) :
 				self.connectMethodBox.setCurrentIndex(i)
 			elif i == count_ - 1 :
@@ -1087,13 +1103,13 @@ class EditAccounts(QWidget):
 		count_ = int(self.cryptBox.count())
 		while i < count_ :
 			str_ = self.cryptBox.itemData(i).toString()
-			#print dataStamp() ,  str_, '-', str(parameterList[4]), '-', i
+			#print dateStamp() ,  str_, '-', str(parameterList[4]), '-', i
 			if str_ == str(parameterList[4]) :
 				self.cryptBox.setCurrentIndex(i)
 			elif i == count_ - 1 :
 				self.cryptBox.setCurrentIndex(0)
 			i += 1
-		#print dataStamp() ,  parameterList[1]
+		#print dateStamp() ,  parameterList[1]
 		self.portBox.setValue(int(parameterList[1]))
 		self.userNameLineEdit.setText(parameterList[2])
 		self.passwordChanged = False
@@ -1141,7 +1157,7 @@ class EditAccounts(QWidget):
 			inbox = self.resultString
 		else :
 			inbox = None
-		# print dataStamp() ,  (accountName,accountServer,port_,connectMethod,cryptMethod, \
+		# print dateStamp() ,  (accountName,accountServer,port_,connectMethod,cryptMethod, \
 		#												userName,userPassword, 'parsingVal')
 		return accountName,\
 				[ accountServer, port_, userName, userPassword, cryptMethod, connectMethod, '0', enable, inbox]
@@ -1159,7 +1175,7 @@ class EditAccounts(QWidget):
 			if item_ == -1 :
 				return None
 			accountName = (self.accountListBox.takeItem(item_)).text()
-			# print dataStamp() ,  accountName.text(), str(accountName.text())
+			# print dateStamp() ,  accountName.text(), str(accountName.text())
 		elif self.Status != 'CLEAR' :
 			return None
 		else:
@@ -1176,7 +1192,7 @@ class EditAccounts(QWidget):
 		try:
 			self.accountList.remove(accountName)
 		except ValueError, x :
-			print dataStamp() ,  x, '  delAcc'
+			print dateStamp() ,  x, '  delAcc'
 			pass
 		finally:
 			pass
@@ -1257,11 +1273,11 @@ class AppletSettings(QWidget):
 	def initValue(self, key_, default = '0'):
 		global Settings
 		if Settings.contains(key_) :
-			#print dataStamp() ,  key_, Settings.value(key_).toString()
+			#print dateStamp() ,  key_, Settings.value(key_).toString()
 			return Settings.value(key_).toString()
 		else :
 			Settings.setValue(key_, QVariant(default))
-			#print dataStamp() ,  key_, Settings.value(key_).toString()
+			#print dateStamp() ,  key_, Settings.value(key_).toString()
 			return default
 
 	def refreshSettings(self, parent = None):
@@ -1558,23 +1574,23 @@ class Font_n_Colour(QWidget):
 	def initValue(self, key_, defaultValue = ''):
 		global Settings
 		if Settings.contains(key_) :
-			#print dataStamp() ,  key_, Settings.value(key_).toString()
+			#print dateStamp() ,  key_, Settings.value(key_).toString()
 			return Settings.value(key_).toString()
 		else :
 			if defaultValue == '' :
 				defaultValue = self.getSystemColor('int')
 			Settings.setValue(key_, QVariant(defaultValue))
-			#print dataStamp() ,  key_, Settings.value(key_).toString()
+			#print dateStamp() ,  key_, Settings.value(key_).toString()
 			return defaultValue
 
 	def getSystemColor(self, key_ = ''):
 		currentBrush = QPalette().windowText()
 		colour = currentBrush.color()
 		if key_ == 'int' :
-			#print dataStamp() ,  colour.rgba()
+			#print dateStamp() ,  colour.rgba()
 			return str(colour.rgba())
 		else :
-			#print dataStamp() ,  str(colour.getRgb())
+			#print dateStamp() ,  str(colour.getRgb())
 			return str(colour.getRgb())
 
 	def cursive_n_bold(self, bold, italic):
@@ -1620,11 +1636,11 @@ class Font_n_Colour(QWidget):
 									'">' + prefix + self.tr._translate('Header :') + suffix + '</font>')
 
 	def headerColour(self):
-		#print dataStamp() ,  self.headerColourVar, type(self.headerColourVar), QString(self.headerColourVar).toUInt()
+		#print dateStamp() ,  self.headerColourVar, type(self.headerColourVar), QString(self.headerColourVar).toUInt()
 		colour, yes, style = self.getColour(QString(self.headerColourVar).toUInt())
 		if yes :
 			self.headerColourVar = colour
-			#print dataStamp() ,  self.headerColourVar, type(self.headerColourVar)
+			#print dateStamp() ,  self.headerColourVar, type(self.headerColourVar)
 			self.headerColourStyle = style
 			prefix, suffix = self.cursive_n_bold(self.headerBoldVar, self.headerItalVar)
 			self.headerFontLabel.clear()
