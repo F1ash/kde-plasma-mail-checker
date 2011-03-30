@@ -21,30 +21,42 @@ def utcDelta(str_):
 	return datetime.timedelta(hours = hours_, minutes = minutes_)
 
 def dateFormat(str_):
-	print str_
+	#print str_, '???'
 	locale.setlocale(locale.LC_ALL, 'C')
-	localTime = datetime.datetime.strptime( str_[6:31], "%a, %d %b %Y %H:%M:%S" ) - utcDelta(str_[32:37]) + dltLocal
-	data_ = localTime.timetuple()
-	#return time.ctime(time.mktime(localTime.timetuple()))
-	locale.setlocale(locale.LC_ALL, lang)
-	dateSTR = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(time.mktime(data_)))
-	print dateSTR
+	try:
+		localTime = datetime.datetime.strptime( str_[6:31], "%a, %d %b %Y %H:%M:%S" ) - \
+															utcDelta(str_[32:37]) + dltLocal
+		data_ = localTime.timetuple()
+		#return time.ctime(time.mktime(localTime.timetuple()))
+		locale.setlocale(locale.LC_ALL, lang)
+		dateSTR = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(time.mktime(data_)))
+	except ValueError:
+		dateSTR = 'get Date error'
+	#print dateSTR
 	return 'Date: ' + QString().fromUtf8(dateSTR)
 
-def mailAttrToSTR(_str):
+def mailAttrToSTR(str_):
 	From = ''
 	Subj = ''
 	Date = ''
-	for str_ in string.split(_str, '\r\n') :
-		if str_[:5] == 'From:' :
-			From = decodeMailSTR(str_) + ' '
-			#print dateStamp(), From
-		if str_[:5] == 'Subje' :
-			Subj = decodeMailSTR(str_) + ' '
-			#print dateStamp(), Subj
-		if str_[:5] == 'Date:' :
-			Date = str_
-			#print dateStamp(), Date
+	STR_= str_
+	for different in ['\r\nSubject: ', '\r\nDate', ''] :
+		if different != '' :
+			raw_str = string.split(STR_, different)[0]
+		else :
+			raw_str = STR_
+		if raw_str[:5] == 'From:' :
+			_str = decodeMailSTR(raw_str[6:]) + ' '
+			From = _str
+			#print dateStamp(), From, 'From'
+		elif raw_str[:5] == 'Subje' :
+			_str = decodeMailSTR(raw_str[9:]) + ' '
+			Subj = _str
+			#print dateStamp(), Subj, 'Subj'
+		elif raw_str[:5] == 'Date:' :
+			Date = raw_str
+			#print dateStamp(), Date, 'Date'
+		STR_ = STR_.replace( raw_str + '\r\n', '' )
 	return From + '\n' + Subj + '\n' + dateFormat(Date) + '\n'
 
 def decodeMailSTR(str_):
