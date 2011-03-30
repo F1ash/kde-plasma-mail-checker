@@ -23,11 +23,11 @@ def utcDelta(str_):
 def dateFormat(str_):
 	print str_
 	locale.setlocale(locale.LC_ALL, 'C')
-	localTime = datetime.datetime.strptime( str_[6:-6], "%a, %d %b %Y %H:%M:%S" ) - utcDelta(str_[-5:]) + dltLocal
+	localTime = datetime.datetime.strptime( str_[6:31], "%a, %d %b %Y %H:%M:%S" ) - utcDelta(str_[32:37]) + dltLocal
 	data_ = localTime.timetuple()
 	#return time.ctime(time.mktime(localTime.timetuple()))
 	locale.setlocale(locale.LC_ALL, lang)
-	dateSTR = time.strftime("%a, %d.%m.%Y %H:%M:%S", time.localtime(time.mktime(data_)))
+	dateSTR = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(time.mktime(data_)))
 	print dateSTR
 	return 'Date: ' + QString().fromUtf8(dateSTR)
 
@@ -318,12 +318,12 @@ def checkNewMailIMAP4(accountData = ['', '']):
 		else:
 			m = imaplib.IMAP4(authentificationData[0], authentificationData[1])
 
-		if m.login( authentificationData[2], '\'' + accountData[1] + '\'' )[0] == 'OK' :
+		if m.login( authentificationData[2], accountData[1] )[0] == 'OK' :
 			if authentificationData[8] == '' :
 				mailBox = 'INBOX'
 			else :
 				mailBox = unicode(QString(authentificationData[8]).toUtf8().data(), 'utf-8')
-			#print dateStamp(), mailBox
+			#print dateStamp(), mailBox, imapUTF7Encode(mailBox)
 			answer = m.select(imapUTF7Encode(mailBox))
 			if answer[0] == 'OK':
 				countAll = int(answer[1][0])
