@@ -40,11 +40,14 @@ def mailAttrToSTR(str_):
 	Subj = ''
 	Date = ''
 	STR_= str_
-	for different in ['\r\nSubject: ', '\r\nDate', ''] :
+	#print '\n\n New header fields'
+	#print STR_, '\n'
+	for different in ['\r\nFrom', '\r\nSubject: ', ''] :
 		if different != '' :
 			raw_str = string.split(STR_, different)[0]
 		else :
 			raw_str = STR_
+		#print dateStamp(), raw_str, 'raw_str'
 		if raw_str[:5] == 'From:' :
 			_str = decodeMailSTR(raw_str[6:]) + ' '
 			From = _str
@@ -266,7 +269,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 							if str_[:5] == 'Date:' :
 								Date += str_
 								#print dateStamp(), Date
-						NewMailAttributes += From + '\r\n' + Subj + '\r\n' + Date + '\r\n\r\n'
+						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ------'
 						newMailExist = newMailExist or True
 						countNew += 1
