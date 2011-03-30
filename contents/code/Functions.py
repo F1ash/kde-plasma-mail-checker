@@ -15,6 +15,17 @@ dltLocal = datetime.timedelta(hours = dltHours, minutes = dltMinutes)
 
 lang = locale.getdefaultlocale()
 
+def htmlWrapper((From_, Subj_, Date_) = ('', '', ''),
+				((pref1, suff1), (pref2, suff2), (pref3, suff3)) = (('', ''), ('', ''), ('', ''))) :
+	From_ = From_.replace('<', '&lt;')
+	From_ = From_.replace('>', '&gt;')
+	Subj_ = Subj_.replace('<', '&lt;')
+	Subj_ = Subj_.replace('>', '&gt;')
+	From = pref1 + From_ + suff1
+	Subj = pref2 + Subj_ + suff2
+	Date = pref3 + Date_ + suff3
+	return 'From: ' + From + '\n' + 'Subj: ' + Subj + '\n' + 'Date: ' + Date
+
 def utcDelta(str_):
 	hours_ = int(str_[:3])
 	minutes_ = int(str_[:1] + str_[-2:])
@@ -33,7 +44,7 @@ def dateFormat(str_):
 	except ValueError:
 		dateSTR = 'get Date error'
 	#print dateSTR
-	return 'Date: ' + QString().fromUtf8(dateSTR)
+	return QString().fromUtf8(dateSTR)
 
 def mailAttrToSTR(str_):
 	From = ''
@@ -60,7 +71,7 @@ def mailAttrToSTR(str_):
 			Date = raw_str
 			#print dateStamp(), Date, 'Date'
 		STR_ = STR_.replace( raw_str + '\r\n', '' )
-	return From + '\n' + Subj + '\n' + dateFormat(Date) + '\n'
+	return From, Subj, dateFormat(Date)
 
 def decodeMailSTR(str_):
 	obj = ''

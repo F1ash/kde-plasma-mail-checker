@@ -263,55 +263,73 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.TitleDialog.setText(self.headerPref + self.title + self.headerSuff)
 
 	def initColourAndFont(self):
-		self.headerFontVar = self.initValue('headerFont')
+		self.headerFontVar = self.initValue('headerFont', ' ')
 		self.headerSizeVar = self.initValue('headerSize')
 		self.headerBoldVar = self.initValue('headerBold')
 		self.headerItalVar = self.initValue('headerItal')
 		self.headerColourVar = self.initValue('headerColour')
 
-		self.accountFontVar = self.initValue('accountFont')
+		self.accountFontVar = self.initValue('accountFont', ' ')
 		self.accountSizeVar = self.initValue('accountSize')
 		self.accountBoldVar = self.initValue('accountBold')
 		self.accountItalVar = self.initValue('accountItal')
 		self.accountColourVar = self.initValue('accountColour')
-		self.accountSFontVar = self.initValue('accountSFont')
+		self.accountSFontVar = self.initValue('accountSFont', ' ')
 		self.accountSSizeVar = self.initValue('accountSSize')
 		self.accountSBoldVar = self.initValue('accountSBold')
 		self.accountSItalVar = self.initValue('accountSItal')
 		self.accountSColourVar = self.initValue('accountSColour')
 
-		self.accountToolTipFontVar = self.initValue('accountToolTipFont')
+		self.accountToolTipFontVar = self.initValue('accountToolTipFont', ' ')
 		self.accountToolTipSizeVar = self.initValue('accountToolTipSize')
 		self.accountToolTipBoldVar = self.initValue('accountToolTipBold')
 		self.accountToolTipItalVar = self.initValue('accountToolTipItal')
 		self.accountToolTipColourVar = self.initValue('accountToolTipColour')
-		self.accountToolTipSFontVar = self.initValue('accountToolTipSFont')
+		self.accountToolTipSFontVar = self.initValue('accountToolTipSFont', ' ')
 		self.accountToolTipSSizeVar = self.initValue('accountToolTipSSize')
 		self.accountToolTipSBoldVar = self.initValue('accountToolTipSBold')
 		self.accountToolTipSItalVar = self.initValue('accountToolTipSItal')
 		self.accountToolTipSColourVar = self.initValue('accountToolTipSColour')
 
-		self.countFontVar = self.initValue('countFont')
+		self.countFontVar = self.initValue('countFont', ' ')
 		self.countSizeVar = self.initValue('countSize')
 		self.countBoldVar = self.initValue('countBold')
 		self.countItalVar = self.initValue('countItal')
 		self.countColourVar = self.initValue('countColour')
-		self.countSFontVar = self.initValue('countSFont')
+		self.countSFontVar = self.initValue('countSFont', ' ')
 		self.countSSizeVar = self.initValue('countSSize')
 		self.countSBoldVar = self.initValue('countSBold')
 		self.countSItalVar = self.initValue('countSItal')
 		self.countSColourVar = self.initValue('countSColour')
 
-		self.countToolTipFontVar = self.initValue('countToolTipFont')
+		self.countToolTipFontVar = self.initValue('countToolTipFont', ' ')
 		self.countToolTipSizeVar = self.initValue('countToolTipSize')
 		self.countToolTipBoldVar = self.initValue('countToolTipBold')
 		self.countToolTipItalVar = self.initValue('countToolTipItal')
 		self.countToolTipColourVar = self.initValue('countToolTipColour')
-		self.countToolTipSFontVar = self.initValue('countToolTipSFont')
+		self.countToolTipSFontVar = self.initValue('countToolTipSFont', ' ')
 		self.countToolTipSSizeVar = self.initValue('countToolTipSSize')
 		self.countToolTipSBoldVar = self.initValue('countToolTipSBold')
 		self.countToolTipSItalVar = self.initValue('countToolTipSItal')
 		self.countToolTipSColourVar = self.initValue('countToolTipSColour')
+
+		self.fieldFromFontVar = self.initValue('fieldFromFont', ' ')
+		self.fieldFromSizeVar = self.initValue('fieldFromSize')
+		self.fieldFromBoldVar = self.initValue('fieldFromBold')
+		self.fieldFromItalVar = self.initValue('fieldFromItal')
+		self.fieldFromColourVar = self.initValue('fieldFromColour')
+
+		self.fieldSubjFontVar = self.initValue('fieldSubjFont', ' ')
+		self.fieldSubjSizeVar = self.initValue('fieldSubjSize')
+		self.fieldSubjBoldVar = self.initValue('fieldSubjBold')
+		self.fieldSubjItalVar = self.initValue('fieldSubjItal')
+		self.fieldSubjColourVar = self.initValue('fieldSubjColour')
+
+		self.fieldDateFontVar = self.initValue('fieldDateFont', ' ')
+		self.fieldDateSizeVar = self.initValue('fieldDateSize')
+		self.fieldDateBoldVar = self.initValue('fieldDateBold')
+		self.fieldDateItalVar = self.initValue('fieldDateItal')
+		self.fieldDateColourVar = self.initValue('fieldDateColour')
 
 		self.headerColourStyle = self.getRGBaStyle(QString(self.headerColourVar).toUInt())
 		self.accountColourStyle = self.getRGBaStyle(QString(self.accountColourVar).toUInt())
@@ -400,6 +418,18 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.countTTSPref, self.countTTSSuff = self.getPrefixAndSuffix( \
 							self.countToolTipSBoldVar, self.countToolTipSItalVar, \
 							self.countToolTipSFontVar, True, self.countToolTipSColourVar)
+		self.fieldFromPref, self.fieldFromSuff = self.getPrefixAndSuffix( \
+							self.fieldFromBoldVar, self.fieldFromItalVar, \
+							self.fieldFromFontVar, True, self.fieldFromColourVar)
+		self.fieldSubjPref, self.fieldSubjSuff = self.getPrefixAndSuffix( \
+							self.fieldSubjBoldVar, self.fieldSubjItalVar, \
+							self.fieldSubjFontVar, True, self.fieldSubjColourVar)
+		self.fieldDatePref, self.fieldDateSuff = self.getPrefixAndSuffix( \
+							self.fieldDateBoldVar, self.fieldDateItalVar, \
+							self.fieldDateFontVar, True, self.fieldDateColourVar)
+		self.mailAttrColor = ((self.fieldFromPref, self.fieldFromSuff), \
+								(self.fieldSubjPref, self.fieldSubjSuff), \
+								(self.fieldDatePref, self.fieldDateSuff))
 
 	def customEvent(self, event):
 		if event.type() == QEvent.User :
@@ -675,14 +705,12 @@ class plasmaMailChecker(plasmascript.Applet):
 					#print dateStamp() ,  str_
 					for _str in string.split(str_, '\r\n\r\n') :
 						if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
-							STR_ += '\n' + mailAttrToSTR(_str)
+							STR_ += '\n' + htmlWrapper(mailAttrToSTR(_str), self.mailAttrColor) + '\n'
 				i += 1
 			# print dateStamp() ,  'newM@ilExist'
 			# KNotification.beep()
 			# KNotification.StandardEvent(KNotification.Notification)
-			#print dateStamp() , QString(STR_).toUtf8().data()
-			STR_.replace('<', '&lt;')
-			STR_.replace('>', '&gt;')
+			# print dateStamp() , QString(STR_).toUtf8().data()
 			self.eventNotification(self.tr._translate('New Massage(s) :') + STR_)
 
 		if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
@@ -1341,55 +1369,73 @@ class Font_n_Colour(QWidget):
 		self.tr = Translator('Font_n_Colour')
 		global Settings
 
-		self.headerFontVar = self.initValue('headerFont')
+		self.headerFontVar = self.initValue('headerFont', ' ')
 		self.headerSizeVar = self.initValue('headerSize')
 		self.headerBoldVar = self.initValue('headerBold')
 		self.headerItalVar = self.initValue('headerItal')
 		self.headerColourVar = self.initValue('headerColour')
 
-		self.accountFontVar = self.initValue('accountFont')
+		self.accountFontVar = self.initValue('accountFont', ' ')
 		self.accountSizeVar = self.initValue('accountSize')
 		self.accountBoldVar = self.initValue('accountBold')
 		self.accountItalVar = self.initValue('accountItal')
 		self.accountColourVar = self.initValue('accountColour')
-		self.accountSFontVar = self.initValue('accountSFont')
+		self.accountSFontVar = self.initValue('accountSFont', ' ')
 		self.accountSSizeVar = self.initValue('accountSSize')
 		self.accountSBoldVar = self.initValue('accountSBold')
 		self.accountSItalVar = self.initValue('accountSItal')
 		self.accountSColourVar = self.initValue('accountSColour')
 
-		self.accountToolTipFontVar = self.initValue('accountToolTipFont')
+		self.accountToolTipFontVar = self.initValue('accountToolTipFont', ' ')
 		self.accountToolTipSizeVar = self.initValue('accountToolTipSize')
 		self.accountToolTipBoldVar = self.initValue('accountToolTipBold')
 		self.accountToolTipItalVar = self.initValue('accountToolTipItal')
 		self.accountToolTipColourVar = self.initValue('accountToolTipColour')
-		self.accountToolTipSFontVar = self.initValue('accountToolTipSFont')
+		self.accountToolTipSFontVar = self.initValue('accountToolTipSFont', ' ')
 		self.accountToolTipSSizeVar = self.initValue('accountToolTipSSize')
 		self.accountToolTipSBoldVar = self.initValue('accountToolTipSBold')
 		self.accountToolTipSItalVar = self.initValue('accountToolTipSItal')
 		self.accountToolTipSColourVar = self.initValue('accountToolTipSColour')
 
-		self.countFontVar = self.initValue('countFont')
+		self.countFontVar = self.initValue('countFont', ' ')
 		self.countSizeVar = self.initValue('countSize')
 		self.countBoldVar = self.initValue('countBold')
 		self.countItalVar = self.initValue('countItal')
 		self.countColourVar = self.initValue('countColour')
-		self.countSFontVar = self.initValue('countSFont')
+		self.countSFontVar = self.initValue('countSFont', ' ')
 		self.countSSizeVar = self.initValue('countSSize')
 		self.countSBoldVar = self.initValue('countSBold')
 		self.countSItalVar = self.initValue('countSItal')
 		self.countSColourVar = self.initValue('countSColour')
 
-		self.countToolTipFontVar = self.initValue('countToolTipFont')
+		self.countToolTipFontVar = self.initValue('countToolTipFont', ' ')
 		self.countToolTipSizeVar = self.initValue('countToolTipSize')
 		self.countToolTipBoldVar = self.initValue('countToolTipBold')
 		self.countToolTipItalVar = self.initValue('countToolTipItal')
 		self.countToolTipColourVar = self.initValue('countToolTipColour')
-		self.countToolTipSFontVar = self.initValue('countToolTipSFont')
+		self.countToolTipSFontVar = self.initValue('countToolTipSFont', ' ')
 		self.countToolTipSSizeVar = self.initValue('countToolTipSSize')
 		self.countToolTipSBoldVar = self.initValue('countToolTipSBold')
 		self.countToolTipSItalVar = self.initValue('countToolTipSItal')
 		self.countToolTipSColourVar = self.initValue('countToolTipSColour')
+
+		self.fieldFromFontVar = self.initValue('fieldFromFont', ' ')
+		self.fieldFromSizeVar = self.initValue('fieldFromSize')
+		self.fieldFromBoldVar = self.initValue('fieldFromBold')
+		self.fieldFromItalVar = self.initValue('fieldFromItal')
+		self.fieldFromColourVar = self.initValue('fieldFromColour')
+
+		self.fieldSubjFontVar = self.initValue('fieldSubjFont', ' ')
+		self.fieldSubjSizeVar = self.initValue('fieldSubjSize')
+		self.fieldSubjBoldVar = self.initValue('fieldSubjBold')
+		self.fieldSubjItalVar = self.initValue('fieldSubjItal')
+		self.fieldSubjColourVar = self.initValue('fieldSubjColour')
+
+		self.fieldDateFontVar = self.initValue('fieldDateFont', ' ')
+		self.fieldDateSizeVar = self.initValue('fieldDateSize')
+		self.fieldDateBoldVar = self.initValue('fieldDateBold')
+		self.fieldDateItalVar = self.initValue('fieldDateItal')
+		self.fieldDateColourVar = self.initValue('fieldDateColour')
 
 		self.headerColourStyle = self.getRGBaStyle(QString(self.headerColourVar).toUInt())
 		self.accountColourStyle = self.getRGBaStyle(QString(self.accountColourVar).toUInt())
@@ -1400,6 +1446,9 @@ class Font_n_Colour(QWidget):
 		self.countSColourStyle = self.getRGBaStyle(QString(self.countSColourVar).toUInt())
 		self.countToolTipColourStyle = self.getRGBaStyle(QString(self.countToolTipColourVar).toUInt())
 		self.countToolTipSColourStyle = self.getRGBaStyle(QString(self.countToolTipSColourVar).toUInt())
+		self.fieldFromColourStyle = self.getRGBaStyle(QString(self.fieldFromColourVar).toUInt())
+		self.fieldSubjColourStyle = self.getRGBaStyle(QString(self.fieldSubjColourVar).toUInt())
+		self.fieldDateColourStyle = self.getRGBaStyle(QString(self.fieldDateColourVar).toUInt())
 
 		self.fontIconPath = self.user_or_sys('icons/font.png')
 		self.colourIconPath = self.user_or_sys('icons/color.png')
@@ -1569,6 +1618,54 @@ class Font_n_Colour(QWidget):
 		self.connect(self.countToolTipSColourButton, SIGNAL('clicked()'), self.countToolTipSColour)
 		self.layout.addWidget(self.countToolTipSColourButton, 5, 4)
 
+		prefix, suffix = self.cursive_n_bold(self.fieldFromBoldVar, self.fieldFromItalVar)
+		self.fieldFromFontLabel = QLabel('<font face="' + self.fieldFromFontVar + \
+											'">' + prefix + self.tr._translate('field From :') + suffix + '</font>')
+		self.fieldFromFontLabel.setStyleSheet(self.fieldFromColourStyle)
+		self.layout.addWidget(self.fieldFromFontLabel, 6, 0)
+
+		self.fieldFromFontButton = QPushButton(self.fontIcon, '')
+		self.fieldFromFontButton.setToolTip('Font')
+		self.fieldFromFontButton.clicked.connect(self.fieldFromFont)
+		self.layout.addWidget(self.fieldFromFontButton, 6, 1)
+
+		self.fieldFromColourButton = QPushButton(self.colourIcon, '')
+		self.fieldFromColourButton.setToolTip('Color')
+		self.connect(self.fieldFromColourButton, SIGNAL('clicked()'), self.fieldFromColour)
+		self.layout.addWidget(self.fieldFromColourButton, 6, 2)
+
+		prefix, suffix = self.cursive_n_bold(self.fieldSubjBoldVar, self.fieldSubjItalVar)
+		self.fieldSubjFontLabel = QLabel('<font face="' + self.fieldSubjFontVar + \
+											'">' + prefix + self.tr._translate('field Subj :') + suffix + '</font>')
+		self.fieldSubjFontLabel.setStyleSheet(self.fieldSubjColourStyle)
+		self.layout.addWidget(self.fieldSubjFontLabel, 7, 0)
+
+		self.fieldSubjFontButton = QPushButton(self.fontIcon, '')
+		self.fieldSubjFontButton.setToolTip('Font')
+		self.fieldSubjFontButton.clicked.connect(self.fieldSubjFont)
+		self.layout.addWidget(self.fieldSubjFontButton, 7, 1)
+
+		self.fieldSubjColourButton = QPushButton(self.colourIcon, '')
+		self.fieldSubjColourButton.setToolTip('Color')
+		self.connect(self.fieldSubjColourButton, SIGNAL('clicked()'), self.fieldSubjColour)
+		self.layout.addWidget(self.fieldSubjColourButton, 7, 2)
+
+		prefix, suffix = self.cursive_n_bold(self.fieldDateBoldVar, self.fieldDateItalVar)
+		self.fieldDateFontLabel = QLabel('<font face="' + self.fieldDateFontVar + \
+											'">' + prefix + self.tr._translate('field Date :') + suffix + '</font>')
+		self.fieldDateFontLabel.setStyleSheet(self.fieldDateColourStyle)
+		self.layout.addWidget(self.fieldDateFontLabel, 8, 0)
+
+		self.fieldDateFontButton = QPushButton(self.fontIcon, '')
+		self.fieldDateFontButton.setToolTip('Font')
+		self.fieldDateFontButton.clicked.connect(self.fieldDateFont)
+		self.layout.addWidget(self.fieldDateFontButton, 8, 1)
+
+		self.fieldDateColourButton = QPushButton(self.colourIcon, '')
+		self.fieldDateColourButton.setToolTip('Color')
+		self.connect(self.fieldDateColourButton, SIGNAL('clicked()'), self.fieldDateColour)
+		self.layout.addWidget(self.fieldDateColourButton, 8, 2)
+
 		self.setLayout(self.layout)
 
 	def initValue(self, key_, defaultValue = ''):
@@ -1647,6 +1744,75 @@ class Font_n_Colour(QWidget):
 			self.headerFontLabel.setStyleSheet(style)
 			self.headerFontLabel.setText('<font face="' + self.headerFontVar + \
 							'">' + prefix + self.tr._translate('Header :') + suffix + '</font>')
+
+	def fieldFromFont(self):
+		font, size, bold, ital, yes = self.getFont(QFont(self.fieldFromFontVar))
+		if yes :
+			self.fieldFromFontVar, self.fieldFromSizeVar, self.fieldFromBoldVar, self.fieldFromItalVar = font, size, bold, ital
+			prefix, suffix = self.cursive_n_bold(self.fieldFromBoldVar, self.fieldFromItalVar)
+			self.fieldFromFontLabel.clear()
+			self.fieldFromFontLabel.setStyleSheet(self.fieldFromColourStyle)
+			self.fieldFromFontLabel.setText('<font face="' + self.fieldFromFontVar + \
+									'">' + prefix + self.tr._translate('field From :') + suffix + '</font>')
+
+	def fieldFromColour(self):
+		#print dateStamp() ,  self.fieldFromColourVar, type(self.fieldFromColourVar), QString(self.fieldFromColourVar).toUInt()
+		colour, yes, style = self.getColour(QString(self.fieldFromColourVar).toUInt())
+		if yes :
+			self.fieldFromColourVar = colour
+			#print dateStamp() ,  self.fieldFromColourVar, type(self.fieldFromColourVar)
+			self.fieldFromColourStyle = style
+			prefix, suffix = self.cursive_n_bold(self.fieldFromBoldVar, self.fieldFromItalVar)
+			self.fieldFromFontLabel.clear()
+			self.fieldFromFontLabel.setStyleSheet(style)
+			self.fieldFromFontLabel.setText('<font face="' + self.fieldFromFontVar + \
+							'">' + prefix + self.tr._translate('field From :') + suffix + '</font>')
+
+	def fieldSubjFont(self):
+		font, size, bold, ital, yes = self.getFont(QFont(self.fieldSubjFontVar))
+		if yes :
+			self.fieldSubjFontVar, self.fieldSubjSizeVar, self.fieldSubjBoldVar, self.fieldSubjItalVar = font, size, bold, ital
+			prefix, suffix = self.cursive_n_bold(self.fieldSubjBoldVar, self.fieldSubjItalVar)
+			self.fieldSubjFontLabel.clear()
+			self.fieldSubjFontLabel.setStyleSheet(self.fieldSubjColourStyle)
+			self.fieldSubjFontLabel.setText('<font face="' + self.fieldSubjFontVar + \
+									'">' + prefix + self.tr._translate('field Subj :') + suffix + '</font>')
+
+	def fieldSubjColour(self):
+		#print dateStamp() ,  self.fieldSubjColourVar, type(self.fieldSubjColourVar), QString(self.fieldSubjColourVar).toUInt()
+		colour, yes, style = self.getColour(QString(self.fieldSubjColourVar).toUInt())
+		if yes :
+			self.fieldSubjColourVar = colour
+			#print dateStamp() ,  self.fieldSubjColourVar, type(self.fieldSubjColourVar)
+			self.fieldSubjColourStyle = style
+			prefix, suffix = self.cursive_n_bold(self.fieldSubjBoldVar, self.fieldSubjItalVar)
+			self.fieldSubjFontLabel.clear()
+			self.fieldSubjFontLabel.setStyleSheet(style)
+			self.fieldSubjFontLabel.setText('<font face="' + self.fieldSubjFontVar + \
+							'">' + prefix + self.tr._translate('field Subj :') + suffix + '</font>')
+
+	def fieldDateFont(self):
+		font, size, bold, ital, yes = self.getFont(QFont(self.fieldDateFontVar))
+		if yes :
+			self.fieldDateFontVar, self.fieldDateSizeVar, self.fieldDateBoldVar, self.fieldDateItalVar = font, size, bold, ital
+			prefix, suffix = self.cursive_n_bold(self.fieldDateBoldVar, self.fieldDateItalVar)
+			self.fieldDateFontLabel.clear()
+			self.fieldDateFontLabel.setStyleSheet(self.fieldDateColourStyle)
+			self.fieldDateFontLabel.setText('<font face="' + self.fieldDateFontVar + \
+									'">' + prefix + self.tr._translate('field Date :') + suffix + '</font>')
+
+	def fieldDateColour(self):
+		#print dateStamp() ,  self.fieldDateColourVar, type(self.fieldDateColourVar), QString(self.fieldDateColourVar).toUInt()
+		colour, yes, style = self.getColour(QString(self.fieldDateColourVar).toUInt())
+		if yes :
+			self.fieldDateColourVar = colour
+			#print dateStamp() ,  self.fieldDateColourVar, type(self.fieldDateColourVar)
+			self.fieldDateColourStyle = style
+			prefix, suffix = self.cursive_n_bold(self.fieldDateBoldVar, self.fieldDateItalVar)
+			self.fieldDateFontLabel.clear()
+			self.fieldDateFontLabel.setStyleSheet(style)
+			self.fieldDateFontLabel.setText('<font face="' + self.fieldDateFontVar + \
+							'">' + prefix + self.tr._translate('field Date :') + suffix + '</font>')
 
 	def accountFont(self):
 		font, size, bold, ital, yes = self.getFont(QFont(self.accountFontVar))
@@ -1879,6 +2045,24 @@ class Font_n_Colour(QWidget):
 		Settings.setValue('countToolTipSBold', self.countToolTipSBoldVar)
 		Settings.setValue('countToolTipSItal', self.countToolTipSItalVar)
 		Settings.setValue('countToolTipSColour', self.countToolTipSColourVar)
+
+		Settings.setValue('fieldFromFont', self.fieldFromFontVar)
+		Settings.setValue('fieldFromSize', self.fieldFromSizeVar)
+		Settings.setValue('fieldFromBold', self.fieldFromBoldVar)
+		Settings.setValue('fieldFromItal', self.fieldFromItalVar)
+		Settings.setValue('fieldFromColour', self.fieldFromColourVar)
+
+		Settings.setValue('fieldSubjFont', self.fieldSubjFontVar)
+		Settings.setValue('fieldSubjSize', self.fieldSubjSizeVar)
+		Settings.setValue('fieldSubjBold', self.fieldSubjBoldVar)
+		Settings.setValue('fieldSubjItal', self.fieldSubjItalVar)
+		Settings.setValue('fieldSubjColour', self.fieldSubjColourVar)
+
+		Settings.setValue('fieldDateFont', self.fieldDateFontVar)
+		Settings.setValue('fieldDateSize', self.fieldDateSizeVar)
+		Settings.setValue('fieldDateBold', self.fieldDateBoldVar)
+		Settings.setValue('fieldDateItal', self.fieldDateItalVar)
+		Settings.setValue('fieldDateColour', self.fieldDateColourVar)
 
 		Settings.sync()
 

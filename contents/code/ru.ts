@@ -255,5 +255,20 @@ ToolTip :</source>
         <translation>Подсказка
 количества :</translation>
     </message>
+    <message>
+        <location filename="main.py" line="1487"/>
+        <source>field From :</source>
+        <translation>От кого :</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="1487"/>
+        <source>field Subj :</source>
+        <translation>Тема :</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="1487"/>
+        <source>field Date :</source>
+        <translation>Дата :</translation>
+    </message>
 </context>
 </TS>
