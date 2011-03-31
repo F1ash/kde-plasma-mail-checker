@@ -59,6 +59,8 @@ def mailAttrToSTR(str_):
 		else :
 			raw_str = STR_
 		#print dateStamp(), raw_str, 'raw_str'
+		count = raw_str.count('\r\n') - 2
+		raw_str = raw_str.replace('\r\n', '', count)
 		if raw_str[:5] == 'From:' :
 			_str = decodeMailSTR(raw_str[6:]) + ' '
 			From = _str
