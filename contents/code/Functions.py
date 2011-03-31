@@ -59,18 +59,15 @@ def mailAttrToSTR(str_):
 		else :
 			raw_str = STR_
 		#print dateStamp(), raw_str, 'raw_str'
-		count = raw_str.count('\r\n') - 2
-		raw_str = raw_str.replace('\r\n', '', count)
-		if raw_str[:5] == 'From:' :
-			_str = decodeMailSTR(raw_str[6:]) + ' '
-			From = _str
+		_str = raw_str.replace('\r\n', '')
+		if _str[:5] == 'From:' :
+			From = decodeMailSTR(_str[6:]) + ' '
 			#print dateStamp(), From, 'From'
-		elif raw_str[:5] == 'Subje' :
-			_str = decodeMailSTR(raw_str[9:]) + ' '
-			Subj = _str
+		elif _str[:5] == 'Subje' :
+			Subj = decodeMailSTR(_str[9:]) + ' '
 			#print dateStamp(), Subj, 'Subj'
-		elif raw_str[:5] == 'Date:' :
-			Date = raw_str
+		elif _str[:5] == 'Date:' :
+			Date = _str
 			#print dateStamp(), Date, 'Date'
 		STR_ = STR_.replace( raw_str + '\r\n', '' )
 	return From, Subj, dateFormat(Date)
