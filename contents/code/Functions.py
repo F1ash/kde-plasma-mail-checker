@@ -367,7 +367,14 @@ def checkNewMailIMAP4(accountData = ['', '']):
 					currentElemTime = str(time.mktime(date_))
 					# print dateStamp(), currentElemTime
 					if currentElemTime > lastElemTime :
-						NewMailAttributes += m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date from subject)])")[1][0][1]
+						Date = ''
+						From = ''
+						Subj = ''
+						Date = string.replace(m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date)])")[1][0][1], '\r\n\r\n', '')
+						From = string.replace(m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (from)])")[1][0][1], '\r\n\r\n', '')
+						Subj = string.replace(m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (subject)])")[1][0][1], '\r\n\r\n', '')
+						# NewMailAttributes += m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date from subject)])")[1][0][1]
+						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ----==------'
 						newMailExist = newMailExist or True
 						countNew += 1
