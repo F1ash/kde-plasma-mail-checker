@@ -74,7 +74,8 @@ def mailAttrToSTR(str_):
 
 def decodeMailSTR(str_):
 	obj = ''
-	for part_str in email.header.decode_header(str_) :
+	_str = str_.replace('"', '')
+	for part_str in email.header.decode_header(_str) :
 		if part_str[1] is None :
 			obj += part_str[0] + ' '
 		else :
