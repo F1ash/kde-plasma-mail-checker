@@ -16,7 +16,8 @@ dltLocal = datetime.timedelta(hours = dltHours, minutes = dltMinutes)
 lang = locale.getdefaultlocale()
 
 def htmlWrapper((From_, Subj_, Date_) = ('', '', ''),
-				((pref1, suff1), (pref2, suff2), (pref3, suff3)) = (('', ''), ('', ''), ('', ''))) :
+				((pref1, suff1), (pref2, suff2), (pref3, suff3)) \
+				= (('', ''), ('', ''), ('', ''))) :
 	From_ = From_.replace('<', '&lt;')
 	From_ = From_.replace('>', '&gt;')
 	Subj_ = Subj_.replace('<', '&lt;')
@@ -32,10 +33,10 @@ def utcDelta(str_):
 	return datetime.timedelta(hours = hours_, minutes = minutes_)
 
 def dateFormat(str_):
-	#print str_, '???'
+	# print str_, '???'
 	locale.setlocale(locale.LC_ALL, 'C')
 	try:
-		localTime = datetime.datetime.strptime( str_[6:31], "%a, %d %b %Y %H:%M:%S" ) - \
+		localTime = datetime.datetime.strptime( str_[6:30], "%a, %d %b %Y %H:%M:%S" ) - \
 															utcDelta(str_[32:37]) + dltLocal
 		data_ = localTime.timetuple()
 		#return time.ctime(time.mktime(localTime.timetuple()))
@@ -43,6 +44,8 @@ def dateFormat(str_):
 		dateSTR = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(time.mktime(data_)))
 	except ValueError:
 		dateSTR = 'get Date error'
+	finally :
+		locale.setlocale(locale.LC_ALL, lang)
 	#print dateSTR
 	return QString().fromUtf8(dateSTR)
 
@@ -74,7 +77,7 @@ def mailAttrToSTR(str_):
 
 def decodeMailSTR(str_):
 	obj = ''
-	_str = str_.replace('"', '')
+	_str = str_.replace('"', '&quot;')
 	for part_str in email.header.decode_header(_str) :
 		if part_str[1] is None :
 			obj += part_str[0] + ' '

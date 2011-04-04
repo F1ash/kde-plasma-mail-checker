@@ -166,6 +166,11 @@ Set Account Name!</source>
         <translation>..запущено..</translation>
     </message>
     <message>
+        <location filename="main.py" line="710"/>
+        <source>In </source>
+        <translation>В </translation>
+    </message>
+    <message>
         <location filename="main.py" line="628"/>
         <source>Mail
 Checking</source>
@@ -254,6 +259,11 @@ ToolTip :</source>
 ToolTip :</source>
         <translation>Подсказка
 количества :</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="1487"/>
+        <source>field Box :</source>
+        <translation>Название ящика :</translation>
     </message>
     <message>
         <location filename="main.py" line="1487"/>
