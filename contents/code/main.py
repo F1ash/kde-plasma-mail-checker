@@ -815,7 +815,6 @@ class plasmaMailChecker(plasmascript.Applet):
 		savePOP3Cache()
 		# refresh color & font Variables
 		self.initPrefixAndSuffix()
-		self.initAkonadi()
 		del self.dialog
 		# refresh plasmoid Header
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
