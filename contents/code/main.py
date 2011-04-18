@@ -8,6 +8,7 @@ try :
 	global WAIT
 	global VERSION
 	from Functions import *
+	from AkonadiMod import *
 	from PyQt4.QtCore import *
 	from PyQt4.QtGui import *
 	from PyKDE4.kdecore import *
@@ -447,7 +448,6 @@ class plasmaMailChecker(plasmascript.Applet):
 			self._refreshData()
 		elif event.type() == 1010 :
 			self.emit(SIGNAL('killThread'))
-		pass
 
 	def user_or_sys(self, path_):
 		var1 = self.kdehome + 'share/apps/plasma/plasmoids/plasmaMailChecker/contents/' + path_
@@ -508,6 +508,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.Timer.start(int(timeOut) * 1000)
 		print dateStamp() ,  'processInit'
 		QApplication.postEvent(self, QEvent(1011))
+		self.initAkonadi()
 
 	def createNotifyrc(self, kdehome):
 		# Output the notifyrc file to the correct location
@@ -776,6 +777,8 @@ class plasmaMailChecker(plasmascript.Applet):
 		parent.addPage(self.passwordManipulate, self.tr._translate("Password Manipulation"))
 		self.fontsNcolour = Font_n_Colour(self, parent)
 		parent.addPage(self.fontsNcolour, self.tr._translate("Font and Colour"))
+		self.akonadiResources = AkonadiResources(self, parent)
+		parent.addPage(self.akonadiResources, self.tr._translate("Akonadi Mail Resources"))
 		self.connect(parent, SIGNAL("okClicked()"), self.configAccepted)
 		self.connect(parent, SIGNAL("cancelClicked()"), self.configDenied)
 
@@ -812,6 +815,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		savePOP3Cache()
 		# refresh color & font Variables
 		self.initPrefixAndSuffix()
+		self.initAkonadi()
 		del self.dialog
 		# refresh plasmoid Header
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -918,6 +922,18 @@ class plasmaMailChecker(plasmascript.Applet):
 				for item in entryList :
 					self.wallet.writePassword( item, self.old_wallet.readPassword(item)[1] )
 				self.wallet.deleteWallet('plasmaMailChecker')
+
+	def initAkonadi(self):
+		global ModuleExist
+		global StateSTR
+		if not ModuleExist or Akonadi.ServerManager.state() == Akonadi.ServerManager.State(4) :
+			return None
+		print dateStamp(), 'Module PyKDE4.akonadi && Akonadi server are available. '
+		if akonadiAccountList().count() != 0 and Akonadi.ServerManager.state() == Akonadi.ServerManager.State(2) :
+			if 'monitor' in dir(self) :
+				del self.monitor
+			self.monitor = AkonadiMonitor(self)
+			self.monitor.initAccounts()
 
 class EditAccounts(QWidget):
 	def __init__(self, obj = None, parent = None):
@@ -2159,6 +2175,289 @@ class EnterMailBox(KDialog):
 
 	def closeEvent(self, event):
 		event.ignore()
+
+class AkonadiResources(QWidget):
+	def __init__(self, obj = None, parent = None):
+		QWidget.__init__(self)
+
+		self.Parent = obj
+		self.prnt = parent
+		self.tr = Translator('AkonadiResources')
+
+		global ModuleExist
+		global StateSTR
+		print dateStamp(), 'Module PyKDE4.akonadi is'
+		if not ModuleExist :
+			print '\tnot'
+		else :
+			print '\tavailable.'
+			self.init()
+
+	def init(self):
+
+		self.Status = 'FREE'
+		self.connectFlag = False
+		global Settings
+		self.layout = QGridLayout()
+
+		self.VBLayout = QVBoxLayout()
+
+		self.akonadiServer = QPushButton('&Restart')
+		#self.akonadiServer.setMaximumWidth(50)
+		self.akonadiServer.setToolTip(self.tr._translate("Restart Akonadi Server"))
+		self.akonadiServer.clicked.connect(self.restartAkonadi)
+		self.layout.addWidget(self.akonadiServer, 0, 4)
+
+		self.akonadiState = QLabel()
+		self.akonadiState.setText( 'Akonadi Server is : ' + StateSTR[Akonadi.ServerManager.state()] )
+		self.layout.addWidget(self.akonadiState, 0, 0)
+
+		self.accountListBox = KListWidget()
+		self.accountListBox.hide()
+		self.accountList = []
+		for accountName in akonadiAccountList():
+			self.accountListBox.addItem(accountName)
+			self.accountList += [accountName]
+		#print dateStamp() ,  self.accountList
+		self.layout.addWidget(self.accountListBox,1,0,2,3)
+
+		self.stringEditor = KLineEdit()
+		self.stringEditor.hide()
+		self.stringEditor.setToolTip(self.tr._translate("Deprecated char : '<b>;</b>'"))
+		self.stringEditor.setContextMenuEnabled(True)
+		self.layout.addWidget(self.stringEditor,3,0)
+
+		self.addAccountItem = QPushButton('&Add')
+		self.addAccountItem.hide()
+		self.addAccountItem.setToolTip(self.tr._translate("Add new Account"))
+		self.addAccountItem.clicked.connect(self.addNewAccount)
+		self.layout.addWidget(self.addAccountItem,3,4)
+
+		self.editAccountItem = QPushButton('&Edit')
+		self.editAccountItem.hide()
+		self.editAccountItem.setToolTip(self.tr._translate("Edit current Account"))
+		self.editAccountItem.clicked.connect(self.editCurrentAccount)
+		self.layout.addWidget(self.editAccountItem,2,4)
+
+		self.delAccountItem = QPushButton('&Del')
+		self.delAccountItem.hide()
+		self.delAccountItem.setToolTip(self.tr._translate("Delete current Account"))
+		self.delAccountItem.clicked.connect(self.delCurrentAccount)
+		self.layout.addWidget(self.delAccountItem,1,4)
+
+		self.VBLayout.addLayout(self.layout)
+
+		self.HB1Layout = QGridLayout()
+
+		self.collectionIDLabel = QLabel()
+		self.collectionIDLabel.hide()
+		self.collectionIDLabel.setText('Collection :')
+		self.HB1Layout.addWidget(self.collectionIDLabel, 0, 0)
+
+		self.collectionID = QLabel()
+		self.collectionID.hide()
+		self.collectionID.setText('-- "" --')
+		self.HB1Layout.addWidget(self.collectionID, 0, 1)
+
+		self.collectionResource = QLabel()
+		self.collectionResource.hide()
+		self.collectionResource.setText('-- "" --')
+		self.HB1Layout.addWidget(self.collectionResource, 0, 2)
+
+		self.HB1Layout.addWidget(QLabel(self.tr._translate("Enable : ")), 0, 3)
+
+		self.enabledBox = QCheckBox()
+		Enabled = AppletSettings().initValue('Enabled', '1')
+		self.enabledBox.setCheckState(Qt.Unchecked)
+		self.enabledBox.hide()
+		self.HB1Layout.addWidget(self.enabledBox,0,4, Qt.AlignHCenter)
+
+		self.VBLayout.addLayout(self.HB1Layout)
+
+		self.HB2Layout = QGridLayout()
+
+		self.collectionChoice = QLabel()
+		self.collectionChoice.hide()
+		self.collectionChoice.setText('Search:')
+		self.HB2Layout.addWidget(self.collectionChoice, 0, 0)
+
+		self.searchColl = QPushButton('...')
+		self.stringEditor.hide()
+		self.searchColl.clicked.connect(self.collectionSearch)
+		self.HB2Layout.addWidget(self.searchColl,0,1)
+
+		self.saveChanges = QPushButton('&Save')
+		self.saveChanges.hide()
+		self.saveChanges.clicked.connect(self.saveChangedAccount)
+		self.HB2Layout.addWidget(self.saveChanges,0,2)
+
+		self.clearChanges = QPushButton('&Clear')
+		self.clearChanges.hide()
+		self.clearChanges.clicked.connect(self.clearChangedAccount)
+		self.HB2Layout.addWidget(self.clearChanges,0,3)
+
+		self.VBLayout.addLayout(self.HB2Layout)
+
+		self.setLayout(self.VBLayout)
+
+		if Akonadi.ServerManager.state() != Akonadi.ServerManager.State(4) :
+			self.initAkonadiAccountManager()
+
+	def initAkonadiAccountManager(self):
+		self.enabledBox.show()
+		self.accountListBox.show()
+		self.stringEditor.show()
+		self.addAccountItem.show()
+		self.clearChanges.show()
+		self.saveChanges.show()
+		self.collectionChoice.show()
+		self.collectionResource.show()
+		self.collectionID.show()
+		self.collectionIDLabel.show()
+		self.delAccountItem.show()
+		self.editAccountItem.show()
+
+	def collectionSearch(self):
+		self.Control = ControlWidget()
+		self.Control.move(self.Parent.popupPosition(self.Control.size()))
+		if self.Control.exec_() :
+			col = self.Control.selectedCollection()
+			## print dateStamp(), col.name().toUtf8(), col.id(), col.resource()
+			self.collectionID.setText(str(col.id()))
+			self.stringEditor.setText(col.name())
+			self.collectionResource.setText(col.resource())
+
+	def clearChangedAccount(self):
+		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		if self.Parent.wallet is None :
+			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
+			return None
+		if self.Status == 'BUSY' :
+			return None
+		self.clearFields()
+		self.Status = 'FREE'
+
+	def saveChangedAccount(self):
+		global Settings
+		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		if self.Parent.wallet is None :
+			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
+			return None
+		if self.Status == 'READY' :
+			accountName = self.stringEditor.userText()
+			if accountName == '' :
+				self.clearChangedAccount()
+				self.Parent.eventNotification(self.tr._translate("Warning :\nSet Account Name!"))
+				return None
+			self.Status = 'CLEAR'
+			self.delCurrentAccount(self.oldAccountName)
+			self.accountListBox.addItem(accountName)
+			if self.enabledBox.isChecked() :
+				enable = '1'
+			else:
+				enable = '0'
+			Settings.beginGroup('Akonadi account')
+			Settings.setValue(accountName, self.collectionID.text() + ' <||> ' +  enable)
+			Settings.endGroup()
+
+			self.accountList += [accountName]
+			self.clearFields()
+			self.Status = 'FREE'
+
+	def clearFields(self):
+		self.stringEditor.clear()
+		self.enabledBox.setCheckState(Qt.Unchecked)
+		self.collectionResource.clear()
+		self.collectionID.clear()
+
+	def editCurrentAccount(self):
+		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		if self.Parent.wallet is None :
+			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
+			return None
+		self.Status = 'BUSY'
+		accountName = self.accountListBox.currentItem().text()
+		self.oldAccountName = accountName
+		Settings.beginGroup('Akonadi account')
+		data = Settings.value(accountName).toString()
+		Settings.endGroup()
+		parameterList = string.split(data, ' <||> ')
+		self.stringEditor.setText(accountName)
+		self.collectionResource.setText(parameterList[0])
+		if str(parameterList[1]) == '1' :
+			self.enabledBox.setCheckState(Qt.Checked)
+		self.Status = 'READY'
+
+	def addNewAccount(self):
+		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		if self.Parent.wallet is None :
+			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
+			self.Parent.configDenied()
+			return None
+		if self.Status != 'FREE' :
+			return None
+		str_ = self.stringEditor.userText()
+		if str_ != '' :
+			self.accountList += [str_]
+			self.accountListBox.addItem(str_)
+			if self.enabledBox.isChecked() :
+				enable = '1'
+			else:
+				enable = '0'
+			Settings.beginGroup('Akonadi account')
+			#Settings.setValue(str_, self.collectionResource.text() + ' <||> ' +  enable)
+			Settings.setValue(str_, self.collectionID.text() + ' <||> ' +  enable)
+			Settings.endGroup()
+			self.clearFields()
+
+	def delCurrentAccount(self, accountName = ''):
+		global Settings
+		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		if self.Parent.wallet is None :
+			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
+			return None
+		if self.Status == 'FREE' :
+			item_ = self.accountListBox.currentRow()
+			#accountGroup = self.accountListBox.currentItem()
+			if item_ == -1 :
+				return None
+			accountName = (self.accountListBox.takeItem(item_)).text()
+			# print dateStamp() ,  accountName.text(), str(accountName.text())
+		elif self.Status != 'CLEAR' :
+			return None
+		else:
+			i = 0
+			while i < self.accountListBox.count() :
+				if accountName == self.accountListBox.item(i).text() :
+					self.accountListBox.takeItem(i)
+					break
+				i += 1
+			pass
+
+		Settings.beginGroup('Akonadi account')
+		Settings.remove(accountName)
+		Settings.endGroup()
+		try:
+			self.accountList.remove(accountName)
+		except ValueError, x :
+			print dateStamp() ,  x, '  delAcc'
+			pass
+		finally:
+			pass
+
+	def restartAkonadi(self):
+		server = Akonadi.Control()
+		#server.widgetNeedsAkonadi(self)
+		if Akonadi.ServerManager.isRunning() :
+			if not server.restart(self) :
+				print dateStamp(), 'Unable to start Akonadi Server '
+		else :
+			if not server.start(self) :
+				print dateStamp(), 'Unable to start Akonadi Server '
+		self.akonadiState.setText( 'Akonadi Server is :\n' + StateSTR[Akonadi.ServerManager.state()] )
+
+	def eventClose(self, event):
+		self.prnt.done(0)
 
 def CreateApplet(parent):
 	return plasmaMailChecker(parent)
