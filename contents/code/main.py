@@ -956,8 +956,9 @@ class EditAccounts(QWidget):
 		while i < Settings.childGroups().count() :
 			#print dateStamp() ,  str(Settings.childGroups().__getitem__(i)), '-'
 			accountName = Settings.childGroups().__getitem__(i)
-			self.accountListBox.addItem(accountName)
-			self.accountList += [accountName]
+			if accountName != 'Akonadi account' :
+				self.accountListBox.addItem(accountName)
+				self.accountList += [accountName]
 			i += 1
 		#print dateStamp() ,  self.accountList
 		self.layout.addWidget(self.accountListBox,0,0,2,3)
