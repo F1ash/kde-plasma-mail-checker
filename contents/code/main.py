@@ -853,6 +853,10 @@ class plasmaMailChecker(plasmascript.Applet):
 			if self.T.isRunning() :
 				self.emit(SIGNAL('killThread'))
 			savePOP3Cache()
+			if 'monitor' in dir(self) :
+				self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
+				del self.monitorTimer
+				del self.monitor
 			self.initStat = False
 			print dateStamp() ,  'stop_eP'
 			self.emit(SIGNAL('refresh'))
@@ -876,6 +880,10 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.disconnect(self, SIGNAL('access'), self.processInit)
 		self.disconnect(self, SIGNAL('destroyed()'), self.eventClose)
 		self.disconnect(self, SIGNAL('killThread'), self.killMailCheckerThread)
+		if 'monitor' in dir(self) :
+			self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
+			del self.monitorTimer
+			del self.monitor
 		x = ''
 		try :
 			self.Timer.stop()
@@ -2459,7 +2467,7 @@ class AkonadiResources(QWidget):
 		else :
 			if not server.start(self) :
 				print dateStamp(), 'Unable to start Akonadi Server '
-		self.akonadiState.setText( 'Akonadi Server is :\n' + StateSTR[Akonadi.ServerManager.state()] )
+		self.akonadiState.setText( 'Akonadi Server is : ' + StateSTR[Akonadi.ServerManager.state()] )
 
 	def eventClose(self, event):
 		self.prnt.done(0)
