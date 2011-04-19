@@ -100,9 +100,13 @@ class AkonadiMonitor(QObject):
 		Settings.beginGroup('Akonadi account')
 		for str_ in accList :
 			data = string.split( Settings.value(str_).toString(), ' <||> ' )
+			if data.count() < 2 :
+				data += ['0']
 			##print dateStamp(), str_.toUtf8(), data[0], data[1]
 			self.collResourceList.append(data[0])
 			self.collEnableList += [ data[1] ]
+		#for i in xrange(accList.count()) :
+		#	print self.collResourceList[i], self.collEnableList[i]
 		Settings.endGroup()
 		""" получить все коллекции и, совпадающие по id, запустить
 		"""
@@ -112,6 +116,7 @@ class AkonadiMonitor(QObject):
 
 	def collectionsFetched(self, job):
 		for col in job.collections() :
+			#print str(col.id()), self.collResourceList.indexOf( str(col.id()) )
 			if self.collResourceList.contains(str(col.id())) and \
 						self.collEnableList[ self.collResourceList.indexOf( str(col.id()) ) ] == '1' :
 				self.monitor.setCollectionMonitored(col)

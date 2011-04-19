@@ -2383,8 +2383,8 @@ class AkonadiResources(QWidget):
 		Settings.endGroup()
 		parameterList = string.split(data, ' <||> ')
 		self.stringEditor.setText(accountName)
-		self.collectionResource.setText(parameterList[0])
-		if str(parameterList[1]) == '1' :
+		self.collectionID.setText(parameterList[0])
+		if parameterList.count() > 1 and str(parameterList[1]) == '1' :
 			self.enabledBox.setCheckState(Qt.Checked)
 		self.Status = 'READY'
 
