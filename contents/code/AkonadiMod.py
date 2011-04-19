@@ -26,8 +26,8 @@ class ItemFetchJob(Akonadi.ItemFetchJob):
 		Akonadi.ItemFetchJob.__init__(self, col, parent)
 
 		self.prnt = parent
-		self.name = col.name()   ##.toUtf8()
 		self.id_ = id_
+		self.nameKey = str(col.id())
 		self.result['KJob*'].connect( self.jobFinished )
 		self.fetchScope().fetchPayloadPart(QByteArray('HEAD'), True)
 
@@ -39,7 +39,7 @@ class ItemFetchJob(Akonadi.ItemFetchJob):
 				## print item.payloadData().data()
 				data += string.split(item.payloadData().data(), '\n')
 				break
-		self.prnt.jobFinished( data, self.name )
+		self.prnt.jobFinished( data, self.nameKey )
 
 class AkonadiMonitor(QObject):
 	def __init__(self, parent = None):
@@ -47,7 +47,6 @@ class AkonadiMonitor(QObject):
 		self.Parent = parent
 		self.monitoredCollection = []
 
-		#	def init(self):
 		self.monitor = Akonadi.Monitor()
 		self.monitor.fetchCollection(True)
 		self.monitor.fetchCollectionStatistics(True)
@@ -64,7 +63,7 @@ class AkonadiMonitor(QObject):
 
 		job = ItemFetchJob( col, item.id(), self )
 
-	def jobFinished(self, data, name):
+	def jobFinished(self, data, id_):
 		i = 0
 		dataString = ''
 		for str_ in data :
@@ -89,17 +88,17 @@ class AkonadiMonitor(QObject):
 		for _str in string.split(str_, '\r\n\r\n') :
 			if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
 				STR_ += '\n' + self.Parent.tr._translate('In ') + \
-						self.Parent.fieldBoxPref + name + self.Parent.fieldBoxSuff + ':\n' + \
+						self.Parent.fieldBoxPref + self.nameList[id_] + self.Parent.fieldBoxSuff + ':\n' + \
 						htmlWrapper(mailAttrToSTR(_str), self.Parent.mailAttrColor) + '\n'
 		self.Parent.eventNotification('<b><u>' + self.Parent.tr._translate('New Massage(s) :') + '</u></b>' + STR_)
 
 	def initAccounts(self):
 		global Settings
-		accList = akonadiAccountList()
+		self.accList = akonadiAccountList()
 		self.collResourceList = QStringList()
 		self.collEnableList = []
 		Settings.beginGroup('Akonadi account')
-		for str_ in accList :
+		for str_ in self.accList :
 			data = string.split( Settings.value(str_).toString(), ' <||> ' )
 			if data.count() < 2 :
 				data += ['0']
@@ -116,11 +115,13 @@ class AkonadiMonitor(QObject):
 		self.connect( self.job, SIGNAL('result(KJob*)'), self.collectionsFetched )
 
 	def collectionsFetched(self, job):
+		self.nameList = {}
 		for col in job.collections() :
-			#print str(col.id()), self.collResourceList.indexOf( str(col.id()) )
-			if self.collResourceList.contains(str(col.id())) and \
-						self.collEnableList[ self.collResourceList.indexOf( str(col.id()) ) ] == '1' :
+			i = self.collResourceList.indexOf( str(col.id()) )
+			#print str(col.id()), i
+			if self.collResourceList.contains(str(col.id())) and self.collEnableList[ i ] == '1' :
 				self.monitor.setCollectionMonitored(col)
+				self.nameList[ str( col.id() ) ] = self.accList[i]
 		for col in self.monitor.collectionsMonitored() :
 			##print dateStamp(), col.resource(), '\t', col.name().toUtf8() + '\t', '  monitored'
 			self.monitoredCollection += [col]

@@ -932,7 +932,6 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def initAkonadi(self):
 		global ModuleExist
-		global StateSTR
 		if not ModuleExist or Akonadi.ServerManager.state() == Akonadi.ServerManager.State(4) :
 			return None
 		print dateStamp(), 'Module PyKDE4.akonadi && Akonadi server are available. '
@@ -2198,7 +2197,6 @@ class AkonadiResources(QWidget):
 		self.tr = Translator('AkonadiResources')
 
 		global ModuleExist
-		global StateSTR
 		print dateStamp(), 'Module PyKDE4.akonadi is'
 		if not ModuleExist :
 			print '\tnot'
