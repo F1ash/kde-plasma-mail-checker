@@ -930,9 +930,14 @@ class plasmaMailChecker(plasmascript.Applet):
 		print dateStamp(), 'Module PyKDE4.akonadi && Akonadi server are available. '
 		if akonadiAccountList().count() != 0 and Akonadi.ServerManager.state() == Akonadi.ServerManager.State(2) :
 			if 'monitor' in dir(self) :
+				self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
+				del self.monitorTimer
 				del self.monitor
 			self.monitor = AkonadiMonitor(self)
 			self.monitor.initAccounts()
+			self.monitorTimer = QTimer()
+			self.monitorTimer.timeout.connect(self.monitor.syncCollection)
+			self.monitorTimer.start(60 * 1000)
 
 class EditAccounts(QWidget):
 	def __init__(self, obj = None, parent = None):

@@ -45,6 +45,7 @@ class AkonadiMonitor(QObject):
 	def __init__(self, parent = None):
 		QObject.__init__(self, parent)
 		self.Parent = parent
+		self.monitoredCollection = []
 
 		#	def init(self):
 		self.monitor = Akonadi.Monitor()
@@ -120,13 +121,19 @@ class AkonadiMonitor(QObject):
 			if self.collResourceList.contains(str(col.id())) and \
 						self.collEnableList[ self.collResourceList.indexOf( str(col.id()) ) ] == '1' :
 				self.monitor.setCollectionMonitored(col)
-		#for col in self.monitor.collectionsMonitored() :
-		#	print dateStamp(), col.resource(), '\t', col.name().toUtf8() + '\t', '  monitored'
+		for col in self.monitor.collectionsMonitored() :
+			##print dateStamp(), col.resource(), '\t', col.name().toUtf8() + '\t', '  monitored'
+			self.monitoredCollection += [col]
 
 	def __del__(self):
 		del self.monitor
 		self.disconnect( self.job, SIGNAL('result(KJob*)'), self.collectionsFetched )
 		del self.job
+
+	def syncCollection(self):
+		agentManager = Akonadi.AgentManager.self()
+		for col in self.monitoredCollection :
+			agentManager.synchronizeCollection(col)
 
 class ControlWidget(Akonadi.CollectionDialog):
 	def __init__(self, parent = None):
