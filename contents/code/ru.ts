@@ -129,6 +129,21 @@ Set Account Name!</source>
         <translation>внимание :
 Задайте имя учётной записи !</translation>
     </message>
+    <message>
+        <location filename="main.py" line="2219"/>
+        <source>Restart Akonadi Server</source>
+        <translation>Рестарт Akonadi сервера</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="2219"/>
+        <source>Akonadi Server is : </source>
+        <translation>Akonadi сервер : </translation>
+    </message>
+    <message>
+        <location filename="main.py" line="2219"/>
+        <source>Module PyKDE4.akonadi isn`t available.</source>
+        <translation>Модуль PyKDE4.akonadi не доступен.</translation>
+    </message>
 </context>
 <context>
     <name>PasswordManipulate</name>
@@ -210,6 +225,11 @@ Checking</source>
         <location filename="main.py" line="871"/>
         <source>Font and Colour</source>
         <translation>Шрифт и Цвет</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="871"/>
+        <source>Akonadi Mail Resources</source>
+        <translation>Почтовые ресурсы Akonadi</translation>
     </message>
     <message>
         <location filename="main.py" line="839"/>

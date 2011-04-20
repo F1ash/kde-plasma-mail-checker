@@ -933,6 +933,7 @@ class plasmaMailChecker(plasmascript.Applet):
 	def initAkonadi(self):
 		global ModuleExist
 		if not ModuleExist or Akonadi.ServerManager.state() == Akonadi.ServerManager.State(4) :
+			print dateStamp(), 'Module PyKDE4.akonadi or Akonadi server are not available.'
 			return None
 		print dateStamp(), 'Module PyKDE4.akonadi && Akonadi server are available. '
 		if akonadiAccountList().count() != 0 and Akonadi.ServerManager.state() == Akonadi.ServerManager.State(2) :
@@ -2194,7 +2195,7 @@ class AkonadiResources(QWidget):
 
 		self.Parent = obj
 		self.prnt = parent
-		self.tr = Translator('AkonadiResources')
+		self.tr = Translator('EditAccounts')
 
 		global ModuleExist
 		print dateStamp(), 'Module PyKDE4.akonadi is'
@@ -2209,6 +2210,7 @@ class AkonadiResources(QWidget):
 		self.Status = 'FREE'
 		self.connectFlag = False
 		global Settings
+		global ModuleExist
 		self.layout = QGridLayout()
 
 		self.VBLayout = QVBoxLayout()
@@ -2220,7 +2222,11 @@ class AkonadiResources(QWidget):
 		self.layout.addWidget(self.akonadiServer, 0, 4)
 
 		self.akonadiState = QLabel()
-		self.akonadiState.setText( 'Akonadi Server is : ' + StateSTR[Akonadi.ServerManager.state()] )
+		if not ModuleExist :
+			self.akonadiState.setText(self.tr._translate("Module PyKDE4.akonadi isn`t available."))
+		else :
+			self.akonadiState.setText( self.tr._translate("Akonadi Server is : ") + \
+										StateSTR[Akonadi.ServerManager.state()] )
 		self.layout.addWidget(self.akonadiState, 0, 0)
 
 		self.accountListBox = KListWidget()
@@ -2465,7 +2471,8 @@ class AkonadiResources(QWidget):
 		else :
 			if not server.start(self) :
 				print dateStamp(), 'Unable to start Akonadi Server '
-		self.akonadiState.setText( 'Akonadi Server is : ' + StateSTR[Akonadi.ServerManager.state()] )
+		self.akonadiState.setText( self.tr._translate("Akonadi Server is : ") + \
+										StateSTR[Akonadi.ServerManager.state()] )
 
 	def eventClose(self, event):
 		self.prnt.done(0)
