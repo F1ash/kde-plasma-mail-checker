@@ -937,7 +937,8 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
 				del self.monitorTimer
 				self.monitor.__del__(); self.monitor = None
-			self.monitor = AkonadiMonitor(self)
+			timeout = self.initValue('TimeOutGroup', '3')
+			self.monitor = AkonadiMonitor(timeout, self)
 			self.monitor.initAccounts()
 			self.monitorTimer = QTimer()
 			self.monitorTimer.timeout.connect(self.monitor.syncCollection)
@@ -1287,6 +1288,7 @@ class AppletSettings(QWidget):
 		waitThread = self.initValue('WaitThread', '120')
 		stayDebLog = self.initValue('stayDebLog', '5')
 		showVersion = self.initValue('ShowVersion', '1')
+		timeOutGroup = self.initValue('TimeOutGroup', '3')
 
 		self.layout = QGridLayout()
 
@@ -1333,6 +1335,12 @@ class AppletSettings(QWidget):
 			self.showVersionBox.setCheckState(Qt.Checked)
 		self.layout.addWidget(self.showVersionBox,6,5)
 
+		self.timeOutGroupLabel = QLabel(self.tr._translate("Group Akonadi events timeout (sec.):"))
+		self.layout.addWidget(self.timeOutGroupLabel, 7, 0)
+		self.timeOutGroupBox = KIntSpinBox(1, 200, 3, int(timeOutGroup), self)
+		self.timeOutGroupBox.setMaximumWidth(75)
+		self.layout.addWidget(self.timeOutGroupBox, 7, 5)
+
 		self.setLayout(self.layout)
 
 	def initValue(self, key_, default = '0'):
@@ -1356,6 +1364,7 @@ class AppletSettings(QWidget):
 		Settings.setValue('CountProbe', str(self.countProbeBox.value()))
 		Settings.setValue('WaitThread', str(self.waitThreadBox.value()))
 		Settings.setValue('stayDebLog', str(self.stayDebLogBox.value()))
+		Settings.setValue('TimeOutGroup', str(self.timeOutGroupBox.value()))
 		if self.AutoRunBox.isChecked() :
 			Settings.setValue('AutoRun', '1')
 		else:
@@ -2283,7 +2292,7 @@ class AkonadiResources(QWidget):
 		Enabled = AppletSettings().initValue('Enabled', '1')
 		self.enabledBox.setCheckState(Qt.Unchecked)
 		self.enabledBox.hide()
-		self.HB1Layout.addWidget(self.enabledBox,0,4, Qt.AlignHCenter)
+		self.HB1Layout.addWidget(self.enabledBox, 0, 4, Qt.AlignHCenter)
 
 		self.VBLayout.addLayout(self.HB1Layout)
 
@@ -2297,17 +2306,17 @@ class AkonadiResources(QWidget):
 		self.searchColl = QPushButton('...')
 		self.stringEditor.hide()
 		self.searchColl.clicked.connect(self.collectionSearch)
-		self.HB2Layout.addWidget(self.searchColl,0,1)
+		self.HB2Layout.addWidget(self.searchColl, 0, 1)
 
 		self.saveChanges = QPushButton('&Save')
 		self.saveChanges.hide()
 		self.saveChanges.clicked.connect(self.saveChangedAccount)
-		self.HB2Layout.addWidget(self.saveChanges,0,2)
+		self.HB2Layout.addWidget(self.saveChanges, 0, 2)
 
 		self.clearChanges = QPushButton('&Clear')
 		self.clearChanges.hide()
 		self.clearChanges.clicked.connect(self.clearChangedAccount)
-		self.HB2Layout.addWidget(self.clearChanges,0,3)
+		self.HB2Layout.addWidget(self.clearChanges, 0, 3)
 
 		self.VBLayout.addLayout(self.HB2Layout)
 
@@ -2418,7 +2427,6 @@ class AkonadiResources(QWidget):
 			else:
 				enable = '0'
 			Settings.beginGroup('Akonadi account')
-			#Settings.setValue(str_, self.collectionResource.text() + ' <||> ' +  enable)
 			Settings.setValue(str_, self.collectionID.text() + ' <||> ' +  enable)
 			Settings.endGroup()
 			self.clearFields()

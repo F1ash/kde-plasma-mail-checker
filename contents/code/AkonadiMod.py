@@ -42,9 +42,10 @@ class ItemFetchJob(Akonadi.ItemFetchJob):
 		self.prnt.jobFinished( data, self.nameKey )
 
 class AkonadiMonitor(QObject):
-	def __init__(self, parent = None):
+	def __init__(self, timeout = '3', parent = None):
 		QObject.__init__(self, parent)
 		self.Parent = parent
+		self.timeout = str(timeout)
 
 		self.monitor = Akonadi.Monitor()
 		self.monitor.fetchCollection(True)
@@ -99,7 +100,7 @@ class AkonadiMonitor(QObject):
 				self.STR_ += '\n' + self.Parent.tr._translate('In ') + \
 						self.Parent.fieldBoxPref + self.nameList[id_] + self.Parent.fieldBoxSuff + ':\n' + \
 						htmlWrapper(mailAttrToSTR(_str), self.Parent.mailAttrColor) + '\n'
-		self.Timer.start(3000)
+		self.Timer.start( int(self.timeout) )
 
 	def popupShow(self):
 		self.Parent.eventNotification('<b><u>' + self.Parent.tr._translate('New Massage(s) :') + \

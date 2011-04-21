@@ -47,6 +47,12 @@ Access denied!</source>
         <source>Show Version :</source>
         <translation>Показывать версию :</translation>
     </message>
+    <message>
+        <location filename="main.py" line="1271"/>
+        <source>Group Akonadi events timeout (sec.):</source>
+        <translation>Время группирования
+сообщений от Akonadi (сек.):</translation>
+    </message>
 </context>
 <context>
     <name>EditAccounts</name>
