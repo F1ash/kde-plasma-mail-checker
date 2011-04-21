@@ -127,8 +127,10 @@ class AkonadiMonitor(QObject):
 			self.monitoredCollection += [col]
 
 	def __del__(self):
+		for col in self.monitor.collectionsMonitored() :
+			self.monitor.setCollectionMonitored(col, False)
+			## print dateStamp(), col.resource(), '\t', col.name().toUtf8() + '\t', ' not monitored'
 		del self.monitor
-		self.disconnect( self.job, SIGNAL('result(KJob*)'), self.collectionsFetched )
 		del self.job
 
 	def syncCollection(self):

@@ -853,10 +853,6 @@ class plasmaMailChecker(plasmascript.Applet):
 			if self.T.isRunning() :
 				self.emit(SIGNAL('killThread'))
 			savePOP3Cache()
-			if 'monitor' in dir(self) :
-				self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
-				del self.monitorTimer
-				del self.monitor
 			self.initStat = False
 			print dateStamp() ,  'stop_eP'
 			self.emit(SIGNAL('refresh'))
@@ -935,12 +931,12 @@ class plasmaMailChecker(plasmascript.Applet):
 		if not ModuleExist or Akonadi.ServerManager.state() == Akonadi.ServerManager.State(4) :
 			print dateStamp(), 'Module PyKDE4.akonadi or Akonadi server are not available.'
 			return None
-		print dateStamp(), 'Module PyKDE4.akonadi && Akonadi server are available. '
 		if akonadiAccountList().count() != 0 and Akonadi.ServerManager.state() == Akonadi.ServerManager.State(2) :
+			print dateStamp(), 'Module PyKDE4.akonadi && Akonadi server are available.'
 			if 'monitor' in dir(self) :
 				self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
 				del self.monitorTimer
-				del self.monitor
+				self.monitor.__del__(); self.monitor = None
 			self.monitor = AkonadiMonitor(self)
 			self.monitor.initAccounts()
 			self.monitorTimer = QTimer()
