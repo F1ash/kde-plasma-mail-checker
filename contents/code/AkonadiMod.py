@@ -45,7 +45,6 @@ class AkonadiMonitor(QObject):
 	def __init__(self, parent = None):
 		QObject.__init__(self, parent)
 		self.Parent = parent
-		self.monitoredCollection = []
 
 		self.monitor = Akonadi.Monitor()
 		self.monitor.fetchCollection(True)
@@ -55,6 +54,11 @@ class AkonadiMonitor(QObject):
 				self.printItemAttr) :
 			print dateStamp(), ' Signal "itemAdded" not connected'
 		#self.initAccounts()
+		self.Timer = QTimer()
+		self.Timer.setSingleShot(True)
+		self.Timer.timeout.connect(self.popupShow)
+		""" self.STR_ == messages collector """
+		self.STR_ = ''
 
 	@pyqtSlot('const Akonadi::Item&', 'const Akonadi::Collection&', name = 'printItemAttr')
 	def printItemAttr(self, item, col):
@@ -64,6 +68,11 @@ class AkonadiMonitor(QObject):
 		job = ItemFetchJob( col, item.id(), self )
 
 	def jobFinished(self, data, id_):
+		if self.Timer.isActive() :
+			print '  stop Timer'
+			self.Timer.stop()
+		else :
+			self.STR_ = ''
 		i = 0
 		dataString = ''
 		for str_ in data :
@@ -84,13 +93,17 @@ class AkonadiMonitor(QObject):
 					j += 1
 			i += 1
 		str_ = dataString + '\r\n\r\n'
-		STR_ = ''
+
 		for _str in string.split(str_, '\r\n\r\n') :
 			if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
-				STR_ += '\n' + self.Parent.tr._translate('In ') + \
+				self.STR_ += '\n' + self.Parent.tr._translate('In ') + \
 						self.Parent.fieldBoxPref + self.nameList[id_] + self.Parent.fieldBoxSuff + ':\n' + \
 						htmlWrapper(mailAttrToSTR(_str), self.Parent.mailAttrColor) + '\n'
-		self.Parent.eventNotification('<b><u>' + self.Parent.tr._translate('New Massage(s) :') + '</u></b>' + STR_)
+		self.Timer.start(3000)
+
+	def popupShow(self):
+		self.Parent.eventNotification('<b><u>' + self.Parent.tr._translate('New Massage(s) :') + \
+										'</u></b>' + self.STR_)
 
 	def initAccounts(self):
 		global Settings
@@ -122,9 +135,8 @@ class AkonadiMonitor(QObject):
 			if self.collResourceList.contains(str(col.id())) and self.collEnableList[ i ] == '1' :
 				self.monitor.setCollectionMonitored(col)
 				self.nameList[ str( col.id() ) ] = self.accList[i]
-		for col in self.monitor.collectionsMonitored() :
-			##print dateStamp(), col.resource(), '\t', col.name().toUtf8() + '\t', '  monitored'
-			self.monitoredCollection += [col]
+		##for col in self.monitor.collectionsMonitored() :
+		##	print dateStamp(), col.resource(), '\t', col.name().toUtf8() + '\t', '  monitored'
 
 	def __del__(self):
 		for col in self.monitor.collectionsMonitored() :
@@ -135,7 +147,7 @@ class AkonadiMonitor(QObject):
 
 	def syncCollection(self):
 		agentManager = Akonadi.AgentManager.self()
-		for col in self.monitoredCollection :
+		for col in self.monitor.collectionsMonitored() :
 			agentManager.synchronizeCollection(col)
 
 class ControlWidget(Akonadi.CollectionDialog):
