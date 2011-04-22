@@ -100,7 +100,7 @@ class AkonadiMonitor(QObject):
 				self.STR_ += '\n' + self.Parent.tr._translate('In ') + \
 						self.Parent.fieldBoxPref + self.nameList[id_] + self.Parent.fieldBoxSuff + ':\n' + \
 						htmlWrapper(mailAttrToSTR(_str), self.Parent.mailAttrColor) + '\n'
-		self.Timer.start( int(self.timeout) )
+		self.Timer.start( int(self.timeout) * 1000 )
 
 	def popupShow(self):
 		self.Parent.eventNotification('<b><u>' + self.Parent.tr._translate('New Massage(s) :') + \
