@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from imapUTF7 import imapUTF7Decode, imapUTF7Encode
-from PyQt4.QtCore import QString, QSettings, QReadWriteLock
+from PyQt4.QtCore import QString, QSettings, QMutex
 import poplib, imaplib, os, string, socket, time, os.path, random, sys, email.header, datetime, locale
 
 global ErrorMsg
 ErrorMsg = ''
-LOCK = QReadWriteLock()
+LOCK = QMutex()
 Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 
 dltHours = time.localtime().tm_hour - time.gmtime().tm_hour
@@ -142,7 +142,7 @@ def to_unicode(_str):
 		return str_
 
 def addAccount(account, data_ = ['']):
-	LOCK.lockForWrite()
+	LOCK.lock()
 	global Settings
 	accounts_ = Settings.value('Accounts').toString()
 	Settings.setValue('Accounts', accounts_ + ';' + account)
@@ -163,7 +163,7 @@ def addAccount(account, data_ = ['']):
 	pass
 
 def readAccountData(account = ''):
-	LOCK.lockForRead()
+	LOCK.lock()
 	global Settings
 	Settings.beginGroup(account)
 	serv_ = Settings.value('server').toString()
@@ -184,7 +184,7 @@ def readAccountData(account = ''):
 			str(authMethod_), str(connMethod_), str(last_), str(enable), inbox]
 
 def initPOP3Cache():
-	LOCK.lockForWrite()
+	LOCK.lock()
 	global Settings
 	dir_cache = os.path.expanduser('~/.cache')
 	if  not os.path.isdir(dir_cache) :
@@ -207,7 +207,7 @@ def initPOP3Cache():
 	LOCK.unlock()
 
 def savePOP3Cache():
-	LOCK.lockForWrite()
+	LOCK.lock()
 	global Settings
 	dir_ = os.path.expanduser('~/.cache/plasmaMailChecker')
 	for accountName in string.split( Settings.value('Accounts').toString(), ';' ):

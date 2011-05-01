@@ -39,13 +39,14 @@ class ItemFetchJob(Akonadi.ItemFetchJob):
 				## print item.payloadData().data()
 				data += string.split(item.payloadData().data(), '\n')
 				break
-		self.prnt.jobFinished( data, self.nameKey )
+		""" self.nameKey -- collection id, self.id_ -- item id """
+		self.prnt.jobFinished( data, self.nameKey, self.id_ )
 
 class AkonadiMonitor(QObject):
 	def __init__(self, timeout = '3', parent = None):
 		QObject.__init__(self, parent)
 		self.Parent = parent
-		self.timeout = str(timeout)
+		self.timeout = int(str(timeout)) * 1000
 
 		self.monitor = Akonadi.Monitor()
 		self.monitor.fetchCollection(True)
@@ -58,22 +59,22 @@ class AkonadiMonitor(QObject):
 		self.Timer = QTimer()
 		self.Timer.setSingleShot(True)
 		self.Timer.timeout.connect(self.popupShow)
-		""" self.STR_ == messages collector """
-		self.STR_ = ''
 
 	@pyqtSlot('const Akonadi::Item&', 'const Akonadi::Collection&', name = 'printItemAttr')
 	def printItemAttr(self, item, col):
-		print dateStamp(), '\n\tadded in ', col.name().toUtf8(), \
-				' with ID : ', col.id(), '<- col : item ->',  item.id()
+		#print dateStamp(), '\n\tadded in ', col.name().toUtf8(), \
+		#		' with ID : ', col.id(), '<- col : item ->',  item.id(), '\tRes: ', col.resource()
 
 		job = ItemFetchJob( col, item.id(), self )
 
-	def jobFinished(self, data, id_):
+	def jobFinished(self, data, nameKey, id_):
 		if self.Timer.isActive() :
-			print '  stop Timer'
+			#print '  stop Timer'
 			self.Timer.stop()
 		else :
-			self.STR_ = ''
+			#print '  Timer not Active'
+			self.pointers_to_new_Items = {}
+			self.count = 0
 		i = 0
 		dataString = ''
 		for str_ in data :
@@ -95,34 +96,61 @@ class AkonadiMonitor(QObject):
 			i += 1
 		str_ = dataString + '\r\n\r\n'
 
+		self.count += 1
+		STR_ = ''
+		""" nameKey -- collection id, id_ -- item id
+			distinction by source
+		"""
 		for _str in string.split(str_, '\r\n\r\n') :
 			if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
-				self.STR_ += '\n' + self.Parent.tr._translate('In ') + \
-						self.Parent.fieldBoxPref + self.nameList[id_] + self.Parent.fieldBoxSuff + ':\n' + \
-						htmlWrapper(mailAttrToSTR(_str), self.Parent.mailAttrColor) + '\n'
-		self.Timer.start( int(self.timeout) * 1000 )
+				STR_ += htmlWrapper(mailAttrToSTR(_str), self.Parent.mailAttrColor) + '\n'
+		var = self.pointers_to_new_Items.pop(nameKey, {})
+		var[ id_ ] = STR_
+		self.pointers_to_new_Items[ nameKey ] = var
+		self.Timer.start( self.timeout )
 
 	def popupShow(self):
-		self.Parent.eventNotification('<b><u>' + self.Parent.tr._translate('New Massage(s) :') + \
-										'</u></b>' + self.STR_)
+		for name_ in self.pointers_to_new_Items.keys() :
+			STR_ = ''; id_ = []
+			for _id in self.pointers_to_new_Items[name_].keys() :
+				STR_ += self.pointers_to_new_Items[name_][_id]
+				id_ += [_id]
+			self.Parent.eventNotification('<b><u>' + self.Parent.tr._translate('New Massage(s) :') + '</u></b>' + \
+						'\n' + self.Parent.tr._translate('In ') + \
+						self.Parent.fieldBoxPref + self.nameList[name_][0] + self.Parent.fieldBoxSuff + ':\n' + \
+						STR_, {name_ : min(id_)}, self.nameList[name_][1])
 
 	def initAccounts(self):
-		global Settings
 		self.accList = akonadiAccountList()
 		self.collResourceList = QStringList()
+		self.collNameList = QStringList()
+		self.collCommList = QStringList()
+		self.collIdList = QStringList()
 		self.collEnableList = []
 		Settings.beginGroup('Akonadi account')
 		for str_ in self.accList :
 			data = string.split( Settings.value(str_).toString(), ' <||> ' )
-			if data.count() < 2 :
-				data += ['0']
+			if data.count() < 1 :
+				data += ['', '0', '', '', '']
+			elif data.count() < 2 :
+				data += ['0', '', '', '']
+			elif data.count() < 3 :
+				data += ['', '', '']
+			elif data.count() < 4 :
+				data += ['', '']
+			elif data.count() < 5 :
+				data += ['%dir_id %mail_id']
 			##print dateStamp(), str_.toUtf8(), data[0], data[1]
-			self.collResourceList.append(data[0])
+			self.collIdList.append(data[0])
 			self.collEnableList += [ data[1] ]
-		#for i in xrange(accList.count()) :
+			self.collResourceList.append(data[2])
+			self.collNameList.append(data[3])
+			self.collCommList.append(data[4])
+		#for i in xrange(self.accList.count()) :
 		#	print self.collResourceList[i], self.collEnableList[i]
 		Settings.endGroup()
-		""" получить все коллекции и, совпадающие по id, запустить
+		""" получить все коллекции и, совпадающие по id, name, и resource коллекции, отдать монитору.
+			если произошли изменения, то выдать предупреждение о переинициализации конкретных аккаунтов
 		"""
 		self.job = \
 				Akonadi.CollectionFetchJob( Akonadi.Collection.root(), Akonadi.CollectionFetchJob.Recursive, self)
@@ -130,14 +158,29 @@ class AkonadiMonitor(QObject):
 
 	def collectionsFetched(self, job):
 		self.nameList = {}
-		for col in job.collections() :
-			i = self.collResourceList.indexOf( str(col.id()) )
-			#print str(col.id()), i
-			if self.collResourceList.contains(str(col.id())) and self.collEnableList[ i ] == '1' :
-				self.monitor.setCollectionMonitored(col)
-				self.nameList[ str( col.id() ) ] = self.accList[i]
-		##for col in self.monitor.collectionsMonitored() :
-		##	print dateStamp(), col.resource(), '\t', col.name().toUtf8() + '\t', '  monitored'
+		brokenItemList = QStringList()
+		listJobColl = job.collections()
+		j = 0
+		for i in xrange( self.accList.count() ) :
+			itemBroken = True
+			for col in listJobColl :
+				if self.collResourceList[i] == col.resource() and \
+							self.collNameList[i] == col.name() :
+					if self.collIdList[i] == str(col.id()) :
+						itemBroken = False
+						if self.collEnableList[ i ] == '1' :
+							self.monitor.setCollectionMonitored(col)
+							self.nameList[ str( col.id() ) ] = (self.accList[i], self.collCommList[i])
+						j += 1
+						break
+			if itemBroken :
+				brokenItemList.append(self.accList[i])
+		if j == 0 and self.accList.count() != 0 :
+			self.errorMessage()
+		elif not brokenItemList.isEmpty() :
+			self.errorMessage(brokenItemList)
+		#for col in self.monitor.collectionsMonitored() :
+		#	print dateStamp(), col.resource(), '\t', col.id(), '\t', col.name().toUtf8() + '\t', '  monitored'
 
 	def __del__(self):
 		for col in self.monitor.collectionsMonitored() :
@@ -145,11 +188,24 @@ class AkonadiMonitor(QObject):
 			## print dateStamp(), col.resource(), '\t', col.name().toUtf8() + '\t', ' not monitored'
 		del self.monitor
 		del self.job
+		del self.Timer
+
+	def errorMessage(self, something = 0):
+		if type(something) is int :
+			#print dateStamp(), 'Your accounts are invalid. You must reinit them.'
+			self.Parent.eventNotification('Your accounts are invalid.\nYou must reinit them.')
+		else :
+			STR = ''
+			for str_ in something :
+				STR += str_ + '\nThis account is invalid.\n'
+				#print dateStamp(), str_.toUtf8(), '\t is involid.'
+			self.Parent.eventNotification(STR)
 
 	def syncCollection(self):
 		agentManager = Akonadi.AgentManager.self()
 		for col in self.monitor.collectionsMonitored() :
 			agentManager.synchronizeCollection(col)
+		#self.Parent.eventNotification('')
 
 class ControlWidget(Akonadi.CollectionDialog):
 	def __init__(self, parent = None):

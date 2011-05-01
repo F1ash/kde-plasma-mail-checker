@@ -8,6 +8,7 @@ try :
 	global WAIT
 	global VERSION
 	from Functions import *
+	from MailProgExec import MailProgExec
 	from AkonadiMod import *
 	from PyQt4.QtCore import *
 	from PyQt4.QtGui import *
@@ -112,7 +113,7 @@ class ThreadCheckMail(QThread):
 					self.accountThread += ['']
 					self.accountThread[i] = QProcess()
 					start, pid = self.accountThread[i].startDetached('/usr/bin/python', Data, os.getcwd())
-					self.dataList += [(pid, str_)]
+					self.dataList += [(pid, str_, start)]
 					#print dateStamp() ,  start, pid, Data.join(' ').toUtf8().data()
 				else :
 					break
@@ -124,7 +125,9 @@ class ThreadCheckMail(QThread):
 				time.sleep(0.1)
 				key_ = False
 				for node in self.dataList :
-					key_ = key_ or pid_exists(node[0], 0)
+					if bool(node[2]) and node[0] != 0 :
+						#print bool(node[2]), node[0], ' ????'
+						key_ = key_ or pid_exists(node[0], 0)
 
 		except x :
 			self.Timer.stop()
@@ -156,7 +159,7 @@ class ThreadCheckMail(QThread):
 		WAIT = False
 		LOCK.unlock()
 		for i in xrange(len(self.dataList)) :
-			if pid_exists(self.dataList[i][0], signal.SIGKILL) :
+			if bool(self.dataList[i][2]) and pid_exists(self.dataList[i][0], signal.SIGKILL) :
 				#print dateStamp() ,  self.dataList[i][0], '  killed'
 				pass
 			else :
@@ -547,14 +550,19 @@ class plasmaMailChecker(plasmascript.Applet):
 			print dateStamp() ,  "Problem writing to file: " + fn
 			print dateStamp() ,  "Unexpected error:", sys.exc_info()[0]
 
-	def eventNotification(self, str_ = ''):
-		KNotification.event("new-notification-arrived",\
-		QString(str_),
-		QPixmap(self.usualIconPath),
-		None,
-		KNotification.CloseOnTimeout,
-		KComponentData('plasmaMailChecker','plasmaMailChecker',\
-		KComponentData.SkipMainComponentRegistration))
+	def eventNotification(self, str_ = '', id_of_new_Items = {}, command = ''):
+		newMailNotify = KNotification.event("new-notification-arrived", \
+						QString(str_), \
+						QPixmap(self.usualIconPath), \
+						None, \
+						KNotification.CloseOnTimeout, \
+						KComponentData('plasmaMailChecker','plasmaMailChecker', \
+						KComponentData.SkipMainComponentRegistration))
+		if len(id_of_new_Items) != 0 :
+			newMailNotify.setActions( QStringList() << "View" )
+			shell_command = MailProgExec(self, id_of_new_Items, command, self)
+			newMailNotify.activated['unsigned int'].connect(shell_command.start)
+		newMailNotify.sendEvent()
 
 	def _refreshData(self):
 		print dateStamp() , '_refresh'
@@ -822,6 +830,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.initTitle()
 			self.TitleDialog.setText(self.headerPref + self.title + self.headerSuff)
 			self.createDialogWidget()
+		self.monitor_isnt_exist()
 		self.initStat = False
 		self.connect(self, SIGNAL('refresh'), self.refreshData)
 		self.emit(SIGNAL('refresh'))
@@ -853,6 +862,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			if self.T.isRunning() :
 				self.emit(SIGNAL('killThread'))
 			savePOP3Cache()
+			self.monitor_isnt_exist()
 			self.initStat = False
 			print dateStamp() ,  'stop_eP'
 			self.emit(SIGNAL('refresh'))
@@ -931,18 +941,28 @@ class plasmaMailChecker(plasmascript.Applet):
 		if not ModuleExist or Akonadi.ServerManager.state() == Akonadi.ServerManager.State(4) :
 			print dateStamp(), 'Module PyKDE4.akonadi or Akonadi server are not available.'
 			return None
-		if akonadiAccountList().count() != 0 and Akonadi.ServerManager.state() == Akonadi.ServerManager.State(2) :
+		if self.monitor_isnt_exist() :
 			print dateStamp(), 'Module PyKDE4.akonadi && Akonadi server are available.'
-			if 'monitor' in dir(self) :
-				self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
-				del self.monitorTimer
-				self.monitor.__del__(); self.monitor = None
 			timeout = self.initValue('TimeOutGroup', '3')
 			self.monitor = AkonadiMonitor(timeout, self)
-			self.monitor.initAccounts()
 			self.monitorTimer = QTimer()
 			self.monitorTimer.timeout.connect(self.monitor.syncCollection)
+			self.monitor.initAccounts()
 			self.monitorTimer.start(60 * 1000)
+
+	def monitor_isnt_exist(self):
+		if akonadiAccountList().count() != 0 and Akonadi.ServerManager.state() == Akonadi.ServerManager.State(2) :
+			if 'monitorTimer' in dir(self) :
+				self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
+				self.monitorTimer.stop()
+				del self.monitorTimer
+			if 'monitor' in dir(self) :
+				self.monitor.__del__()
+				del self.monitor
+				print dateStamp(), ' monitor delete.'
+			return True
+		else :
+			return False
 
 class EditAccounts(QWidget):
 	def __init__(self, obj = None, parent = None):
@@ -1337,7 +1357,7 @@ class AppletSettings(QWidget):
 
 		self.timeOutGroupLabel = QLabel(self.tr._translate("Group Akonadi events timeout (sec.):"))
 		self.layout.addWidget(self.timeOutGroupLabel, 7, 0)
-		self.timeOutGroupBox = KIntSpinBox(1, 200, 3, int(timeOutGroup), self)
+		self.timeOutGroupBox = KIntSpinBox(1, 200, 1, int(timeOutGroup), self)
 		self.timeOutGroupBox.setMaximumWidth(75)
 		self.layout.addWidget(self.timeOutGroupBox, 7, 5)
 
@@ -2318,6 +2338,20 @@ class AkonadiResources(QWidget):
 		self.clearChanges.clicked.connect(self.clearChangedAccount)
 		self.HB2Layout.addWidget(self.clearChanges, 0, 3)
 
+		self.accountCommandLabel = QLabel()
+		self.accountCommandLabel.hide()
+		self.accountCommandLabel.setText('Account Command:')
+		self.accountCommandLabel.setToolTip('Exec command activated in notification.\nExample: \n' + \
+						'qdbus org.kde.kmail /KMail org.kde.kmail.kmail.showMail %mail_id %mail_id\n' + \
+						'qdbus org.kde.kmail /KMail org.kde.kmail.kmail.selectFolder %dir_id')
+		self.HB2Layout.addWidget(self.accountCommandLabel, 1, 0)
+
+		self.accountCommand = KLineEdit()
+		self.accountCommand.hide()
+		self.accountCommand.setToolTip(self.tr._translate("Deprecated char : '<b>;</b>'"))
+		self.accountCommand.setContextMenuEnabled(True)
+		self.HB2Layout.addWidget(self.accountCommand, 1, 1, 1, 4)
+
 		self.VBLayout.addLayout(self.HB2Layout)
 
 		self.setLayout(self.VBLayout)
@@ -2338,6 +2372,8 @@ class AkonadiResources(QWidget):
 		self.collectionIDLabel.show()
 		self.delAccountItem.show()
 		self.editAccountItem.show()
+		self.accountCommandLabel.show()
+		self.accountCommand.show()
 
 	def collectionSearch(self):
 		self.Control = ControlWidget()
@@ -2346,7 +2382,8 @@ class AkonadiResources(QWidget):
 			col = self.Control.selectedCollection()
 			## print dateStamp(), col.name().toUtf8(), col.id(), col.resource()
 			self.collectionID.setText(str(col.id()))
-			self.stringEditor.setText(col.name())
+			self.nameColl = col.name()
+			self.stringEditor.setText(self.nameColl)
 			self.collectionResource.setText(col.resource())
 
 	def clearChangedAccount(self):
@@ -2379,7 +2416,9 @@ class AkonadiResources(QWidget):
 			else:
 				enable = '0'
 			Settings.beginGroup('Akonadi account')
-			Settings.setValue(accountName, self.collectionID.text() + ' <||> ' +  enable)
+			Settings.setValue(accountName, self.collectionID.text() + ' <||> ' + enable + ' <||> ' + \
+								self.collectionResource.text() + ' <||> ' + self.nameColl + \
+								' <||> ' + self.accountCommand.text())
 			Settings.endGroup()
 
 			self.accountList += [accountName]
@@ -2391,6 +2430,7 @@ class AkonadiResources(QWidget):
 		self.enabledBox.setCheckState(Qt.Unchecked)
 		self.collectionResource.clear()
 		self.collectionID.clear()
+		self.accountCommand.clear()
 
 	def editCurrentAccount(self):
 		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
@@ -2408,6 +2448,12 @@ class AkonadiResources(QWidget):
 		self.collectionID.setText(parameterList[0])
 		if parameterList.count() > 1 and str(parameterList[1]) == '1' :
 			self.enabledBox.setCheckState(Qt.Checked)
+		if parameterList.count() > 2 :
+			self.collectionResource.setText(parameterList[2])
+		if parameterList.count() > 3 :
+			self.nameColl = parameterList[3]
+		if parameterList.count() > 4 :
+			self.accountCommand.setText( parameterList[4] )
 		self.Status = 'READY'
 
 	def addNewAccount(self):
@@ -2427,7 +2473,9 @@ class AkonadiResources(QWidget):
 			else:
 				enable = '0'
 			Settings.beginGroup('Akonadi account')
-			Settings.setValue(str_, self.collectionID.text() + ' <||> ' +  enable)
+			Settings.setValue(str_, self.collectionID.text() + ' <||> ' + enable + ' <||> ' + \
+								self.collectionResource.text() + ' <||> ' + self.nameColl + \
+								' <||> ' + self.accountCommand.text())
 			Settings.endGroup()
 			self.clearFields()
 
