@@ -147,6 +147,11 @@ Set Account Name!</source>
     </message>
     <message>
         <location filename="main.py" line="2219"/>
+        <source>Account Command:</source>
+        <translation>Команда для учётки:</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="2219"/>
         <source>Module PyKDE4.akonadi isn`t available.</source>
         <translation>Модуль PyKDE4.akonadi не доступен.</translation>
     </message>

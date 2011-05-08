@@ -2340,7 +2340,7 @@ class AkonadiResources(QWidget):
 
 		self.accountCommandLabel = QLabel()
 		self.accountCommandLabel.hide()
-		self.accountCommandLabel.setText('Account Command:')
+		self.accountCommandLabel.setText(self.tr._translate('Account Command:'))
 		self.accountCommandLabel.setToolTip('Exec command activated in notification.\nExample: \n' + \
 						'qdbus org.kde.kmail /KMail org.kde.kmail.kmail.showMail %mail_id %mail_id\n' + \
 						'qdbus org.kde.kmail /KMail org.kde.kmail.kmail.selectFolder %dir_id')
