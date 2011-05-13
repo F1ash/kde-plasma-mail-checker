@@ -243,6 +243,11 @@ Checking</source>
         <translation>Почтовые ресурсы Akonadi</translation>
     </message>
     <message>
+        <location filename="main.py" line="871"/>
+        <source>EXAMPLES</source>
+        <translation>Примеры</translation>
+    </message>
+    <message>
         <location filename="main.py" line="839"/>
         <source>Warning :
 Access denied!</source>

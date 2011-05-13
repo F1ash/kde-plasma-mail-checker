@@ -9,6 +9,7 @@ try :
 	global VERSION
 	from Functions import *
 	from MailProgExec import MailProgExec
+	from Examples import Examples
 	from AkonadiMod import *
 	from PyQt4.QtCore import *
 	from PyQt4.QtGui import *
@@ -202,9 +203,9 @@ class plasmaMailChecker(plasmascript.Applet):
 		if not os.path.exists(self.kdehome+"share/apps/plasmaMailChecker/plasmaMailChecker.notifyrc"):
 			if os.path.exists(self.kdehome+"share/apps"):
 				self.createNotifyrc(self.kdehome)
-		self.stopIconPath = self.user_or_sys('icons/mailChecker_stop.png')
-		self.webIconPath = self.user_or_sys('icons/mailChecker_web.png')
-		self.usualIconPath = self.user_or_sys('icons/mailChecker.png')
+		self.stopIconPath = self.user_or_sys('contents/icons/mailChecker_stop.png')
+		self.webIconPath = self.user_or_sys('contents/icons/mailChecker_web.png')
+		self.usualIconPath = self.user_or_sys('contents/icons/mailChecker.png')
 
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 			self.titleLayout = QGraphicsLinearLayout()
@@ -453,8 +454,8 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.emit(SIGNAL('killThread'))
 
 	def user_or_sys(self, path_):
-		var1 = self.kdehome + 'share/apps/plasma/plasmoids/plasmaMailChecker/contents/' + path_
-		var2 = '/usr/share/kde4/apps/plasma/plasmoids/plasmaMailChecker/contents/' + path_
+		var1 = self.kdehome + 'share/apps/plasma/plasmoids/plasmaMailChecker/' + path_
+		var2 = '/usr/share/kde4/apps/plasma/plasmoids/plasmaMailChecker/' + path_
 		if os.path.exists(var1) :
 			return var1
 		elif os.path.exists(var2) :
@@ -793,6 +794,8 @@ class plasmaMailChecker(plasmascript.Applet):
 		parent.addPage(self.fontsNcolour, self.tr._translate("Font and Colour"))
 		self.akonadiResources = AkonadiResources(self, parent)
 		parent.addPage(self.akonadiResources, self.tr._translate("Akonadi Mail Resources"))
+		self.examples = Examples(self.user_or_sys('EXAMPLES'), parent)
+		parent.addPage(self.examples, self.tr._translate("EXAMPLES"))
 		self.connect(parent, SIGNAL("okClicked()"), self.configAccepted)
 		self.connect(parent, SIGNAL("cancelClicked()"), self.configDenied)
 
