@@ -28,10 +28,7 @@ Description:
 	(getting new mail).
 	Command line of Akonadi account must be used for execution of console command
 	(different from plasmoid process) - "View" in notification of some mail.
-	For example, open directory with some mail (KMail app):
-	qdbus org.kde.kmail /KMail org.kde.kmail.kmail.selectFolder %dir_mail
-	%dir_mail is the automatically replaceable template of Akonadi resource id
-	within execution.
+	See for : EXAMPLES.
 Notes:
 	In Plasmoid built Translator with autodetect of locale. Installation
 	new language simply by adding the appropriate *.qm file.

@@ -1,0 +1,27 @@
+# -*- coding: utf-8 -*-
+
+EXAMPLES :
+(Thanks to Murz at http://kde-look.org)
+
+1. Open thunderbird and selecting needed folder (folder path you must enter manually):
+thunderbird mailbox://someone@pop.example.net/Inbox
+
+2. Activate evolution window and select mail component
+evolution -c mail
+
+3. Activate kmail (kdepim 4.6+) window with current folder with akonadi id:
+/usr/bin/qdbus org.kde.kmail /KMail org.kde.kmail.kmail.selectFolder %dir_id; /usr/bin/wmctrl -x -R kmail
+
+4. Activate kontact (kdepim 4.6+) window with current folder with akonadi id:
+/usr/bin/qdbus org.kde.kmail /KMail org.kde.kmail.kmail.selectFolder %dir_id; /usr/bin/wmctrl -x -R kontact
+
+5. Open current message in kmail separate window (akonadi, kdepim 4.6+):
+qdbus org.kde.kmail /KMail org.kde.kmail.kmail.showMail %mail_id %mail_id
+
+%dir_mail is the automatically replaceable template of Akonadi resource id within execution.
+
+For kmail1 and kdepim < 4.6:
+6. Activate kmail window (for kmail1 with kdepim 4.4 or earlier) and select the specific folder:
+/usr/bin/qdbus org.kde.kmail /KMail org.kde.kmail.kmail.selectFolder /1287421332/Inbox; /usr/bin/wmctrl -x -R kmail
+For get folders id you can use command:
+/usr/bin/qdbus org.kde.kmail /KMail org.kde.kmail.kmail.folderList

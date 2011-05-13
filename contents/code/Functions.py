@@ -157,6 +157,7 @@ def addAccount(account, data_ = ['']):
 	Settings.setValue('Enabled', str(data_[7]))
 	if str(data_[5]) == 'imap' :
 		Settings.setValue('Inbox', data_[8])
+	Settings.setValue('CommandLine', data_[9])
 	Settings.endGroup()
 	Settings.sync()
 	LOCK.unlock()
@@ -178,10 +179,14 @@ def readAccountData(account = ''):
 		inbox = Settings.value('Inbox').toString()
 	else :
 		inbox = ''
+	if Settings.contains('CommandLine') :
+		command = Settings.value('CommandLine').toString()
+	else :
+		command = ''
 	Settings.endGroup()
 	LOCK.unlock()
 	return [str(serv_), str(port_), login_, '', \
-			str(authMethod_), str(connMethod_), str(last_), str(enable), inbox]
+			str(authMethod_), str(connMethod_), str(last_), str(enable), inbox, command]
 
 def initPOP3Cache():
 	LOCK.lock()

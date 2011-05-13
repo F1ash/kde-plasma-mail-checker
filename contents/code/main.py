@@ -502,6 +502,12 @@ class plasmaMailChecker(plasmascript.Applet):
 	def processInit(self):
 		global Settings
 		Settings.sync()
+		self.accountList = string.split(Settings.value('Accounts').toString(),';')
+		self.accountCommand = {}
+		for accountName in self.accountList :
+			Settings.beginGroup(accountName)
+			self.accountCommand[accountName] = self.initValue('CommandLine', ' ')
+			Settings.endGroup()
 		timeOut = self.initValue('TimeOut', '600')
 		self.waitThread = self.initValue('WaitThread', '120')
 
@@ -665,8 +671,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		newMailExist = False
 		self.listNewMail = ''
 		x = ''
-		accountList = string.split(Settings.value('Accounts').toString(),';')
-		for accountName in accountList :
+		for accountName in self.accountList :
 			try :
 				if int(self.checkResult[i][2]) > 0 :
 					self.listNewMail += '<pre>' + accountName + '&#09;' + str(self.checkResult[i][2]) + '</pre>'
@@ -716,23 +721,24 @@ class plasmaMailChecker(plasmascript.Applet):
 
 		#print dateStamp() ,  newMailExist and not noCheck
 		if newMailExist and not noCheck :
-			STR_ = ''
 			i = 0
 			while i < len(self.checkResult) :
+				""" collected mail headers for each account
+				"""
 				str_ = self.checkResult[i][4]
+				STR_ = ''
 				if str_ not in ['', ' ', '0'] :
 					#print dateStamp() ,  str_
 					for _str in string.split(str_, '\r\n\r\n') :
 						if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
 							STR_ += '\n' + self.tr._translate('In ') + \
-									self.fieldBoxPref + accountList[i] + self.fieldBoxSuff + ':\n' + \
+									self.fieldBoxPref + self.accountList[i] + self.fieldBoxSuff + ':\n' + \
 									htmlWrapper(mailAttrToSTR(_str), self.mailAttrColor) + '\n'
+				if STR_ != '' :
+					self.eventNotification('<b><u>' + self.tr._translate('New Massage(s) :') + '</u></b>' + STR_, \
+											{0 : 0}, \
+											self.accountCommand[ self.accountList[i] ])
 				i += 1
-			# print dateStamp() ,  'newM@ilExist'
-			# KNotification.beep()
-			# KNotification.StandardEvent(KNotification.Notification)
-			# print dateStamp() , QString(STR_).toUtf8().data()
-			self.eventNotification('<b><u>' + self.tr._translate('New Massage(s) :') + '</u></b>' + STR_)
 
 		if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
 			if self.listNewMail == '' :
@@ -1031,7 +1037,6 @@ class EditAccounts(QWidget):
 		self.enabledBox = QCheckBox()
 		Enabled = AppletSettings().initValue('Enabled', '1')
 		self.enabledBox.setCheckState(Qt.Unchecked)
-		#self.enabledBox.hide()
 		self.HB1Layout.addWidget(self.enabledBox,1,2, Qt.AlignHCenter)
 
 		self.VBLayout.addLayout(self.HB1Layout)
@@ -1063,6 +1068,15 @@ class EditAccounts(QWidget):
 		self.clearChanges = QPushButton('&Clear')
 		self.clearChanges.clicked.connect(self.clearChangedAccount)
 		self.HB2Layout.addWidget(self.clearChanges,1,3)
+
+		self.accountCommandLabel = QLabel()
+		self.accountCommandLabel.setText(self.tr._translate('Account Command:'))
+		self.accountCommandLabel.setToolTip('Exec command activated in notification.\nSee for : EXAMPLES.')
+		self.HB2Layout.addWidget(self.accountCommandLabel, 2, 0)
+
+		self.accountCommand = KLineEdit()
+		self.accountCommand.setContextMenuEnabled(True)
+		self.HB2Layout.addWidget(self.accountCommand, 2, 1, 2, 4)
 
 		self.VBLayout.addLayout(self.HB2Layout)
 
@@ -1197,6 +1211,7 @@ class EditAccounts(QWidget):
 			i += 1
 		#print dateStamp() ,  parameterList[1]
 		self.portBox.setValue(int(parameterList[1]))
+		self.accountCommand.setText(parameterList[9])
 		self.userNameLineEdit.setText(parameterList[2])
 		self.passwordChanged = False
 		self.passwordLineEdit.setPasswordMode(False)
@@ -1233,6 +1248,7 @@ class EditAccounts(QWidget):
 		connectMethod = self.connectMethodBox.itemData(self.connectMethodBox.currentIndex()).toString()
 		cryptMethod = self.cryptBox.itemData(self.cryptBox.currentIndex()).toString()
 		port_ = self.portBox.value()
+		command = self.accountCommand.userText()
 		userName = self.userNameLineEdit.userText()
 		userPassword = self.passwordLineEdit.userText()
 		if self.enabledBox.isChecked() :
@@ -1246,7 +1262,8 @@ class EditAccounts(QWidget):
 		# print dateStamp() ,  (accountName,accountServer,port_,connectMethod,cryptMethod, \
 		#												userName,userPassword, 'parsingVal')
 		return accountName,\
-				[ accountServer, port_, userName, userPassword, cryptMethod, connectMethod, '0', enable, inbox]
+				[ accountServer, port_, userName, userPassword, \
+				cryptMethod, connectMethod, '0', enable, inbox, command]
 
 	def delCurrentAccount(self, accountName = ''):
 		global Settings
@@ -2348,7 +2365,6 @@ class AkonadiResources(QWidget):
 
 		self.accountCommand = KLineEdit()
 		self.accountCommand.hide()
-		self.accountCommand.setToolTip(self.tr._translate("Deprecated char : '<b>;</b>'"))
 		self.accountCommand.setContextMenuEnabled(True)
 		self.HB2Layout.addWidget(self.accountCommand, 1, 1, 1, 4)
 
