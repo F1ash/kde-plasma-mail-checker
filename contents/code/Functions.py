@@ -15,6 +15,8 @@ dltLocal = datetime.timedelta(hours = dltHours, minutes = dltMinutes)
 
 lang = locale.getdefaultlocale()
 
+char_set = string.ascii_letters + string.digits
+
 def htmlWrapper((From_, Subj_, Date_) = ('', '', ''),
 				((pref1, suff1), (pref2, suff2), (pref3, suff3)) \
 				= (('', ''), ('', ''), ('', ''))) :
@@ -127,7 +129,8 @@ def readDataFiles(fileName):
 						str(dataToSTR(path_ + '.content'))
 
 def randomString(j = 1):
-	return "".join( [random.choice(string.letters) for i in xrange(j)] )
+	#return "".join( [random.choice(string.letters) for i in xrange(j)] )
+	return ''.join(random.sample(char_set, j))
 
 def to_unicode(_str):
 	str_ = '<=junk_string=>'
