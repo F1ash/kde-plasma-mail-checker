@@ -4,14 +4,7 @@ from PyQt4.QtCore import *
 from Functions import dateStamp, htmlWrapper, mailAttrToSTR
 from main import Settings
 import os.path, time, string
-try :
-	ModuleExist = True
-	from PyKDE4.akonadi import Akonadi
-except :
-	print 'PyKDE4.akonadi module not available.'
-	ModuleExist = False
-finally :
-	pass
+from PyKDE4.akonadi import Akonadi
 
 StateSTR = { 0 : 'NotRunning', 1 : 'Starting', 2 : 'Running', 3 : 'Stopping', 4 : 'Broken' }
 

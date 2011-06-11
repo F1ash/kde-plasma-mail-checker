@@ -10,7 +10,6 @@ try :
 	from Functions import *
 	from MailProgExec import MailProgExec
 	from Examples import Examples
-	from AkonadiMod import *
 	from PyQt4.QtCore import *
 	from PyQt4.QtGui import *
 	from PyKDE4.kdecore import *
@@ -18,6 +17,14 @@ try :
 	from PyKDE4.plasma import Plasma
 	from PyKDE4 import plasmascript
 	import string, time, os.path, sys, locale, signal
+	try :
+		ModuleExist = True
+		from PyKDE4.akonadi import Akonadi
+		from AkonadiMod import *
+	except :
+		ModuleExist = False
+	finally :
+		pass
 	RESULT = []
 	Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 	ErrorMsg = ''
@@ -948,8 +955,10 @@ class plasmaMailChecker(plasmascript.Applet):
 	def initAkonadi(self):
 		global ModuleExist
 		if not ModuleExist or Akonadi.ServerManager.state() == Akonadi.ServerManager.State(4) :
-			print dateStamp(), 'Module PyKDE4.akonadi or Akonadi server are not available.'
+			print dateStamp(), ModuleExist , 'Module PyKDE4.akonadi or Akonadi server are not available.'
 			return None
+		else :
+			print dateStamp(), ModuleExist , 'Module PyKDE4.akonadi is available.'
 		if self.monitor_isnt_exist() :
 			print dateStamp(), 'Module PyKDE4.akonadi && Akonadi server are available.'
 			timeout = self.initValue('TimeOutGroup', '3')
@@ -960,7 +969,9 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.monitorTimer.start(60 * 1000)
 
 	def monitor_isnt_exist(self):
-		if akonadiAccountList().count() != 0 and Akonadi.ServerManager.state() == Akonadi.ServerManager.State(2) :
+		global ModuleExist
+		if ModuleExist and akonadiAccountList().count() != 0 \
+				and Akonadi.ServerManager.state() == Akonadi.ServerManager.State(2) :
 			if 'monitorTimer' in dir(self) :
 				self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
 				self.monitorTimer.stop()
