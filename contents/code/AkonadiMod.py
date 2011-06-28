@@ -29,8 +29,12 @@ class ItemFetchJob(Akonadi.ItemFetchJob):
 		data = []
 		for item in job.items() :
 			if item.id() == self.id_ :
-				## print item.payloadData().data()
-				data += string.split(item.payloadData().data(), '\n')
+				##print item.payloadData().data(), '  common enter data'
+				data = string.split(item.payloadData().data(), '\r\n')
+				## delete whitelines
+				for str_ in ['', ' ', '\t', '\r', '\n'] :
+					for i in xrange(data.count(str_)) :
+						data.remove(str_)
 				break
 		""" self.nameKey -- collection id, self.id_ -- item id """
 		self.prnt.jobFinished( data, self.nameKey, self.id_ )
@@ -69,25 +73,34 @@ class AkonadiMonitor(QObject):
 			self.pointers_to_new_Items = {}
 			self.count = 0
 		i = 0
-		dataString = ''
+		dataString = ['', '', '']; count = len(data)
 		for str_ in data :
 			if str_[:5] == 'Date:' :
-				dataString += str_ + '\r\n'
+				dataString[0] += str_ + '\r\n'
 			elif str_[:5] == 'From:' :
-				dataString += str_ + '\r\n'
+				dataString[1] += str_ + '\r\n'
+				From = True
+				j = i
+				while From and j < (count - 1) :
+					next_str = data[j+1]
+					if next_str[:1] in ['\t', ' ', '\n'] :
+						dataString[1] += next_str + ' \r\n'
+					else :
+						From = False
+					j += 1
 			elif str_[:8] == 'Subject:' :
-				dataString += str_
+				dataString[2] += str_ + '\r\n'
 				Subj = True
 				j = i
-				while Subj :
+				while Subj and j < (count - 1) :
 					next_str = data[j+1]
-					if next_str[:1] in ['\t', ' ', '\r\n'] :
-						dataString += next_str + ' \r\n '
+					if next_str[:1] in ['\t', ' ', '\n'] :
+						dataString[2] += next_str + ' \r\n'
 					else :
 						Subj = False
 					j += 1
 			i += 1
-		str_ = dataString + '\r\n\r\n'
+		str_ = string.join(dataString, '') + '\r\n\r\n'
 
 		self.count += 1
 		STR_ = ''
@@ -108,7 +121,7 @@ class AkonadiMonitor(QObject):
 			for _id in self.pointers_to_new_Items[name_].keys() :
 				STR_ += self.pointers_to_new_Items[name_][_id]
 				id_ += [_id]
-			self.Parent.eventNotification('<b><u>' + self.Parent.tr._translate('New Massage(s) :') + '</u></b>' + \
+			self.Parent.eventNotification('<b><u>' + self.Parent.tr._translate('New Message(s) :') + '</u></b>' + \
 						'\n' + self.Parent.tr._translate('In ') + \
 						self.Parent.fieldBoxPref + self.nameList[name_][0] + self.Parent.fieldBoxSuff + ':\n' + \
 						STR_, {name_ : min(id_)}, self.nameList[name_][1])
