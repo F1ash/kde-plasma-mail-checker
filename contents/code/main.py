@@ -743,7 +743,7 @@ class plasmaMailChecker(plasmascript.Applet):
 									self.fieldBoxPref + self.accountList[i] + self.fieldBoxSuff + ':\n' + \
 									htmlWrapper(mailAttrToSTR(_str), self.mailAttrColor) + '\n'
 				if STR_ != '' :
-					self.eventNotification('<b><u>' + self.tr._translate('New Massage(s) :') + '</u></b>' + STR_, \
+					self.eventNotification('<b><u>' + self.tr._translate('New Message(s) :') + '</u></b>' + STR_, \
 											{0 : 0}, \
 											self.accountCommand[ self.accountList[i] ])
 				i += 1

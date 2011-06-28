@@ -214,7 +214,7 @@ Checking</source>
     </message>
     <message>
         <location filename="main.py" line="724"/>
-        <source>New Massage(s) :</source>
+        <source>New Message(s) :</source>
         <translation>Новая почта :</translation>
     </message>
     <message>
