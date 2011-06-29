@@ -3,7 +3,7 @@
 from PyQt4.QtCore import *
 from Functions import dateStamp, htmlWrapper, mailAttrToSTR
 from main import Settings
-import os.path, time, string
+import string
 from PyKDE4.akonadi import Akonadi
 
 StateSTR = { 0 : 'NotRunning', 1 : 'Starting', 2 : 'Running', 3 : 'Stopping', 4 : 'Broken' }
@@ -29,12 +29,18 @@ class ItemFetchJob(Akonadi.ItemFetchJob):
 		data = []
 		for item in job.items() :
 			if item.id() == self.id_ :
-				##print item.payloadData().data(), '  common enter data'
-				data = string.split(item.payloadData().data(), '\r\n')
+				## print item.payloadData().data(), '  common enter data'
+				data = string.split(item.payloadData().data(), '\n')
 				## delete whitelines
 				for str_ in ['', ' ', '\t', '\r', '\n'] :
 					for i in xrange(data.count(str_)) :
 						data.remove(str_)
+				i = 0
+				for str_ in data :
+					l = len(str_)
+					if str_.endswith('\r') : data[i] = str_[:(l-1)]
+					i += 1
+				## for str_ in data : print str_ , ' ==='
 				break
 		""" self.nameKey -- collection id, self.id_ -- item id """
 		self.prnt.jobFinished( data, self.nameKey, self.id_ )
@@ -78,7 +84,7 @@ class AkonadiMonitor(QObject):
 			if str_[:5] == 'Date:' :
 				dataString[0] += str_ + '\r\n'
 			elif str_[:5] == 'From:' :
-				dataString[1] += str_ + '\r\n'
+				dataString[1] += str_ + ' \r\n'
 				From = True
 				j = i
 				while From and j < (count - 1) :
@@ -89,7 +95,7 @@ class AkonadiMonitor(QObject):
 						From = False
 					j += 1
 			elif str_[:8] == 'Subject:' :
-				dataString[2] += str_ + '\r\n'
+				dataString[2] += str_ + ' \r\n'
 				Subj = True
 				j = i
 				while Subj and j < (count - 1) :
@@ -100,7 +106,8 @@ class AkonadiMonitor(QObject):
 						Subj = False
 					j += 1
 			i += 1
-		str_ = string.join(dataString, '') + '\r\n\r\n'
+		## add "\r\n" once, because dataString[2] contain "\r\n" already
+		str_ = string.join(dataString, '') + '\r\n'
 
 		self.count += 1
 		STR_ = ''
