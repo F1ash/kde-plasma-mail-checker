@@ -84,7 +84,7 @@ def losedBlank(str_):
 	else :
 		return str_
 
-def decodeMailSTR(str_, headerCode):
+def decodeMailSTR(str_, headerCode = 'utf-8'):
 	obj = ''
 	__str = str_.replace('"', ' &quot; ')
 	## for recovery losed blank
