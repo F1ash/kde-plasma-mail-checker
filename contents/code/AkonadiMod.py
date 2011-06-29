@@ -14,6 +14,17 @@ def akonadiAccountList():
 	Settings.endGroup()
 	return accList
 
+def codeDetect(str_):
+	_str = str_.partition('charset=')
+	if _str[1] == '' or _str[2] == '' :
+		return ''
+	for symbol in [' ', ';', '\r\n', '\n'] :
+		_str_raw = _str.partition(symbol)[0]
+		_str = _str_raw
+	headerCode = _str.replace('"','').lower()
+	#print headerCode, ' <--  header Code'
+	return headerCode
+
 class ItemFetchJob(Akonadi.ItemFetchJob):
 	def __init__(self, col, id_ = 0, parent = None):
 		Akonadi.ItemFetchJob.__init__(self, col, parent)
@@ -79,7 +90,7 @@ class AkonadiMonitor(QObject):
 			self.pointers_to_new_Items = {}
 			self.count = 0
 		i = 0
-		dataString = ['', '', '']; count = len(data)
+		dataString = ['', '', '']; count = len(data); headerCode = ''
 		for str_ in data :
 			if str_[:5] == 'Date:' :
 				dataString[0] += str_ + '\r\n'
@@ -105,6 +116,8 @@ class AkonadiMonitor(QObject):
 					else :
 						Subj = False
 					j += 1
+			elif str_[:13] == 'Content-type:' :
+				headerCode = codeDetect(str_)
 			i += 1
 		## add "\r\n" once, because dataString[2] contain "\r\n" already
 		str_ = string.join(dataString, '') + '\r\n'
@@ -116,7 +129,7 @@ class AkonadiMonitor(QObject):
 		"""
 		for _str in string.split(str_, '\r\n\r\n') :
 			if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
-				STR_ += htmlWrapper(mailAttrToSTR(_str), self.Parent.mailAttrColor) + '\n'
+				STR_ += htmlWrapper(mailAttrToSTR(_str, headerCode), self.Parent.mailAttrColor) + '\n'
 		var = self.pointers_to_new_Items.pop(nameKey, {})
 		var[ id_ ] = STR_
 		self.pointers_to_new_Items[ nameKey ] = var
