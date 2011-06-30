@@ -95,7 +95,7 @@ def decodeMailSTR(str_, headerCode = 'utf-8'):
 			try :
 				obj += part_str[0].decode(headerCode) + ' '
 			except LookupError, err:
-				print err, ' : ', headerCode
+				print dateStamp(), err, ' : ', headerCode
 				obj += part_str[0] + ' '
 			finally :
 				pass
