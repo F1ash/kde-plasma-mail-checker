@@ -97,8 +97,8 @@ def decodeMailSTR(str_, headerCode = ''):
 		try :
 			if part_str[1] is None :
 				if headerCode != '':
-					if headerCode[:3].lower() == 'win' :
-						raw_headerCode = 'win-' + headerCode[-4:]
+					if headerCode[:3].lower() == 'win' or headerCode[:2].lower() == 'cp':
+						raw_headerCode = 'cp' + headerCode[-4:]
 						headerCode = raw_headerCode
 					obj += part_str[0].decode(headerCode) + ' '
 				else :
