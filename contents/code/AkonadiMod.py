@@ -19,9 +19,9 @@ def codeDetect(str_):
 	if _str[1] == '' or _str[2] == '' :
 		return ''
 	for symbol in [' ', ';', '\r\n', '\n'] :
-		_str_raw = _str.partition(symbol)[0]
+		_str_raw = _str[0].partition(symbol)
 		_str = _str_raw
-	headerCode = _str.replace('"','').lower()
+	headerCode = _str[0].replace('"','').lower()
 	#print headerCode, ' <--  header Code'
 	return headerCode
 
