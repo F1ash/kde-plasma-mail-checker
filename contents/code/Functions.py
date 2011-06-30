@@ -51,7 +51,7 @@ def dateFormat(str_):
 	#print dateSTR
 	return QString().fromUtf8(dateSTR)
 
-def mailAttrToSTR(str_, headerCode = 'utf-8'):
+def mailAttrToSTR(str_, headerCode = ''):
 	From = ''
 	Subj = ''
 	Date = ''
@@ -84,23 +84,29 @@ def losedBlank(str_):
 	else :
 		return str_
 
-def decodeMailSTR(str_, headerCode = 'utf-8'):
+def decodeMailSTR(str_, headerCode = ''):
 	obj = ''
 	__str = str_.replace('"', ' &quot; ')
 	## for recovery losed blank
 	_str = losedBlank(__str)
 	## 
 	for part_str in email.header.decode_header(_str) :
-		if part_str[1] is None :
-			try :
-				obj += part_str[0].decode(headerCode) + ' '
-			except LookupError, err:
-				print dateStamp(), err, ' : ', headerCode
-				obj += part_str[0] + ' '
-			finally :
-				pass
-		else :
-			obj += part_str[0].decode(part_str[1]) + ' '
+		try :
+			if part_str[1] is None :
+				if headerCode != '':
+					obj += part_str[0].decode(headerCode) + ' '
+				else :
+					obj += part_str[0] + ' '
+			else :
+				obj += part_str[0].decode(part_str[1]) + ' '
+		except LookupError, err:
+			print dateStamp(), err, ' : ', headerCode, ' <---> ', part_str[0]
+			obj += part_str[0] + ' '
+		except UnicodeDecodeError, err:
+			print dateStamp(), err, ' : ', part_str[1], ' <---> ', part_str[0]
+			obj += part_str[0] + ' '
+		finally :
+			pass
 	return obj
 
 def dateStamp():
