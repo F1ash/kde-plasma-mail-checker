@@ -92,7 +92,13 @@ def decodeMailSTR(str_, headerCode = 'utf-8'):
 	## 
 	for part_str in email.header.decode_header(_str) :
 		if part_str[1] is None :
-			obj += part_str[0].decode(headerCode) + ' '
+			try :
+				obj += part_str[0].decode(headerCode) + ' '
+			except LookupError, err:
+				print err, ' : ', headerCode
+				obj += part_str[0] + ' '
+			finally :
+				pass
 		else :
 			obj += part_str[0].decode(part_str[1]) + ' '
 	return obj
