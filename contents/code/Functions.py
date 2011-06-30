@@ -78,7 +78,8 @@ def mailAttrToSTR(str_, headerCode = ''):
 	return From, Subj, dateFormat(Date)
 
 def losedBlank(str_):
-	_str = str_.partition('?=')
+	## _str = str_.partition('?=')
+	_str = str_.rpartition('?=')
 	if _str[1] != '' and _str[2] != '' :
 		## return string.join([ _str[0], losedBlank( _str[2] ) ], '?= ')
 		return string.join([ _str[0], _str[2] ], '?= ')
