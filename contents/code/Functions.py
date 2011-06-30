@@ -105,7 +105,7 @@ def decodeMailSTR(str_, headerCode = ''):
 			print dateStamp(), err, ' : ', headerCode, ' <---> ', unicode(part_str[0])
 			obj += part_str[0] + ' '
 		except UnicodeDecodeError, err:
-			print dateStamp(), QtCore.QString(err + ' : '+ part_str[1] + ' <---> ' + part_str[0])
+			print dateStamp(), QString(err + ' : '+ part_str[1] + ' <---> ' + part_str[0])
 			obj += part_str[0] + ' '
 		finally :
 			pass
