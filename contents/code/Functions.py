@@ -80,7 +80,8 @@ def mailAttrToSTR(str_, headerCode = ''):
 def losedBlank(str_):
 	_str = str_.partition('?=')
 	if _str[1] != '' and _str[2] != '' :
-		return string.join([ _str[0], losedBlank( _str[2] ) ], '?= ')
+		## return string.join([ _str[0], losedBlank( _str[2] ) ], '?= ')
+		return string.join([ _str[0], _str[2] ], '?= ')
 	else :
 		return str_
 
@@ -88,7 +89,7 @@ def decodeMailSTR(str_, headerCode = ''):
 	obj = ''
 	__str = str_.replace('"', ' &quot; ')
 	## for recovery losed blank
-	_str = losedBlank(__str)
+	## _str = losedBlank(__str)
 	## 
 	for part_str in email.header.decode_header(_str) :
 		try :

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4.QtCore import *
-from Functions import dateStamp, htmlWrapper, mailAttrToSTR
+from Functions import dateStamp, htmlWrapper, mailAttrToSTR, losedBlank
 from main import Settings
 import string
 from PyKDE4.akonadi import Akonadi
@@ -95,24 +95,24 @@ class AkonadiMonitor(QObject):
 			if str_[:5] == 'Date:' :
 				dataString[0] += str_ + '\r\n'
 			elif str_[:5] == 'From:' :
-				dataString[1] += str_ + ' \r\n'
+				dataString[1] += losedBlank(str_) + ' \r\n'
 				From = True
 				j = i
 				while From and j < (count - 1) :
 					next_str = data[j+1]
 					if next_str[:1] in ['\t', ' ', '\n'] :
-						dataString[1] += next_str + ' \r\n'
+						dataString[1] += losedBlank(next_str) + ' \r\n'
 					else :
 						From = False
 					j += 1
 			elif str_[:8] == 'Subject:' :
-				dataString[2] += str_ + ' \r\n'
+				dataString[2] += losedBlank(str_) + ' \r\n'
 				Subj = True
 				j = i
 				while Subj and j < (count - 1) :
 					next_str = data[j+1]
 					if next_str[:1] in ['\t', ' ', '\n'] :
-						dataString[2] += next_str + ' \r\n'
+						dataString[2] += losedBlank(next_str) + ' \r\n'
 					else :
 						Subj = False
 					j += 1
