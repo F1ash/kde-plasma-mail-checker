@@ -97,13 +97,15 @@ def decodeMailSTR(str_, headerCode = ''):
 		try :
 			if part_str[1] is None :
 				if headerCode != '':
-					if headerCode[:3].lower() == 'win' or headerCode[:2].lower() == 'cp':
+					if headerCode[:3].lower() == 'win' or headerCode[:2].lower() == 'cp' :
 						raw_headerCode = 'cp' + headerCode[-4:]
 						headerCode = raw_headerCode
 					obj += part_str[0].decode(headerCode) + ' '
 				else :
 					obj += part_str[0] + ' '
+				print dateStamp(), ' charset=', headerCode
 			else :
+				print dateStamp(), ' charset=', part_str[1]
 				obj += part_str[0].decode(part_str[1]) + ' '
 		except LookupError, err:
 			print dateStamp(), err, ' : ', headerCode, ' <---> ', QString(part_str[0]).toUtf8().data()
