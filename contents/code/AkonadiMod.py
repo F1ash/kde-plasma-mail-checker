@@ -18,10 +18,11 @@ def codeDetect(str_):
 	_str = str_.partition('charset=')
 	if _str[1] == '' or _str[2] == '' :
 		return ''
+	STR = [_str[1]]
 	for symbol in [' ', ';', '\r\n', '\n'] :
-		_str_raw = _str[0].partition(symbol)
-		_str = _str_raw
-	headerCode = _str[0].replace('"','').lower()
+		_str_raw = STR[0].partition(symbol)
+		STR = _str_raw
+	headerCode = STR[0].replace('"','').lower()
 	#print headerCode, ' <--  header Code'
 	return headerCode
 
@@ -116,8 +117,17 @@ class AkonadiMonitor(QObject):
 					else :
 						Subj = False
 					j += 1
-			elif str_[:13] == 'Content-type:' :
-				headerCode = codeDetect(str_)
+			elif str_[:13].lower() == 'content-type:' :
+				Code = True
+				j = i
+				while Code and j < (count - 1) :
+					next_str = data[j]
+					if next_str[:1] in ['\t', ' ', '\n'] :
+						headerCode = codeDetect(str_)
+						if headerCode != '' : break
+					else :
+						Code = False
+					j += 1
 			i += 1
 		## add "\r\n" once, because dataString[2] contain "\r\n" already
 		str_ = string.join(dataString, '') + '\r\n'
