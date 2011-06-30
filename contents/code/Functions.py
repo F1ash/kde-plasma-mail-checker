@@ -51,7 +51,7 @@ def dateFormat(str_):
 	#print dateSTR
 	return QString().fromUtf8(dateSTR)
 
-def mailAttrToSTR(str_):
+def mailAttrToSTR(str_, headerCode = 'utf-8'):
 	From = ''
 	Subj = ''
 	Date = ''
@@ -66,10 +66,10 @@ def mailAttrToSTR(str_):
 		#print dateStamp(), raw_str, 'raw_str'
 		_str = raw_str.replace('\r\n', '')
 		if _str[:5] == 'From:' :
-			From = decodeMailSTR(_str[6:]) + ' '
+			From = decodeMailSTR(_str[6:], headerCode) + ' '
 			#print dateStamp(), From, 'From'
 		elif _str[:5] == 'Subje' :
-			Subj = decodeMailSTR(_str[9:]) + ' '
+			Subj = decodeMailSTR(_str[9:], headerCode) + ' '
 			#print dateStamp(), Subj, 'Subj'
 		elif _str[:5] == 'Date:' :
 			Date = _str
