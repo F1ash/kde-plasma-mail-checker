@@ -77,21 +77,22 @@ def mailAttrToSTR(str_, headerCode = ''):
 		STR_ = STR_.replace( raw_str + '\r\n', '' )
 	return From, Subj, dateFormat(Date)
 
-def losedBlank(str_):
-	## _str = str_.partition('?=')
-	_str = str_.rpartition('?=')
-	if _str[1] != '' and _str[2] != '' :
-		## return string.join([ _str[0], losedBlank( _str[2] ) ], '?= ')
-		return string.join([ _str[0], _str[2] ], '?= ')
-	else :
-		return str_
+def losedBlank(str_raw):
+	""" рассчёт на то, что в строке может быть не одна закодированная фраза
+		поэтому добавляем пробел в конце обработанной фразы
+	"""
+	STR_ = ''
+	for str_ in string.split(str_raw, ' ') :
+		_str = str_.rpartition('?=')
+		if _str[1] != '' and _str[2] != '' :
+			STR_ += string.join([ _str[0], losedBlank( _str[2] ) ], '?= ') + ' '
+		else :
+			STR_ += str_ + ' '
+	return STR_
 
 def decodeMailSTR(str_, headerCode = ''):
 	obj = ''
 	_str = str_.replace('"', ' &quot; ')
-	## for recovery losed blank
-	## _str = losedBlank(__str)
-	## 
 	for part_str in email.header.decode_header(_str) :
 		try :
 			if part_str[1] is None :
@@ -102,11 +103,11 @@ def decodeMailSTR(str_, headerCode = ''):
 			else :
 				obj += part_str[0].decode(part_str[1]) + ' '
 		except LookupError, err:
-			print dateStamp(), err, ' : ', headerCode, ' <---> ', unicode(part_str[0])
+			print dateStamp(), err, ' : ', headerCode, ' <---> ', QString(part_str[0]).toUtf8().data()
 			obj += part_str[0] + ' '
 		except UnicodeDecodeError, err:
-			print dateStamp(), QString(err + ' : '+ part_str[1] + ' <---> ' + part_str[0])
-			obj += part_str[0] + ' '
+			print dateStamp(), err, ' : ', part_str[1], ' <---> ', QString(part_str[0]).toUtf8().data()
+			obj += QString().fromUtf8(part_str[0]) + ' '
 		finally :
 			pass
 	return obj
@@ -305,16 +306,20 @@ def checkNewMailPOP3(accountData = ['', '']):
 						From = ''
 						Subj = ''
 						Date = ''
+						Next = ''
 						for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
-							if str_[:5] == 'From:' :
-								From += str_
+							if str_[:5] == 'From:' or (Next == 'From' and str_[:1] == ' ') :
+								Next = 'From'
+								From += losedBlank(str_) + ' '
 								#print dateStamp(), From
-							if str_[:5] == 'Subje' :
-								Subj += str_
+							elif str_[:5] == 'Subje' or (Next == 'Subj' and str_[:1] == ' ') :
+								Next = 'Subj'
+								Subj += losedBlank(str_) + ' '
 								#print dateStamp(), Subj
-							if str_[:5] == 'Date:' :
+							elif str_[:5] == 'Date:' :
 								Date += str_
 								#print dateStamp(), Date
+							else : Next = ''
 						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ------'
 						newMailExist = newMailExist or True
