@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4.QtCore import *
-from Functions import dateStamp, htmlWrapper, mailAttrToSTR, losedBlank
+from Functions import dateStamp, htmlWrapper, mailAttrToSTR, losedBlank, codeDetect
 from main import Settings
 import string
 from PyKDE4.akonadi import Akonadi
@@ -13,18 +13,6 @@ def akonadiAccountList():
 	accList = Settings.allKeys()
 	Settings.endGroup()
 	return accList
-
-def codeDetect(str_):
-	_str = str_.partition('charset=')
-	if _str[1] == '' or _str[2] == '' :
-		return ''
-	STR = [_str[1]]
-	for symbol in [' ', ';', '\r\n', '\n'] :
-		_str_raw = STR[0].partition(symbol)
-		STR = _str_raw
-	headerCode = STR[0].replace('"','').lower()
-	#print headerCode, ' <--  header Code'
-	return headerCode
 
 class ItemFetchJob(Akonadi.ItemFetchJob):
 	def __init__(self, col, id_ = 0, parent = None):

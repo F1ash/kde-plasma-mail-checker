@@ -737,11 +737,15 @@ class plasmaMailChecker(plasmascript.Applet):
 				STR_ = ''
 				if str_ not in ['', ' ', '0'] :
 					#print dateStamp() ,  str_
+					j = 0
 					for _str in string.split(str_, '\r\n\r\n') :
 						if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
 							STR_ += '\n' + self.tr._translate('In ') + \
 									self.fieldBoxPref + self.accountList[i] + self.fieldBoxSuff + ':\n' + \
-									htmlWrapper(mailAttrToSTR(_str), self.mailAttrColor) + '\n'
+									htmlWrapper(mailAttrToSTR(_str, self.checkResult[i][5][j]), \
+												self.mailAttrColor) + \
+									'\n'
+						j += 1
 				if STR_ != '' :
 					self.eventNotification('<b><u>' + self.tr._translate('New Message(s) :') + '</u></b>' + STR_, \
 											{0 : 0}, \

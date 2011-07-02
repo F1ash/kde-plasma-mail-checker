@@ -9,8 +9,8 @@ if __name__ == '__main__':
 		Result = (False, 0, 0, '', '')
 	else :
 		Result = ( checkMail( [account, passw] ) )
-	suff = ['.Result', '.all', '.new', '.msg', '.content']
-	for i in xrange(5) :
+	suff = ['.Result', '.all', '.new', '.msg', '.content', '.encoding']
+	for i in xrange(6) :
 		f = open('/dev/shm/' + fileName + suff[i], 'w')
 		if type(Result[i]) is bool or type(Result[i]) is int :
 			res_ = str(Result[i])

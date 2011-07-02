@@ -90,6 +90,18 @@ def losedBlank(str_raw):
 			STR_ += str_ + ' '
 	return STR_
 
+def codeDetect(str_):
+	_str = str_.partition('charset=')
+	if _str[1] == '' or _str[2] == '' :
+		return ''
+	STR = [_str[1]]
+	for symbol in [' ', ';', '\r\n', '\n'] :
+		_str_raw = STR[0].partition(symbol)
+		STR = _str_raw
+	headerCode = STR[0].replace('"','').lower()
+	#print headerCode, ' <--  header Code'
+	return headerCode
+
 def decodeMailSTR(str_, headerCode = ''):
 	obj = ''
 	_str = str_.replace('"', ' &quot; ')
@@ -103,10 +115,14 @@ def decodeMailSTR(str_, headerCode = ''):
 					obj += part_str[0].decode(headerCode) + ' '
 				else :
 					obj += part_str[0] + ' '
-				print dateStamp(), ' charset=', headerCode
+				print dateStamp(), ' charset=', headerCode, ' <--- None'
 			else :
-				print dateStamp(), ' charset=', part_str[1]
-				obj += part_str[0].decode(part_str[1]) + ' '
+				headerCode = part_str[1]
+				if headerCode[:3].lower() == 'win' or headerCode[:2].lower() == 'cp' :
+					raw_headerCode = 'cp' + headerCode[-4:]
+					headerCode = raw_headerCode
+				print dateStamp(), ' charset=', part_str[1], ' : ', headerCode
+				obj += part_str[0].decode(headerCode) + ' '
 		except LookupError, err:
 			print dateStamp(), err, ' : ', headerCode, ' <---> ', QString(part_str[0]).toUtf8().data()
 			obj += part_str[0] + ' '
@@ -156,7 +172,7 @@ def readDataFiles(fileName):
 	path_ = '/dev/shm/' + fileName
 	return bool(dataToSTR(path_ + '.Result')), int(dataToSTR(path_ + '.all')), \
 						int(dataToSTR(path_ + '.new')), str(dataToSTR(path_ + '.msg')), \
-						str(dataToSTR(path_ + '.content'))
+						str(dataToSTR(path_ + '.content')), str(dataToSTR(path_ + '.encoding'))
 
 def randomString(j = 1):
 	#return "".join( [random.choice(string.letters) for i in xrange(j)] )
@@ -282,6 +298,7 @@ def defineUIDL(accountName = '', str_ = ''):
 
 def checkNewMailPOP3(accountData = ['', '']):
 	global ErrorMsg
+	encoding = ''
 	x = ''
 	try:
 		NewMailAttributes = ''
@@ -311,6 +328,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 						From = ''
 						Subj = ''
 						Date = ''
+						Code = ''
 						Next = ''
 						for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
 							if str_[:5] == 'From:' or (Next == 'From' and str_[:1] == ' ') :
@@ -321,12 +339,16 @@ def checkNewMailPOP3(accountData = ['', '']):
 								Next = 'Subj'
 								Subj += losedBlank(str_) + ' '
 								#print dateStamp(), Subj
+							elif str_[:13].lower() == 'content-type:' or (Next == 'Code' and str_[:1] == ' ') :
+								Next = 'Code'
+								Code = codeDetect(str_)
 							elif str_[:5] == 'Date:' :
 								Date += str_
 								#print dateStamp(), Date
 							else : Next = ''
 						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ------'
+						encoding += Code + '\n'
 						newMailExist = newMailExist or True
 						countNew += 1
 
@@ -369,11 +391,12 @@ def checkNewMailPOP3(accountData = ['', '']):
 	finally:
 		pass
 
-	return probeError, countAll, countNew, NewMailAttributes
+	return probeError, countAll, countNew, NewMailAttributes, encoding
 
 def checkNewMailIMAP4(accountData = ['', '']):
 	global Settings
 	global ErrorMsg
+	encoding = ''
 	x = ''
 	try:
 		NewMailAttributes = ''
@@ -490,17 +513,18 @@ def checkNewMailIMAP4(accountData = ['', '']):
 	finally:
 		pass
 
-	return probeError, countAll, countNew, NewMailAttributes
+	return probeError, countAll, countNew, NewMailAttributes, encoding
 
 def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', ''], acc = ''):
 	global ErrorMsg
 	Result = False
 	all_ = 0
 	new_ = 0
+	encoding = ''
 	i = 0
 	while i < probe_ :
 		#print dateStamp(), 'Probe ', i + 1, to_unicode(authData[0])
-		test_, all_, new_, content = checkNewMail(authData)
+		test_, all_, new_, content, encoding = checkNewMail(authData)
 		if test_ :
 			Result = True
 			break
@@ -508,7 +532,7 @@ def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', ''], acc = '')
 		if i == probe_ :
 			ErrorMsg += "\nCan`t connect to server\non Account : " + to_unicode(acc) + '\n'
 	#print dateStamp(), ErrorMsg, '  errors'
-	return Result, all_, new_, ErrorMsg, QString(content).toUtf8()
+	return Result, all_, new_, ErrorMsg, QString(content).toUtf8(), encoding
 
 def checkMail(accountData = ['', '']):
 	global Settings
