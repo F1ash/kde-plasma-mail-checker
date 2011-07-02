@@ -341,7 +341,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 								#print dateStamp(), Subj
 							elif str_[:13].lower() == 'content-type:' or (Next == 'Code' and str_[:1] == ' ') :
 								Next = 'Code'
-								Code = codeDetect(str_)
+								Code += codeDetect(str_)
 							elif str_[:5] == 'Date:' :
 								Date += str_
 								#print dateStamp(), Date
