@@ -734,6 +734,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				""" collected mail headers for each account
 				"""
 				str_ = self.checkResult[i][4]
+				encoding = string.split(self.checkResult[i][5], '\n')
 				STR_ = ''
 				if str_ not in ['', ' ', '0'] :
 					#print dateStamp() ,  str_
@@ -742,7 +743,7 @@ class plasmaMailChecker(plasmascript.Applet):
 						if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
 							STR_ += '\n' + self.tr._translate('In ') + \
 									self.fieldBoxPref + self.accountList[i] + self.fieldBoxSuff + ':\n' + \
-									htmlWrapper(mailAttrToSTR(_str, self.checkResult[i][5][j]), \
+									htmlWrapper(mailAttrToSTR(_str, encoding[j]), \
 												self.mailAttrColor) + \
 									'\n'
 						j += 1

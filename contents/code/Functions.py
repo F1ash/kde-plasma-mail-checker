@@ -94,8 +94,8 @@ def codeDetect(str_):
 	_str = str_.partition('charset=')
 	if _str[1] == '' or _str[2] == '' :
 		return ''
-	STR = [_str[1]]
-	for symbol in [' ', ';', '\r\n', '\n'] :
+	STR = [_str[2]]
+	for symbol in [';', '\r\n', '\n'] :
 		_str_raw = STR[0].partition(symbol)
 		STR = _str_raw
 	headerCode = STR[0].replace('"','').lower()
