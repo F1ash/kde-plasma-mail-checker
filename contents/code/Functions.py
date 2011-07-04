@@ -95,11 +95,11 @@ def codeDetect(str_):
 	if _str[1] == '' or _str[2] == '' :
 		return ''
 	STR = [_str[2]]
-	for symbol in [';', '\r\n', '\n'] :
+	for symbol in ['\r\n', '\n', ';'] :
 		_str_raw = STR[0].partition(symbol)
 		STR = _str_raw
 	headerCode = STR[0].replace('"','').lower()
-	#print headerCode, ' <--  header Code'
+	print headerCode, ' <--  header Code'
 	return headerCode
 
 def decodeMailSTR(str_, headerCode = ''):
@@ -108,26 +108,25 @@ def decodeMailSTR(str_, headerCode = ''):
 	for part_str in email.header.decode_header(_str) :
 		try :
 			if part_str[1] is None :
+				_headerCode = headerCode
 				if headerCode != '':
 					if headerCode[:3].lower() == 'win' or headerCode[:2].lower() == 'cp' :
-						raw_headerCode = 'cp' + headerCode[-4:]
-						headerCode = raw_headerCode
-					obj += part_str[0].decode(headerCode) + ' '
+						_headerCode = 'cp' + headerCode[-4:]
+					obj += part_str[0].decode(_headerCode) + ' '
 				else :
 					obj += part_str[0] + ' '
-				print dateStamp(), ' charset=', headerCode, ' <--- None'
+				print dateStamp(), ' charset=', _headerCode, ' <--- None', '::', obj, '<--', part_str[0]
 			else :
-				headerCode = part_str[1]
-				if headerCode[:3].lower() == 'win' or headerCode[:2].lower() == 'cp' :
-					raw_headerCode = 'cp' + headerCode[-4:]
-					headerCode = raw_headerCode
-				print dateStamp(), ' charset=', part_str[1], ' : ', headerCode
-				obj += part_str[0].decode(headerCode) + ' '
+				_headerCode = part_str[1]
+				if part_str[1][:3].lower() == 'win' or part_str[1][:2].lower() == 'cp' :
+					_headerCode = 'cp' + part_str[1][-4:]
+				obj += part_str[0].decode(_headerCode) + ' '
+				print dateStamp(), ' charset=', part_str[1], ' : ', _headerCode, '::', obj, '<--', part_str[0]
 		except LookupError, err:
-			print dateStamp(), err, ' : ', headerCode, ' <---> ', QString(part_str[0]).toUtf8().data()
+			print dateStamp(), err, ' : ', headerCode, '<>', part_str[1], ' <---> ', QString(part_str[0]).toUtf8().data()
 			obj += part_str[0] + ' '
 		except UnicodeDecodeError, err:
-			print dateStamp(), err, ' : ', part_str[1], ' <---> ', QString(part_str[0]).toUtf8().data()
+			print dateStamp(), err, ' : ', headerCode, '<>', part_str[1], ' <---> ', QString(part_str[0]).toUtf8().data()
 			obj += QString().fromUtf8(part_str[0]) + ' '
 		finally :
 			pass
