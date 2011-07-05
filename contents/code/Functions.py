@@ -115,13 +115,13 @@ def decodeMailSTR(str_, headerCode = ''):
 					obj += part_str[0].decode(_headerCode) + ' '
 				else :
 					obj += part_str[0] + ' '
-				print dateStamp(), ' charset=', _headerCode, ' <--- None', '::', obj, '<--', part_str[0]
+				print dateStamp(), ' charset=', _headerCode, ' <--- None'	##, '::', obj, '<--', part_str[0]
 			else :
 				_headerCode = part_str[1]
 				if part_str[1][:3].lower() == 'win' or part_str[1][:2].lower() == 'cp' :
 					_headerCode = 'cp' + part_str[1][-4:]
 				obj += part_str[0].decode(_headerCode) + ' '
-				print dateStamp(), ' charset=', part_str[1], ' : ', _headerCode, '::', obj, '<--', part_str[0]
+				print dateStamp(), ' charset=', part_str[1], ' : ', _headerCode	##, '::', obj, '<--', part_str[0]
 		except LookupError, err:
 			print dateStamp(), err, ' : ', headerCode, '<>', part_str[1], ' <---> ', QString(part_str[0]).toUtf8().data()
 			obj += part_str[0] + ' '
