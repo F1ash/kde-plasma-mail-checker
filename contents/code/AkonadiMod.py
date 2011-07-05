@@ -107,15 +107,17 @@ class AkonadiMonitor(QObject):
 					j += 1
 			elif str_[:13].lower() == 'content-type:' :
 				Code = True
-				j = i
-				while Code and j < (count - 1) :
-					next_str = data[j]
-					if next_str[:1] in ['\t', ' ', '\n'] :
-						headerCode = codeDetect(str_)
-						if headerCode != '' : break
-					else :
-						Code = False
-					j += 1
+				headerCode = codeDetect(str_)
+				if headerCode == '' :
+					j = i
+					while Code and j < (count - 1) :
+						next_str = data[j+1]
+						if next_str[:1] in ['\t', ' ', '\n'] :
+							headerCode = codeDetect(next_str)
+							if headerCode != '' : break
+						else :
+							Code = False
+						j += 1
 			i += 1
 		## add "\r\n" once, because dataString[2] contain "\r\n" already
 		str_ = string.join(dataString, '') + '\r\n'
