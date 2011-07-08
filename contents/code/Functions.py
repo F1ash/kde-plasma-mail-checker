@@ -119,7 +119,7 @@ def decodeMailSTR(str_, headerCode = ''):
 						_headerCode = 'cp' + headerCode[-4:]
 					obj += part_str[0].decode(_headerCode) + ' '
 				else :
-					obj += part_str[0] + ' '
+					obj += unicode(part_str[0]) + ' '
 				## print dateStamp(), ' charset=', _headerCode, ' <--- None'	##, '::', obj, '<--', part_str[0]
 			else :
 				_headerCode = part_str[1]
