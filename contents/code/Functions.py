@@ -343,7 +343,9 @@ def checkNewMailPOP3(accountData = ['', '']):
 								Next = 'Subj'
 								Subj += losedBlank(str_) + ' '
 								#print dateStamp(), Subj
-							elif str_[:13].lower() == 'content-type:' or (Next == 'Code' and str_[:1] == ' ') :
+							elif str_[:13].lower() == 'content-type:' \
+								 and string.find(str_.lower(), 'text/plain') > -1 \
+								 or (Next == 'Code' and str_[:1] == ' ') :
 								Next = 'Code'
 								Code += codeDetect(str_)
 							elif str_[:5] == 'Date:' :
@@ -353,6 +355,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ------'
 						encoding += Code + '\n'
+						#print encoding, '  encoding POP3'
 						newMailExist = newMailExist or True
 						countNew += 1
 

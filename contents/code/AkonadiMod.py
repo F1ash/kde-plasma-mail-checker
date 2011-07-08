@@ -105,7 +105,7 @@ class AkonadiMonitor(QObject):
 					else :
 						Subj = False
 					j += 1
-			elif str_[:13].lower() == 'content-type:' :
+			elif (str_[:13].lower() == 'content-type:') and (string.find(str_.lower(), 'text/plain') > -1) :
 				Code = True
 				headerCode = codeDetect(str_)
 				if headerCode == '' :
