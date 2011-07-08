@@ -91,9 +91,14 @@ def losedBlank(str_raw):
 	return STR_
 
 def codeDetect(str_):
-	_str = str_.partition('charset=')
-	if _str[1] == '' or _str[2] == '' :
-		return ''
+	charSetExist = False
+	_str = ''
+	for _diff in ['charset = ', 'charset =', 'charset= ', 'charset='] :
+		_str = str_.partition(_diff)
+		if _str[1] != '' :
+			charSetExist = charSetExist or True
+			break
+	if not charSetExist or _str[2] == '' : return ''
 	STR = [_str[2]]
 	for symbol in ['\r\n', '\n', ';'] :
 		_str_raw = STR[0].partition(symbol)
