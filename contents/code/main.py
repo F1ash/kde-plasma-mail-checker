@@ -52,8 +52,8 @@ class Translator(QTranslator):
 
 	def user_or_sys(self, path_):
 		kdehome = unicode(KGlobal.dirs().localkdedir())
-		var1 = kdehome + 'share/apps/plasma/plasmoids/plasmaMailChecker/contents/code/'
-		var2 = '/usr/share/kde4/apps/plasma/plasmoids/plasmaMailChecker/contents/code/'
+		var1 = kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/code/'
+		var2 = '/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/code/'
 		if os.path.exists(var1 + path_) :
 			return var1
 		elif os.path.exists(var2 + path_) :
@@ -87,12 +87,12 @@ class ThreadCheckMail(QThread):
 
 	def user_or_sys(self, path_):
 		kdehome = unicode(KGlobal.dirs().localkdedir())
-		var1 = kdehome + 'share/apps/plasma/plasmoids/plasmaMailChecker/contents/' + path_
-		var2 = '/usr/share/kde4/apps/plasma/plasmoids/plasmaMailChecker/contents/' + path_
-		if os.path.exists(var1) :
-			return var1
-		elif os.path.exists(var2) :
+		var1 = kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/' + path_
+		var2 = '/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/' + path_
+		if os.path.exists(var2) :
 			return var2
+		elif os.path.exists(var1) :
+			return var1
 		else :
 			return kdehome
 
@@ -207,7 +207,7 @@ class plasmaMailChecker(plasmascript.Applet):
 
 		self.kdehome = unicode(KGlobal.dirs().localkdedir())
 
-		if not os.path.exists(self.kdehome+"share/apps/plasmaMailChecker/plasmaMailChecker.notifyrc"):
+		if not os.path.exists(self.kdehome+"share/apps/kde-plasma-mail-checker/kde-plasma-mail-checker.notifyrc"):
 			if os.path.exists(self.kdehome+"share/apps"):
 				self.createNotifyrc(self.kdehome)
 		self.stopIconPath = self.user_or_sys('contents/icons/mailChecker_stop.png')
@@ -255,8 +255,16 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def initTitle(self):
 		global VERSION
-		fileName = self.kdehome + 'share/apps/plasma/plasmoids/plasmaMailChecker/metadata.desktop'
-		if os.path.exists(fileName) :
+		fileName = self.kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/metadata.desktop'
+		if os.path.exists('/usr/share/kde4/services/kde-plasma-mail-checker.desktop') :
+			with open('/usr/share/kde4/services/kde-plasma-mail-checker.desktop') as f :
+				str_ = f.read()
+			list_ = string.split(str_, '\n')
+			for _str in list_ :
+				if 'X-KDE-PluginInfo-Version' in _str :
+					VERSION = string.split(_str, '=')[1]
+					break
+		elif os.path.exists(fileName) :
 			with open(fileName) as f :
 				str_ = f.read()
 			list_ = string.split(str_, '\n')
@@ -461,12 +469,12 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.emit(SIGNAL('killThread'))
 
 	def user_or_sys(self, path_):
-		var1 = self.kdehome + 'share/apps/plasma/plasmoids/plasmaMailChecker/' + path_
-		var2 = '/usr/share/kde4/apps/plasma/plasmoids/plasmaMailChecker/' + path_
-		if os.path.exists(var1) :
-			return var1
-		elif os.path.exists(var2) :
+		var1 = self.kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/' + path_
+		var2 = '/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-mail-checker/' + path_
+		if os.path.exists(var2) :
 			return var2
+		elif os.path.exists(var1) :
+			return var1
 		else :
 			return self.kdehome
 
@@ -531,7 +539,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		# Output the notifyrc file to the correct location
 		print dateStamp() ,  "Outputting notifyrc file"
 
-		dir_ = kdehome+"share/apps/plasmaMailChecker"
+		dir_ = kdehome+"share/apps/kde-plasma-mail-checker"
 		if not os.path.isdir(dir_):
 			try:
 				os.mkdir(dir_)
@@ -540,7 +548,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				print dateStamp() ,  "Unexpected error:", sys.exc_info()[0]
 
 		# File to create
-		fn = kdehome+"share/apps/plasmaMailChecker/plasmaMailChecker.notifyrc"
+		fn = kdehome+"share/apps/kde-plasma-mail-checker/kde-plasma-mail-checker.notifyrc"
 
 		# File contents
 		c = []
@@ -570,7 +578,7 @@ class plasmaMailChecker(plasmascript.Applet):
 						QPixmap(self.usualIconPath), \
 						None, \
 						KNotification.CloseOnTimeout, \
-						KComponentData('plasmaMailChecker','plasmaMailChecker', \
+						KComponentData('kde-plasma-mail-checker','kde-plasma-mail-checker', \
 						KComponentData.SkipMainComponentRegistration))
 		if len(id_of_new_Items) != 0 :
 			newMailNotify.setActions( QStringList() << "View" )
@@ -1568,8 +1576,8 @@ class Font_n_Colour(QWidget):
 
 	def user_or_sys(self, path_):
 		kdehome = unicode(KGlobal.dirs().localkdedir())
-		var1 = kdehome + 'share/apps/plasma/plasmoids/plasmaMailChecker/contents/' + path_
-		var2 = '/usr/share/kde4/apps/plasma/plasmoids/plasmaMailChecker/contents/' + path_
+		var1 = kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/' + path_
+		var2 = '/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/' + path_
 		if os.path.exists(var1) :
 			return var1
 		elif os.path.exists(var2) :
