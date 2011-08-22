@@ -31,9 +31,11 @@ kde-plasma-mail-checker
 Плазмоид использует KDE-оповещение.
 Плазмоид может отслеживать получение новой почты средствами Akonadi.
 
+%prep
+%setup -q
+
 %build
 make %{?_smp_mflags}
-%setup -q
 
 %install
 make install DESTDIR=$RPM_BUILD_ROOT/usr
@@ -49,5 +51,5 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 
- * Mon Aug 22 2011 Fl@sh <kaperang07@gmail.com> - 1.1.12-1
- - Initial build
+* Mon Aug 22 2011 Fl@sh <kaperang07@gmail.com> - 1.1.12-1
+- Initial build
