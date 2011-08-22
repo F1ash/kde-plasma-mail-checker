@@ -5,13 +5,12 @@ Summary: KDE Plasmoid for periodically checking a new messages in the mailboxes 
 Summary(ru): Плазмоид периодически проверяет наличие новых писем в списке почтовых ящиков.
 Group: Applications/Network
 License: GPL
-Source0: https://github.com/downloads/F1ash/plasmaMailChecker/kde-plasma-mail-checker-1.1.12.tar.bz2
+Source0: https://github.com/downloads/F1ash/plasmaMailChecker/%{name}-%{version}.tar.bz2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL: https://github.com/F1ash/plasmaMailChecker
 BuildArch: noarch
 
-Requires: python >= 2.6, PyQt4 >= 4.7, PyKDE4 >= 4.6
-Conflicts: python >= 3.0
+Requires: python, PyQt4, PyKDE4
 BuildRequires: qt-devel
 
 %description
