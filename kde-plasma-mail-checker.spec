@@ -43,8 +43,8 @@ make install DESTDIR=$RPM_BUILD_ROOT/usr
 %files
 %defattr(-,root,root)
 %{_datadir}/kde4/services/%{name}.desktop
-%{_kde4_appsdir}/plasma/plasmoids/%{name}/*
-%dir %{_kde4_appsdir}/plasma/plasmoids/%{name}
+%{_datadir}/kde4/apps/plasma/plasmoids/%{name}/*
+%dir %{_datadir}/kde4/apps/plasma/plasmoids/%{name}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
