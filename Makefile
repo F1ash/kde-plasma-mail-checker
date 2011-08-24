@@ -2,22 +2,26 @@ DESTDIR=/usr
 INSTALL=install -D -m 0644 -p
 LRELEASE=/usr/bin/lrelease-qt4
 APP_NAME=kde-plasma-mail-checker
+KAPPS=share/kde4/apps
+KSERV=share/kde4/services
 PLASMA=plasma/plasmoids
+CODE=contents/code
+ICONS=contents/icons
 
 build: contents/code/ru.qm
 	@echo "Nothing to build"
 
 install: build
-	$(INSTALL) metadata.desktop $(DESTDIR)/share/kde4/services/$(APP_NAME).desktop
-	$(INSTALL) contents/code/main.py $(DESTDIR)/share/kde4/apps/$(PLASMA)/$(APP_NAME)/code/main.py
-	$(INSTALL) contents/code/ru.qm $(DESTDIR)/share/kde4/apps/$(PLASMA)/$(APP_NAME)/code/ru.qm
-	$(INSTALL) contents/icons/mailChecker.png $(DESTDIR)/share/kde4/apps/$(PLASMA)/$(APP_NAME)/icons/mailChecker.png
-	$(INSTALL) contents/icons/mailChecker_stop.png $(DESTDIR)/share/kde4/apps/$(PLASMA)/$(APP_NAME)/icons/mailChecker_stop.png
-	$(INSTALL) contents/icons/mailChecker_web.png $(DESTDIR)/share/kde4/apps/$(PLASMA)/$(APP_NAME)/icons/mailChecker_web.png
+	$(INSTALL) metadata.desktop $(DESTDIR)/$(KSERV)/$(APP_NAME).desktop
+	$(INSTALL) $(CODE)/main.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/main.py
+	$(INSTALL) $(CODE)/ru.qm $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/ru.qm
+	$(INSTALL) $(ICONS)/mailChecker.png $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/mailChecker.png
+	$(INSTALL) $(ICONS)/mailChecker_stop.png $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/mailChecker_stop.png
+	$(INSTALL) $(ICONS)/mailChecker_web.png $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/mailChecker_web.png
 
 contents/code/ru.qm:
-	$(LRELEASE) contents/code/ru.ts -qm contents/code/ru.qm
+	$(LRELEASE) $(CODE)/ru.ts -qm $(CODE)/ru.qm
 
 clean:
-	rm -rf $(DESTDIR)/share/kde4/services/$(APP_NAME).desktop
-	rm -rf $(DESTDIR)/share/kde4/apps/$(PLASMA)/$(APP_NAME)
+	rm -rf $(DESTDIR)/$(KSERV)/$(APP_NAME).desktop
+	rm -rf $(DESTDIR)/v/$(PLASMA)/$(APP_NAME)
