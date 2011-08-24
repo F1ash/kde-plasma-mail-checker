@@ -620,7 +620,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					self.panelIcon.icon() ) )
 			return None
 
-		self.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if not (self.wallet is None) :
 			self.wallet.setFolder('plasmaMailChecker')
 			if not self.T.isRunning() :
@@ -830,7 +830,7 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def configAccepted(self):
 		self.disconnect(self, SIGNAL('refresh'), self.refreshData)
-		self.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.wallet is None :
 			self.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
@@ -869,7 +869,7 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def _enterPassword(self):
 		if not self.initStat :
-			self.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+			self.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 			if not (self.wallet is None) :
 				#print dateStamp() ,  '_eP'
 				self.enterPassword()
@@ -897,7 +897,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.emit(SIGNAL('refresh'))
 
 	def enterPassword(self):
-		self.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if not (self.wallet is None) :
 			if not self.wallet.hasFolder('plasmaMailChecker') : self.wallet.createFolder('plasmaMailChecker')
 			#print dateStamp() ,  'eP'
@@ -1144,7 +1144,7 @@ class EditAccounts(QWidget):
 		self.connectFlag = False
 
 	def clearChangedAccount(self):
-		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
@@ -1156,7 +1156,7 @@ class EditAccounts(QWidget):
 
 	def saveChangedAccount(self):
 		global Settings
-		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
@@ -1202,7 +1202,7 @@ class EditAccounts(QWidget):
 			del self.resultString
 
 	def editCurrentAccount(self):
-		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
@@ -1250,7 +1250,7 @@ class EditAccounts(QWidget):
 		self.Status = 'READY'
 
 	def addNewAccount(self):
-		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			self.Parent.configDenied()
@@ -1294,7 +1294,7 @@ class EditAccounts(QWidget):
 
 	def delCurrentAccount(self, accountName = ''):
 		global Settings
-		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
@@ -1419,7 +1419,7 @@ class AppletSettings(QWidget):
 
 	def refreshSettings(self, parent = None):
 		global Settings
-		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
@@ -2146,7 +2146,7 @@ class Font_n_Colour(QWidget):
 
 	def refreshSettings(self, parent = None):
 		global Settings
-		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
@@ -2430,7 +2430,7 @@ class AkonadiResources(QWidget):
 			self.collectionResource.setText(col.resource())
 
 	def clearChangedAccount(self):
-		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
@@ -2441,7 +2441,7 @@ class AkonadiResources(QWidget):
 
 	def saveChangedAccount(self):
 		global Settings
-		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
@@ -2476,7 +2476,7 @@ class AkonadiResources(QWidget):
 		self.accountCommand.clear()
 
 	def editCurrentAccount(self):
-		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
@@ -2500,7 +2500,7 @@ class AkonadiResources(QWidget):
 		self.Status = 'READY'
 
 	def addNewAccount(self):
-		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			self.Parent.configDenied()
@@ -2524,7 +2524,7 @@ class AkonadiResources(QWidget):
 
 	def delCurrentAccount(self, accountName = ''):
 		global Settings
-		self.Parent.wallet = KWallet.Wallet.openWallet('kdewallet', 0)
+		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.Parent.wallet is None :
 			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
