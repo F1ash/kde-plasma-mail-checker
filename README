@@ -2,7 +2,7 @@
 
 Dependencies:
 	kdebase-workspace-python-applet (Fedora package name)
-	You need a create new wallet (or use existing) (KWallet) for correct work plasmoid.
+	M@ilChecker uses default wallet or an alternative, if specified.
 
 Paths and files:
 	Error log file: $HOME/.xsession-errors
@@ -37,4 +37,4 @@ Notes:
 Known issues:
 	If you internet connection is too slow, you need increase time value in "Autoexit of connect" parameter.
 
-Tested on Fedora 14 (kdebase-workspace-python-applet-4.5.3-3.fc14.x86_64)
+Tested on Fedora 14 (kdebase-workspace-python-applet-4.5.3-3.fc14.x86_64), Fedora15
