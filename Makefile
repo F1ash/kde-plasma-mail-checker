@@ -31,4 +31,4 @@ contents/code/ru.qm:
 
 clean:
 	rm -rf $(DESTDIR)/$(KSERV)/$(APP_NAME).desktop
-	rm -rf $(DESTDIR)/v/$(PLASMA)/$(APP_NAME)
+	rm -rf $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)
