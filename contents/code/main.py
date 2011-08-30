@@ -52,12 +52,12 @@ class Translator(QTranslator):
 
 	def user_or_sys(self, path_):
 		kdehome = unicode(KGlobal.dirs().localkdedir())
-		var1 = kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/code/'
-		var2 = '/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/code/'
-		if os.path.exists(var1 + path_) :
-			return var1
-		elif os.path.exists(var2 + path_) :
+		var1 = kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/code/' + path_
+		var2 = '/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/code/' + path_
+		if os.path.exists(var2) :
 			return var2
+		elif os.path.exists(var1) :
+			return var1
 		else :
 			return kdehome
 
