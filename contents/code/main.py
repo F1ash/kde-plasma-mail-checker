@@ -1578,10 +1578,10 @@ class Font_n_Colour(QWidget):
 		kdehome = unicode(KGlobal.dirs().localkdedir())
 		var1 = kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/' + path_
 		var2 = '/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/' + path_
-		if os.path.exists(var1) :
-			return var1
-		elif os.path.exists(var2) :
+		if os.path.exists(var2) :
 			return var2
+		elif os.path.exists(var1) :
+			return var1
 		else :
 			return kdehome
 
