@@ -1,9 +1,9 @@
 Name: kde-plasma-mail-checker
 Version: 1.1.12
-Release: 6%{?dist}
+Release: 7%{?dist}
 Summary: KDE Plasmoid for periodically checking a new messages in the mailboxes list.
 Summary(ru): Плазмоид периодически проверяет наличие новых писем в списке почтовых ящиков.
-Group: Applications/Network
+Group: Applications/Internet
 License: GPL
 Source0: http://cloud.github.com/downloads/F1ash/plasmaMailChecker/%{name}-%{version}.tar.bz2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -50,6 +50,9 @@ make install DESTDIR=$RPM_BUILD_ROOT/usr
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+
+* Thu Sep 1 2011 Fl@sh <kaperang07@gmail.com> - 1.1.12-7
+- fixed Group
 
 * Tue Aug 30 2011 Fl@sh <kaperang07@gmail.com> - 1.1.12-6
 - fixed Makefile
