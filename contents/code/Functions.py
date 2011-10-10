@@ -569,4 +569,4 @@ def checkMail(accountData = ['', '']):
 			Msg = 'ConnectMethod Error\n'
 	else:
 		Msg = 'AccountName Error\n'
-	return False, 0, 0, Msg, ''
+	return False, 0, 0, Msg, '', ''
