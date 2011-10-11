@@ -687,6 +687,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		newMailExist = False
 		self.listNewMail = ''
 		x = ''
+		if 'accountList' not in dir(self) : self.accountList = []
 		for accountName in self.accountList :
 			try :
 				if int(self.checkResult[i][2]) > 0 :
@@ -852,7 +853,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		savePOP3Cache()
 		# refresh color & font Variables
 		self.initPrefixAndSuffix()
-		del self.dialog
+		if 'dialog' in dir(self) : del self.dialog
 		# refresh plasmoid Header
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 			self.TitleDialog.setStyleSheet(self.headerColourStyle)
@@ -2270,9 +2271,8 @@ class AkonadiResources(QWidget):
 		print dateStamp(), 'Module PyKDE4.akonadi is'
 		if not ModuleExist :
 			print '\tnot'
-		else :
-			print '\tavailable.'
-			self.init()
+		print '\tavailable.'
+		self.init()
 
 	def init(self):
 
@@ -2285,6 +2285,7 @@ class AkonadiResources(QWidget):
 		self.VBLayout = QVBoxLayout()
 
 		self.akonadiServer = QPushButton('&Restart')
+		self.akonadiServer.hide()
 		#self.akonadiServer.setMaximumWidth(50)
 		self.akonadiServer.setToolTip(self.tr._translate("Restart Akonadi Server"))
 		self.akonadiServer.clicked.connect(self.restartAkonadi)
@@ -2293,15 +2294,17 @@ class AkonadiResources(QWidget):
 		self.akonadiState = QLabel()
 		if not ModuleExist :
 			self.akonadiState.setText(self.tr._translate("Module PyKDE4.akonadi isn`t available."))
+			akonadiAccList = []
 		else :
 			self.akonadiState.setText( self.tr._translate("Akonadi Server is : ") + \
 										StateSTR[Akonadi.ServerManager.state()] )
+			akonadiAccList = akonadiAccountList()
 		self.layout.addWidget(self.akonadiState, 0, 0)
 
 		self.accountListBox = KListWidget()
 		self.accountListBox.hide()
 		self.accountList = []
-		for accountName in akonadiAccountList():
+		for accountName in akonadiAccList:
 			self.accountListBox.addItem(accountName)
 			self.accountList += [accountName]
 		#print dateStamp() ,  self.accountList
@@ -2350,7 +2353,9 @@ class AkonadiResources(QWidget):
 		self.collectionResource.setText('-- "" --')
 		self.HB1Layout.addWidget(self.collectionResource, 0, 2)
 
-		self.HB1Layout.addWidget(QLabel(self.tr._translate("Enable : ")), 0, 3)
+		self.enableLabel = QLabel(self.tr._translate("Enable : "))
+		self.enableLabel.hide()
+		self.HB1Layout.addWidget(self.enableLabel, 0, 3)
 
 		self.enabledBox = QCheckBox()
 		Enabled = AppletSettings().initValue('Enabled', '1')
@@ -2368,7 +2373,7 @@ class AkonadiResources(QWidget):
 		self.HB2Layout.addWidget(self.collectionChoice, 0, 0)
 
 		self.searchColl = QPushButton('...')
-		self.stringEditor.hide()
+		self.searchColl.hide()
 		self.searchColl.clicked.connect(self.collectionSearch)
 		self.HB2Layout.addWidget(self.searchColl, 0, 1)
 
@@ -2399,10 +2404,12 @@ class AkonadiResources(QWidget):
 
 		self.setLayout(self.VBLayout)
 
-		if Akonadi.ServerManager.state() != Akonadi.ServerManager.State(4) :
+		if ModuleExist and Akonadi.ServerManager.state() != Akonadi.ServerManager.State(4) :
 			self.initAkonadiAccountManager()
 
 	def initAkonadiAccountManager(self):
+		self.akonadiServer.show()
+		self.enableLabel.show()
 		self.enabledBox.show()
 		self.accountListBox.show()
 		self.stringEditor.show()
@@ -2413,6 +2420,7 @@ class AkonadiResources(QWidget):
 		self.collectionResource.show()
 		self.collectionID.show()
 		self.collectionIDLabel.show()
+		self.searchColl.show()
 		self.delAccountItem.show()
 		self.editAccountItem.show()
 		self.accountCommandLabel.show()
