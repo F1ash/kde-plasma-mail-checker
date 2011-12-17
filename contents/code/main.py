@@ -30,7 +30,7 @@ try :
 	ErrorMsg = ''
 	warningMsg = ''
 	#sys.stderr = open('/dev/shm/errorMailChecker' + str(time.time()) + '.log','w')
-	sys.stdout = open('/tmp/outMailChecker' + time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
+	#sys.stdout = open('/tmp/outMailChecker' + time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
 except ImportError, warningMsg :
 	print "ImportError", warningMsg
 finally:
@@ -691,7 +691,9 @@ class plasmaMailChecker(plasmascript.Applet):
 		for accountName in self.accountList :
 			try :
 				if int(self.checkResult[i][2]) > 0 :
-					self.listNewMail += '<pre>' + accountName + '&#09;' + str(self.checkResult[i][2]) + '</pre>'
+					self.listNewMail += '<pre>' + accountName + '&#09;' + \
+										 str(self.checkResult[i][2]) + ' | ' + \
+										 str(self.checkResult[i][6]) + '</pre>'
 					newMailExist = True
 					self.label[i].setStyleSheet(self.accountSColourStyle)
 					self.countList[i].setStyleSheet(self.countSColourStyle)
@@ -699,9 +701,11 @@ class plasmaMailChecker(plasmascript.Applet):
 						accountName_ = self.accSPref + accountName + self.accSSuff
 						accountTT = self.accTTSPref + self.tr._translate('Account') + \
 													self.accTTSSuff + ' ' + accountName
-						text_1 = self.countSPref + str(self.checkResult[i][1]) + self.countSSuff
-						text_2 = self.countTTSPref + self.tr._translate('New : ') + \
-													str(self.checkResult[i][2]) + self.countTTSSuff
+						text_1 = self.countSPref + str(self.checkResult[i][1]) + ' | ' + \
+								 str(self.checkResult[i][6]) + self.countSSuff
+						text_2 = self.countTTSPref + '<pre>' + self.tr._translate('New : ') + \
+								 str(self.checkResult[i][2]) + '</pre><pre>UnRead : ' + \
+								 str(self.checkResult[i][6]) + '</pre>' + self.countTTSSuff
 				else:
 					self.label[i].setStyleSheet(self.accountColourStyle)
 					self.countList[i].setStyleSheet(self.countColourStyle)
@@ -709,9 +713,11 @@ class plasmaMailChecker(plasmascript.Applet):
 						accountName_ = self.accPref + accountName + self.accSuff
 						accountTT = self.accTTPref + self.tr._translate('Account') + \
 													self.accTTSuff + ' ' + accountName
-						text_1 = self.countPref + str(self.checkResult[i][1]) + self.countSuff
-						text_2 = self.countTTPref + self.tr._translate('New : ') + \
-													str(self.checkResult[i][2]) + self.countTTSuff
+						text_1 = self.countPref + str(self.checkResult[i][1]) + ' | ' + \
+								 str(self.checkResult[i][6]) + self.countSuff
+						text_2 = self.countTTPref + '<pre>' + self.tr._translate('New : ') + \
+								 str(self.checkResult[i][2]) + '</pre><pre>UnRead : ' + \
+								 str(self.checkResult[i][6]) + '</pre>' + self.countTTSuff
 
 				if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) and self.initStat :
 					self.label[i].setText(accountName_)

@@ -175,8 +175,9 @@ def dataToSTR(path_ = ''):
 def readDataFiles(fileName):
 	path_ = '/dev/shm/' + fileName
 	return bool(dataToSTR(path_ + '.Result')), int(dataToSTR(path_ + '.all')), \
-						int(dataToSTR(path_ + '.new')), str(dataToSTR(path_ + '.msg')), \
-						str(dataToSTR(path_ + '.content')), str(dataToSTR(path_ + '.encoding'))
+		   int(dataToSTR(path_ + '.new')), str(dataToSTR(path_ + '.msg')), \
+		   str(dataToSTR(path_ + '.content')), str(dataToSTR(path_ + '.encoding')), \
+		   str(dataToSTR(path_ + '.unRead'))
 
 def randomString(j = 1):
 	#return "".join( [random.choice(string.letters) for i in xrange(j)] )
@@ -398,7 +399,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 	finally:
 		pass
 
-	return probeError, countAll, countNew, NewMailAttributes, encoding
+	return probeError, countAll, countNew, NewMailAttributes, encoding, '-'
 
 def checkNewMailIMAP4(accountData = ['', '']):
 	global Settings
@@ -411,6 +412,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 		probeError = True
 		countNew = 0
 		countAll = 0
+		unSeen = 0
 		authentificationData = readAccountData(accountData[0])
 		lastElemTime = authentificationData[6]
 
@@ -427,6 +429,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 			#print dateStamp(), mailBox, imapUTF7Encode(mailBox)
 			answer = m.select(imapUTF7Encode(mailBox))
 			if answer[0] == 'OK':
+				unSeen = len(m.search(None, 'UnSeen')[1][0].split())
 				countAll = int(answer[1][0])
 				i = countAll
 				while i > 0 :
@@ -520,7 +523,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 	finally:
 		pass
 
-	return probeError, countAll, countNew, NewMailAttributes, encoding
+	return probeError, countAll, countNew, NewMailAttributes, encoding, unSeen
 
 def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', ''], acc = ''):
 	global ErrorMsg
@@ -528,10 +531,11 @@ def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', ''], acc = '')
 	all_ = 0
 	new_ = 0
 	encoding = ''
+	unSeen = '-'
 	i = 0
 	while i < probe_ :
 		#print dateStamp(), 'Probe ', i + 1, to_unicode(authData[0])
-		test_, all_, new_, content, encoding = checkNewMail(authData)
+		test_, all_, new_, content, encoding, unSeen = checkNewMail(authData)
 		if test_ :
 			Result = True
 			break
@@ -539,7 +543,7 @@ def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', ''], acc = '')
 		if i == probe_ :
 			ErrorMsg += "\nCan`t connect to server\non Account : " + to_unicode(acc) + '\n'
 	#print dateStamp(), ErrorMsg, '  errors'
-	return Result, all_, new_, ErrorMsg, QString(content).toUtf8(), encoding
+	return Result, all_, new_, ErrorMsg, QString(content).toUtf8(), encoding, str(unSeen)
 
 def checkMail(accountData = ['', '']):
 	global Settings
@@ -569,4 +573,4 @@ def checkMail(accountData = ['', '']):
 			Msg = 'ConnectMethod Error\n'
 	else:
 		Msg = 'AccountName Error\n'
-	return False, 0, 0, Msg, '', ''
+	return False, 0, 0, Msg, '', '', '-'
