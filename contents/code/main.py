@@ -1201,6 +1201,9 @@ class EditAccounts(QWidget):
 			Settings.setValue('Accounts', str_)
 			self.clearFields()
 			self.saveChanges.setEnabled(False)
+			self.editAccountItem.setEnabled(False)
+			self.delAccountItem.setEnabled(False)
+			self.accountListBox.itemClicked.connect(self.enable_Del_n_Edit)
 			self.Status = 'FREE'
 
 	def clearFields(self):
