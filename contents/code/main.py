@@ -743,7 +743,8 @@ class plasmaMailChecker(plasmascript.Applet):
 			i += 1
 
 		#print dateStamp() ,  newMailExist and not noCheck
-		if newMailExist and not noCheck :
+		matched = True if len(self.checkResult) == len(self.accountList) else False
+		if newMailExist and not noCheck and matched :
 			i = 0
 			while i < len(self.checkResult) :
 				""" collected mail headers for each account
@@ -1030,6 +1031,7 @@ class EditAccounts(QWidget):
 				self.accountList += [accountName]
 			i += 1
 		#print dateStamp() ,  self.accountList
+		self.accountListBox.itemClicked.connect(self.enable_Del_n_Edit)
 		self.layout.addWidget(self.accountListBox,0,0,2,3)
 
 		self.stringEditor = KLineEdit()
@@ -1043,11 +1045,13 @@ class EditAccounts(QWidget):
 		self.layout.addWidget(self.addAccountItem,3,4)
 
 		self.editAccountItem = QPushButton('&Edit')
+		self.editAccountItem.setEnabled(False)
 		self.editAccountItem.setToolTip(self.tr._translate("Edit current Account"))
 		self.editAccountItem.clicked.connect(self.editCurrentAccount)
 		self.layout.addWidget(self.editAccountItem,1,4)
 
 		self.delAccountItem = QPushButton('&Del')
+		self.delAccountItem.setEnabled(False)
 		self.delAccountItem.setToolTip(self.tr._translate("Delete current Account"))
 		self.delAccountItem.clicked.connect(self.delCurrentAccount)
 		self.layout.addWidget(self.delAccountItem,0,4)
@@ -1096,6 +1100,7 @@ class EditAccounts(QWidget):
 		self.HB2Layout.addWidget(QLabel(self.tr._translate("Changes : ")),0,2)
 
 		self.saveChanges = QPushButton('&Save')
+		self.saveChanges.setEnabled(False)
 		self.saveChanges.clicked.connect(self.saveChangedAccount)
 		self.HB2Layout.addWidget(self.saveChanges,1,2)
 
@@ -1132,6 +1137,11 @@ class EditAccounts(QWidget):
 		self.VBLayout.addLayout(self.HB3Layout)
 
 		self.setLayout(self.VBLayout)
+
+	def enable_Del_n_Edit(self):
+		self.accountListBox.itemClicked.disconnect(self.enable_Del_n_Edit)
+		self.editAccountItem.setEnabled(True)
+		self.delAccountItem.setEnabled(True)
 
 	def showCatalogChoice(self, str_):
 		#print dateStamp() , 'signal received'
@@ -1190,6 +1200,7 @@ class EditAccounts(QWidget):
 				i += 1
 			Settings.setValue('Accounts', str_)
 			self.clearFields()
+			self.saveChanges.setEnabled(False)
 			self.Status = 'FREE'
 
 	def clearFields(self):
@@ -1254,6 +1265,7 @@ class EditAccounts(QWidget):
 		else:
 			self.passwordLineEdit.setText( '***EncriptedKey_not_created***' )
 		self.connectFlag = self.passwordLineEdit.userTextChanged.connect(self.changePasswFlag)
+		self.saveChanges.setEnabled(True)
 		self.Status = 'READY'
 
 	def addNewAccount(self):

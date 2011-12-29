@@ -453,6 +453,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ----==------'
 						newMailExist = newMailExist or True
+						encoding += '\n'
 						countNew += 1
 					else:
 						break

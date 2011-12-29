@@ -25,3 +25,8 @@ For kmail1 and kdepim < 4.6:
 /usr/bin/qdbus org.kde.kmail /KMail org.kde.kmail.kmail.selectFolder /1287421332/Inbox; /usr/bin/wmctrl -x -R kmail
 For get folders id you can use command:
 /usr/bin/qdbus org.kde.kmail /KMail org.kde.kmail.kmail.folderList
+
+(Thanks to Serafean at http://kde-look.org)
+7. The dbus calls are useless if kmail isn't running.
+For the "view" button to be useful with akonadi, set the command:
+kmail -view akonadi:/?item=%mail_id
