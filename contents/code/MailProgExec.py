@@ -13,7 +13,7 @@ class MailProgExec(QThread):
 
 	def run(self):
 		accountThread = QProcess()
-		if self.command not in ['', ' ', '  '] :
+		if self.command not in ['', ' ', '  ', '\n'] :
 			start = accountThread.startDetached('/bin/bash -c "' + self.command + '"')
 			print dateStamp(), QString().fromUtf8(self.command), ' start is ', start
 		else :

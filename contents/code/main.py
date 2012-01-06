@@ -45,8 +45,8 @@ class Translator(QTranslator):
 		QTranslator.__init__(self, parent)
 
 		lang = locale.getdefaultlocale()[0][:2]
-		#print dateStamp() ,  lang
 		_Path = self.user_or_sys(lang + '.qm')
+		#print dateStamp() ,  lang, _Path
 		self.load(QString(lang), QString(_Path), QString('qm'))
 		self.context = context
 
@@ -1113,8 +1113,18 @@ class EditAccounts(QWidget):
 		self.accountCommandLabel.setToolTip('Exec command activated in notification.\nSee for : EXAMPLES.')
 		self.HB2Layout.addWidget(self.accountCommandLabel, 2, 0)
 
-		self.accountCommand = KLineEdit()
-		self.accountCommand.setContextMenuEnabled(True)
+		self.accountCommand = QComboBox()
+		self.accountCommand.setToolTip('Exec command activated in notification.\nSee for : EXAMPLES.')
+		self.accountCommand.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
+		self.accountCommand.setEditable(True)
+		templates = Translator().user_or_sys('templates')
+		if os.path.isfile(templates) :
+			with open(templates, 'rb') as f :
+				texts = f.read().split('\n')
+				texts.remove('')
+		else : texts = []
+		#print texts, os.getcwd(), templates
+		self.accountCommand.addItems(QStringList() << '' << texts)
 		self.HB2Layout.addWidget(self.accountCommand, 2, 1, 2, 4)
 
 		self.VBLayout.addLayout(self.HB2Layout)
@@ -1137,6 +1147,11 @@ class EditAccounts(QWidget):
 		self.VBLayout.addLayout(self.HB3Layout)
 
 		self.setLayout(self.VBLayout)
+
+	def disable_Del_n_Edit(self):
+		self.accountListBox.itemClicked.connect(self.enable_Del_n_Edit)
+		self.editAccountItem.setEnabled(False)
+		self.delAccountItem.setEnabled(False)
 
 	def enable_Del_n_Edit(self):
 		self.accountListBox.itemClicked.disconnect(self.enable_Del_n_Edit)
@@ -1201,9 +1216,6 @@ class EditAccounts(QWidget):
 			Settings.setValue('Accounts', str_)
 			self.clearFields()
 			self.saveChanges.setEnabled(False)
-			self.editAccountItem.setEnabled(False)
-			self.delAccountItem.setEnabled(False)
-			self.accountListBox.itemClicked.connect(self.enable_Del_n_Edit)
 			self.Status = 'FREE'
 
 	def clearFields(self):
@@ -1221,6 +1233,8 @@ class EditAccounts(QWidget):
 		self.enabledBox.setCheckState(Qt.Unchecked)
 		if 'resultString' in dir(self) :
 			del self.resultString
+		self.accountCommand.clearEditText()
+		self.disable_Del_n_Edit()
 
 	def editCurrentAccount(self):
 		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
@@ -1259,7 +1273,7 @@ class EditAccounts(QWidget):
 			i += 1
 		#print dateStamp() ,  parameterList[1]
 		self.portBox.setValue(int(parameterList[1]))
-		self.accountCommand.setText(parameterList[9])
+		self.accountCommand.setEditText(parameterList[9])
 		self.userNameLineEdit.setText(parameterList[2])
 		self.passwordChanged = False
 		self.passwordLineEdit.setPasswordMode(False)
@@ -1297,7 +1311,7 @@ class EditAccounts(QWidget):
 		connectMethod = self.connectMethodBox.itemData(self.connectMethodBox.currentIndex()).toString()
 		cryptMethod = self.cryptBox.itemData(self.cryptBox.currentIndex()).toString()
 		port_ = self.portBox.value()
-		command = self.accountCommand.userText()
+		command = self.accountCommand.currentText()
 		userName = self.userNameLineEdit.userText()
 		userPassword = self.passwordLineEdit.userText()
 		if self.enabledBox.isChecked() :

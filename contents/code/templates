@@ -1,0 +1,8 @@
+thunderbird mailbox://someone@pop.example.net/Inbox
+evolution -c mail
+/usr/bin/qdbus org.kde.kmail /KMail org.kde.kmail.kmail.selectFolder %dir_id; /usr/bin/wmctrl -x -R kmail
+/usr/bin/qdbus org.kde.kmail /KMail org.kde.kmail.kmail.selectFolder %dir_id; /usr/bin/wmctrl -x -R kontact
+qdbus org.kde.kmail /KMail org.kde.kmail.kmail.showMail %mail_id %mail_id
+/usr/bin/qdbus org.kde.kmail /KMail org.kde.kmail.kmail.selectFolder /1287421332/Inbox; /usr/bin/wmctrl -x -R kmail
+/usr/bin/qdbus org.kde.kmail /KMail org.kde.kmail.kmail.folderList
+kmail -view akonadi:/?item=%mail_id
