@@ -17,6 +17,34 @@ lang = locale.getdefaultlocale()
 
 char_set = string.ascii_letters + string.digits
 
+def dataToList(path_ = ''):
+	if os.path.isfile(path_) :
+		with open(path_, 'rb') as f :
+			l_ = f.read()
+			raw_l = l_.split('\n')
+			if raw_l.count('') : raw_l.remove('')
+			l = []
+			for item in raw_l :
+				l.append(QString().fromUtf8(item))
+		return l
+	else :
+		return []
+
+FROM_filter = dataToList(os.path.expanduser('~/.config/plasmaMailChecker/filter.from'))
+SUBJ_filter = dataToList(os.path.expanduser('~/.config/plasmaMailChecker/filter.subj'))
+
+def Filter(text, deprecated):
+	res = True
+	for item in deprecated :
+		if text.count(item) :
+			res = False
+			break
+	return res
+
+def Allowed(FROM = '', SUBJ = ''):
+	return ( Filter(FROM, FROM_filter) if Settings.value('FROMFilter', 'False').toBool() else True ) \
+			and ( Filter(SUBJ, SUBJ_filter) if Settings.value('SUBJFilter', 'False').toBool() else True )
+
 def htmlWrapper((From_, Subj_, Date_) = ('', '', ''),
 				((pref1, suff1), (pref2, suff2), (pref3, suff3)) \
 				= (('', ''), ('', ''), ('', ''))) :
@@ -353,7 +381,8 @@ def checkNewMailPOP3(accountData = ['', '']):
 								Date += str_
 								#print dateStamp(), Date
 							else : Next = ''
-						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
+						if Allowed(From, Subj) :
+							NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ------'
 						encoding += Code + '\n'
 						#print encoding, '  encoding POP3'
@@ -450,7 +479,8 @@ def checkNewMailIMAP4(accountData = ['', '']):
 						From = string.replace(m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (from)])")[1][0][1], '\r\n\r\n', '')
 						Subj = string.replace(m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (subject)])")[1][0][1], '\r\n\r\n', '')
 						# NewMailAttributes += m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date from subject)])")[1][0][1]
-						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
+						if Allowed(From, Subj) :
+							NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ----==------'
 						newMailExist = newMailExist or True
 						encoding += '\n'

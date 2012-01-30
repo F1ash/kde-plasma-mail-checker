@@ -155,6 +155,13 @@ Set Account Name!</source>
         <source>Module PyKDE4.akonadi isn`t available.</source>
         <translation>Модуль PyKDE4.akonadi не доступен.</translation>
     </message>
+    <message>
+        <location filename="main.py" line="1090"/>
+        <source>Exec command activated in notification.
+See for : EXAMPLES.</source>
+        <translation>Команда, активируемая в уведомлении.
+Смотри: ПРИМЕРЫ.</translation>
+    </message>
 </context>
 <context>
     <name>PasswordManipulate</name>
@@ -244,6 +251,11 @@ Checking</source>
     </message>
     <message>
         <location filename="main.py" line="871"/>
+        <source>Filters</source>
+        <translation>Фильтры</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="871"/>
         <source>EXAMPLES</source>
         <translation>Примеры</translation>
     </message>
@@ -315,6 +327,45 @@ ToolTip :</source>
         <location filename="main.py" line="1487"/>
         <source>field Date :</source>
         <translation>Дата :</translation>
+    </message>
+</context>
+
+<context>
+    <name>Filters</name>
+    <message>
+        <location filename="Filter.py" line="39"/>
+        <source>FROM field</source>
+        <translation>Поле "От кого"</translation>
+    </message>
+    <message>
+        <location filename="Filter.py" line="40"/>
+        <source>SUBJ field</source>
+        <translation>Поле "Тема"</translation>
+    </message>
+    <message>
+        <location filename="Filter.py" line="48"/>
+        <source>Filter`s strings</source>
+        <translation>Строки для фильтра</translation>
+    </message>
+    <message>
+        <location filename="Buttons.py" line="18"/>
+        <source>Enable\Disable the Filter</source>
+        <translation>Включить\Отключить фильтр</translation>
+    </message>
+    <message>
+        <location filename="Buttons.py" line="28"/>
+        <source>Add to Filter</source>
+        <translation>Добавить в фильтр</translation>
+    </message>
+    <message>
+        <location filename="Buttons.py" line="34"/>
+        <source>Delete from Filter</source>
+        <translation>Удалить из фильтра</translation>
+    </message>
+    <message>
+        <location filename="Buttons.py" line="40"/>
+        <source>Save the filters</source>
+        <translation>Сохранить фильтр</translation>
     </message>
 </context>
 </TS>

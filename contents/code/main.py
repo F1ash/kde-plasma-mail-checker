@@ -9,14 +9,16 @@ try :
 	global VERSION
 	from Functions import *
 	from MailProgExec import MailProgExec
+	from Filter import Filters
 	from Examples import Examples
+	from Translator import Translator
 	from PyQt4.QtCore import *
 	from PyQt4.QtGui import *
 	from PyKDE4.kdecore import *
 	from PyKDE4.kdeui import *
 	from PyKDE4.plasma import Plasma
 	from PyKDE4 import plasmascript
-	import string, time, os.path, sys, locale, signal
+	import string, time, os.path, sys, signal
 	try :
 		ModuleExist = True
 		from PyKDE4.akonadi import Akonadi
@@ -39,33 +41,6 @@ finally:
 
 GeneralLOCK = QMutex()
 LOCK = QReadWriteLock()
-
-class Translator(QTranslator):
-	def __init__(self, context = '', parent=None):
-		QTranslator.__init__(self, parent)
-
-		lang = locale.getdefaultlocale()[0][:2]
-		_Path = self.user_or_sys(lang + '.qm')
-		#print dateStamp() ,  lang, _Path
-		self.load(QString(lang), QString(_Path), QString('qm'))
-		self.context = context
-
-	def user_or_sys(self, path_):
-		kdehome = unicode(KGlobal.dirs().localkdedir())
-		var1 = kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/code/' + path_
-		var2 = '/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/code/' + path_
-		if os.path.exists(var2) :
-			return var2
-		elif os.path.exists(var1) :
-			return var1
-		else :
-			return kdehome
-
-	def _translate(self, sourceText):
-		res = QTranslator.translate(self, self.context, sourceText)
-		if len(res) == 0:
-			res = QString(sourceText)
-		return res
 
 class ThreadCheckMail(QThread):
 	def __init__(self, obj = None, accountData = [('', '')], timeout = 120, parent = None):
@@ -114,7 +89,7 @@ class ThreadCheckMail(QThread):
 				if WAIT :
 					str_ = str(randomString(24))
 					Data = QStringList()
-					Data.append(path);
+					Data.append(path)
 					Data.append(accountData[0])
 					Data.append(accountData[1])
 					Data.append(str_)
@@ -813,7 +788,7 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def createConfigurationInterface(self, parent):
 		self.editAccounts = EditAccounts(self, parent)
-		parent.addPage(self.editAccounts,self.tr._translate("Accounts"))
+		parent.addPage(self.editAccounts, self.tr._translate("Accounts"))
 		self.appletSettings = AppletSettings(self, parent)
 		parent.addPage(self.appletSettings, self.tr._translate("Settings"))
 		self.passwordManipulate = PasswordManipulate(self, parent)
@@ -822,6 +797,8 @@ class plasmaMailChecker(plasmascript.Applet):
 		parent.addPage(self.fontsNcolour, self.tr._translate("Font and Colour"))
 		self.akonadiResources = AkonadiResources(self, parent)
 		parent.addPage(self.akonadiResources, self.tr._translate("Akonadi Mail Resources"))
+		self.filters = Filters(self, parent)
+		parent.addPage(self.filters, self.tr._translate("Filters"))
 		self.examples = Examples(self.user_or_sys('EXAMPLES'), parent)
 		parent.addPage(self.examples, self.tr._translate("EXAMPLES"))
 		self.connect(parent, SIGNAL("okClicked()"), self.configAccepted)
@@ -1110,11 +1087,11 @@ class EditAccounts(QWidget):
 
 		self.accountCommandLabel = QLabel()
 		self.accountCommandLabel.setText(self.tr._translate('Account Command:'))
-		self.accountCommandLabel.setToolTip('Exec command activated in notification.\nSee for : EXAMPLES.')
+		self.accountCommandLabel.setToolTip(self.tr._translate("Exec command activated in notification.\nSee for : EXAMPLES."))
 		self.HB2Layout.addWidget(self.accountCommandLabel, 2, 0)
 
 		self.accountCommand = QComboBox()
-		self.accountCommand.setToolTip('Exec command activated in notification.\nSee for : EXAMPLES.')
+		self.accountCommand.setToolTip(self.tr._translate("Exec command activated in notification.\nSee for : EXAMPLES."))
 		self.accountCommand.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
 		self.accountCommand.setEditable(True)
 		templates = Translator().user_or_sys('templates')
