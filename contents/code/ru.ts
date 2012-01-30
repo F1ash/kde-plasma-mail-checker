@@ -53,6 +53,11 @@ Access denied!</source>
         <translation>Время группирования
 сообщений от Akonadi (сек.):</translation>
     </message>
+    <message>
+        <location filename="main.py" line="1271"/>
+        <source>Max Count of Showed Mail :</source>
+        <translation>Показывать сообщений не более :</translation>
+    </message>
 </context>
 <context>
     <name>EditAccounts</name>
@@ -223,6 +228,16 @@ Checking</source>
         <location filename="main.py" line="724"/>
         <source>New Message(s) :</source>
         <translation>Новая почта :</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="724"/>
+        <source>Trere are more then</source>
+        <translation>Пришло более чем</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="724"/>
+        <source>messages.</source>
+        <translation>сообщений.</translation>
     </message>
     <message>
         <location filename="main.py" line="818"/>

@@ -220,6 +220,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.connect(self, SIGNAL('killThread'), self.killMailCheckerThread)
 		#self.connect(self, SIGNAL('finished()'), self.loop , SLOT(self.T._terminate()))
 
+		self.maxShowedMail = int(self.initValue('MaxShowedMail', '1024'))
 		AutoRun = self.initValue('AutoRun')
 		if AutoRun != '0' :
 			#QApplication.postEvent(self, QEvent(QEvent.User))
@@ -501,6 +502,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			Settings.endGroup()
 		timeOut = self.initValue('TimeOut', '600')
 		self.waitThread = self.initValue('WaitThread', '120')
+		self.maxShowedMail = int(self.initValue('MaxShowedMail', '1024'))
 
 		self.initStat = True
 		initPOP3Cache()
@@ -662,6 +664,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		newMailExist = False
 		self.listNewMail = ''
 		x = ''
+		countOfAllNewMail = 0
 		if 'accountList' not in dir(self) : self.accountList = []
 		for accountName in self.accountList :
 			try :
@@ -681,6 +684,7 @@ class plasmaMailChecker(plasmascript.Applet):
 						text_2 = self.countTTSPref + '<pre>' + self.tr._translate('New : ') + \
 								 str(self.checkResult[i][2]) + '</pre><pre>UnRead : ' + \
 								 str(self.checkResult[i][6]) + '</pre>' + self.countTTSSuff
+					countOfAllNewMail += 1
 				else:
 					self.label[i].setStyleSheet(self.accountColourStyle)
 					self.countList[i].setStyleSheet(self.countColourStyle)
@@ -719,7 +723,8 @@ class plasmaMailChecker(plasmascript.Applet):
 
 		#print dateStamp() ,  newMailExist and not noCheck
 		matched = True if len(self.checkResult) == len(self.accountList) else False
-		if newMailExist and not noCheck and matched :
+		overLoad = True if self.maxShowedMail < countOfAllNewMail else False
+		if newMailExist and not noCheck and matched and not overLoad :
 			i = 0
 			while i < len(self.checkResult) :
 				""" collected mail headers for each account
@@ -743,6 +748,11 @@ class plasmaMailChecker(plasmascript.Applet):
 											{0 : 0}, \
 											self.accountCommand[ self.accountList[i] ])
 				i += 1
+		elif overLoad :
+			self.eventNotification('<b><u>' + self.tr._translate('There are more then') + '\n' + \
+									str(self.maxShowedMail) + '\n' + self.tr._translate('messages.') + \
+									'\n(' + str(countOfAllNewMail) + ')</u></b>', \
+									{0 : 0}, '' )
 
 		if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
 			if self.listNewMail == '' :
@@ -1366,6 +1376,7 @@ class AppletSettings(QWidget):
 		stayDebLog = self.initValue('stayDebLog', '5')
 		showVersion = self.initValue('ShowVersion', '1')
 		timeOutGroup = self.initValue('TimeOutGroup', '3')
+		maxShowedMail = self.initValue('MaxShowedMail', '1024')
 
 		self.layout = QGridLayout()
 
@@ -1418,6 +1429,12 @@ class AppletSettings(QWidget):
 		self.timeOutGroupBox.setMaximumWidth(75)
 		self.layout.addWidget(self.timeOutGroupBox, 7, 5)
 
+		self.maxMailLabel = QLabel(self.tr._translate("Max Count of Showed Mail :"))
+		self.layout.addWidget(self.maxMailLabel, 8, 0)
+		self.maxMailBox = KIntSpinBox(1, 1024, 1, int(maxShowedMail), self)
+		self.maxMailBox.setMaximumWidth(75)
+		self.layout.addWidget(self.maxMailBox, 8, 5)
+
 		self.setLayout(self.layout)
 
 	def initValue(self, key_, default = '0'):
@@ -1442,6 +1459,7 @@ class AppletSettings(QWidget):
 		Settings.setValue('WaitThread', str(self.waitThreadBox.value()))
 		Settings.setValue('stayDebLog', str(self.stayDebLogBox.value()))
 		Settings.setValue('TimeOutGroup', str(self.timeOutGroupBox.value()))
+		Settings.setValue('MaxShowedMail', str(self.maxMailBox.value()))
 		if self.AutoRunBox.isChecked() :
 			Settings.setValue('AutoRun', '1')
 		else:
