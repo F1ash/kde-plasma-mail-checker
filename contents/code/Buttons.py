@@ -55,9 +55,8 @@ class ButtonPanel(QWidget):
 	def activate(self, state):
 		value = 'SUBJFilter' if self.id_ else 'FROMFilter'
 		self.Settings.setValue(value, 'True' if state else 'False')
-		if state : self.prnt.enableSide(self.id_)
-		else : self.prnt.disableSide(self.id_)
+		if state : self.prnt.activateSide(self.id_, True)
+		else : self.prnt.activateSide(self.id_, False)
 
 	def setCurrentState(self):
-		if self.Enabled : self.activate(True)
-		else : self.activate(False)
+		self.activate(self.Enabled)

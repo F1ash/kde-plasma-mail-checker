@@ -105,30 +105,16 @@ class Filters(QWidget):
 			saveListToFile(filter_, self.filterFROM)
 			FROM_filter = dataToList(self.filterFROM)
 
-	def disableSide(self, id_):
+	def activateSide(self, id_, state = False):
 		if id_ :
-			self.buttonSUBJ.addButton.setEnabled(False)
-			self.buttonSUBJ.delButton.setEnabled(False)
-			self.buttonSUBJ.saveButton.setEnabled(False)
-			self.subjEditor.setEnabled(False)
-			self.subjListBox.setEnabled(False)
+			self.buttonSUBJ.addButton.setEnabled(state)
+			self.buttonSUBJ.delButton.setEnabled(state)
+			self.buttonSUBJ.saveButton.setEnabled(state)
+			self.subjEditor.setEnabled(state)
+			self.subjListBox.setEnabled(state)
 		else :
-			self.buttonFROM.addButton.setEnabled(False)
-			self.buttonFROM.delButton.setEnabled(False)
-			self.buttonFROM.saveButton.setEnabled(False)
-			self.fromEditor.setEnabled(False)
-			self.fromListBox.setEnabled(False)
-
-	def enableSide(self, id_):
-		if id_ :
-			self.buttonSUBJ.addButton.setEnabled(True)
-			self.buttonSUBJ.delButton.setEnabled(True)
-			self.buttonSUBJ.saveButton.setEnabled(True)
-			self.subjEditor.setEnabled(True)
-			self.subjListBox.setEnabled(True)
-		else :
-			self.buttonFROM.addButton.setEnabled(True)
-			self.buttonFROM.delButton.setEnabled(True)
-			self.buttonFROM.saveButton.setEnabled(True)
-			self.fromEditor.setEnabled(True)
-			self.fromListBox.setEnabled(True)
+			self.buttonFROM.addButton.setEnabled(state)
+			self.buttonFROM.delButton.setEnabled(state)
+			self.buttonFROM.saveButton.setEnabled(state)
+			self.fromEditor.setEnabled(state)
+			self.fromListBox.setEnabled(state)
