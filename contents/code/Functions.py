@@ -383,9 +383,9 @@ def checkNewMailPOP3(accountData = ['', '']):
 							else : Next = ''
 						if Allowed(From, Subj) :
 							NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
-						#print dateStamp(), NewMailAttributes, '   ------'
-						encoding += Code + '\n'
-						#print encoding, '  encoding POP3'
+							#print dateStamp(), NewMailAttributes, '   ------'
+							encoding += Code + '\n'
+							#print encoding, '  encoding POP3'
 						newMailExist = newMailExist or True
 						countNew += 1
 
@@ -481,9 +481,9 @@ def checkNewMailIMAP4(accountData = ['', '']):
 						# NewMailAttributes += m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date from subject)])")[1][0][1]
 						if Allowed(From, Subj) :
 							NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
-						#print dateStamp(), NewMailAttributes, '   ----==------'
+							#print dateStamp(), NewMailAttributes, '   ----==------'
+							encoding += '\n'
 						newMailExist = newMailExist or True
-						encoding += '\n'
 						countNew += 1
 					else:
 						break
