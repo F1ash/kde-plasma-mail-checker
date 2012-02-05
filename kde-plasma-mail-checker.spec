@@ -51,7 +51,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 
-* Sun Feb  5 2011 Fl@sh <kaperang07@gmail.com> - 1.4.18-11.R
+* Sun Feb  5 2012 Fl@sh <kaperang07@gmail.com> - 1.4.18-11.R
 - version updated
 
 * Thu Dec 30 2011 Fl@sh <kaperang07@gmail.com> - 1.3.18-10.R
