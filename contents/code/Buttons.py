@@ -17,7 +17,7 @@ class ButtonPanel(QWidget):
 		self.enabledBox = QCheckBox()
 		self.enabledBox.setToolTip(self.tr._translate("Enable\Disable the Filter"))
 		value = 'SUBJFilter' if self.id_ else 'FROMFilter'
-		self.Enabled = self.Settings.value(value, 'False').toBool()
+		self.Enabled = True if self.Settings.value(value, 'False')=='True' else False
 		if self.Enabled : self.enabledBox.setCheckState(Qt.Checked)
 		else : self.enabledBox.setCheckState(Qt.Unchecked)
 		self.enabledBox.stateChanged.connect(self.activate)

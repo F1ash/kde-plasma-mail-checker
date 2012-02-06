@@ -445,8 +445,9 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.emit(SIGNAL('killThread'))
 
 	def user_or_sys(self, path_):
-		var1 = self.kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/' + path_
-		var2 = '/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-mail-checker/' + path_
+		var1 = os.path.join(self.kdehome, 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/', path_)
+		var2 = os.path.join('/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-mail-checker/', path_)
+		#print [var1, var2]
 		if os.path.exists(var2) :
 			return var2
 		elif os.path.exists(var1) :
@@ -664,7 +665,6 @@ class plasmaMailChecker(plasmascript.Applet):
 		newMailExist = False
 		self.listNewMail = ''
 		x = ''
-		countOfAllNewMail = 0
 		if 'accountList' not in dir(self) : self.accountList = []
 		for accountName in self.accountList :
 			try :
@@ -684,7 +684,6 @@ class plasmaMailChecker(plasmascript.Applet):
 						text_2 = self.countTTSPref + '<pre>' + self.tr._translate('New : ') + \
 								 str(self.checkResult[i][2]) + '</pre><pre>UnRead : ' + \
 								 str(self.checkResult[i][6]) + '</pre>' + self.countTTSSuff
-					countOfAllNewMail += 1
 				else:
 					self.label[i].setStyleSheet(self.accountColourStyle)
 					self.countList[i].setStyleSheet(self.countColourStyle)
@@ -722,11 +721,25 @@ class plasmaMailChecker(plasmascript.Applet):
 			i += 1
 
 		#print dateStamp() ,  newMailExist and not noCheck
-		matched = True if len(self.checkResult) == len(self.accountList) else False
-		overLoad = True if self.maxShowedMail < countOfAllNewMail else False
-		if newMailExist and not noCheck and matched and not overLoad :
+		countOfNodes = len(self.checkResult)
+		matched = True if countOfNodes == len(self.accountList) else False
+		if newMailExist and not noCheck and matched :
+			''' detect count of new mail '''
+			countOfAllNewMail = 0
+			overLoad = False
 			i = 0
-			while i < len(self.checkResult) :
+			while i < countOfNodes :
+				countOfAllNewMail += int(self.checkResult[i][2])
+				i += 1
+			if self.maxShowedMail < countOfAllNewMail :
+				overLoad = True
+				self.eventNotification('<b>' + self.tr._translate('There are more then') + '\n' + \
+										'&#09;' + str(self.maxShowedMail) + \
+										' (' + str(countOfAllNewMail) + ') ' + \
+										self.tr._translate('messages.') + '</b>', \
+										{0 : 0}, '' )
+			i = 0
+			while i < countOfNodes and not overLoad :
 				""" collected mail headers for each account
 				"""
 				str_ = self.checkResult[i][4]
@@ -737,22 +750,20 @@ class plasmaMailChecker(plasmascript.Applet):
 					j = 0
 					for _str in string.split(str_, '\r\n\r\n') :
 						if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
+							_str_raw = htmlWrapper(mailAttrToSTR(_str, encoding[j]), self.mailAttrColor)
+							## None is means unfiltered mail header
+							if _str_raw is None :
+								j += 1
+								continue
 							STR_ += '\n' + self.tr._translate('In ') + \
 									self.fieldBoxPref + self.accountList[i] + self.fieldBoxSuff + ':\n' + \
-									htmlWrapper(mailAttrToSTR(_str, encoding[j]), \
-												self.mailAttrColor) + \
-									'\n'
+									_str_raw + '\n'
 						j += 1
 				if STR_ != '' :
 					self.eventNotification('<b><u>' + self.tr._translate('New Message(s) :') + '</u></b>' + STR_, \
 											{0 : 0}, \
 											self.accountCommand[ self.accountList[i] ])
 				i += 1
-		elif overLoad :
-			self.eventNotification('<b><u>' + self.tr._translate('There are more then') + '\n' + \
-									str(self.maxShowedMail) + '\n' + self.tr._translate('messages.') + \
-									'\n(' + str(countOfAllNewMail) + ')</u></b>', \
-									{0 : 0}, '' )
 
 		if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
 			if self.listNewMail == '' :
@@ -763,7 +774,7 @@ class plasmaMailChecker(plasmascript.Applet):
 								self.panelIcon.icon() ) )
 
 		i = 0
-		while i < len(self.checkResult) :
+		while i < countOfNodes :
 			if self.checkResult[i][3] not in ['', ' ', '0', '\n'] :
 				ErrorMsg += self.checkResult[i][3]
 			i += 1
