@@ -344,18 +344,17 @@ ToolTip :</source>
         <translation>Дата :</translation>
     </message>
 </context>
-
 <context>
     <name>Filters</name>
     <message>
         <location filename="Filter.py" line="39"/>
         <source>FROM field</source>
-        <translation>Поле "От кого"</translation>
+        <translation>Поле &quot;От кого&quot;</translation>
     </message>
     <message>
         <location filename="Filter.py" line="40"/>
         <source>SUBJ field</source>
-        <translation>Поле "Тема"</translation>
+        <translation>Поле &quot;Тема&quot;</translation>
     </message>
     <message>
         <location filename="Filter.py" line="48"/>

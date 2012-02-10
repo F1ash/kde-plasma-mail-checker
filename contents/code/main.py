@@ -253,7 +253,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		#print dateStamp() , "VERSION : ", VERSION
 		self.version = self.initValue('ShowVersion', '1')
 		if int(self.version) > 0 :
-			self.title = self.tr._translate('M@il Checker') + '\n' + VERSION
+			self.title = self.tr._translate('M@il Checker') + '\n' + VERSION + ' ' + lang[0][:2]
 		else :
 			self.title = self.tr._translate('M@il Checker')
 		self.TitleDialog.setText(self.headerPref + self.title + self.headerSuff)
@@ -751,7 +751,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					for _str in string.split(str_, '\r\n\r\n') :
 						if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
 							_str_raw = htmlWrapper(mailAttrToSTR(_str, encoding[j]), self.mailAttrColor)
-							## None is means unfiltered mail header
+							## None is means deprecated mail header
 							if _str_raw is None :
 								j += 1
 								continue

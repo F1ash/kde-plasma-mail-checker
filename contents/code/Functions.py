@@ -214,17 +214,11 @@ def randomString(j = 1):
 	#return "".join( [random.choice(string.letters) for i in xrange(j)] )
 	return ''.join(random.sample(char_set, j))
 
-def to_unicode(_str):
-	str_ = '<=junk_string=>'
-	try:
-		#print dateStamp(), _str, '---'
-		str_ = unicode(_str, 'UTF-8')
-	except TypeError:
-		str_ = _str
-	#except UnicodeEncodeError:
-	#	str_ = str(_str)
-	finally:
-		return str_
+def to_unicode(txt, encoding = 'utf-8'):
+	if isinstance(txt, basestring) :
+		if not isinstance(txt, unicode) :
+			txt = unicode(txt, encoding, errors = 'replace')
+	return txt
 
 def addAccount(account, data_ = ['']):
 	LOCK.lock()

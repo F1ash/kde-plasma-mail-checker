@@ -11,23 +11,24 @@ class Translator(QTranslator):
 
 		lang = locale.getdefaultlocale()[0][:2]
 		_Path = self.user_or_sys(lang + '.qm')
-		#print dateStamp() ,  lang, _Path
+		#print 'Tr:' ,  lang, _Path
 		self.load(QString(lang), QString(_Path), QString('qm'))
 		self.context = context
 
 	def user_or_sys(self, path_):
 		kdehome = unicode(KGlobal.dirs().localkdedir())
-		var1 = kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/code/' + path_
-		var2 = '/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/code/' + path_
-		if os.path.exists(var2) :
+		var1 = kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/code/'
+		var2 = '/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/code/'
+		if os.path.exists(var2 + path_) :
 			return var2
-		elif os.path.exists(var1) :
+		elif os.path.exists(var1 + path_) :
 			return var1
 		else :
 			return kdehome
 
 	def _translate(self, sourceText):
-		res = QTranslator.translate(self, self.context, sourceText)
+		res = self.translate(self.context, sourceText)
+		#print res, 'tr:', self.context, sourceText
 		if len(res) == 0:
 			res = QString(sourceText)
 		return res
