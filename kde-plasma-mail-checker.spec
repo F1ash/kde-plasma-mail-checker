@@ -1,6 +1,6 @@
 Name: kde-plasma-mail-checker
-Version: 1.4.20
-Release: 13%{?dist}.R
+Version: 1.5.20
+Release: 14%{?dist}.R
 Summary: KDE Plasmoid for periodically checking a new messages in the mailboxes list.
 Summary(ru): Плазмоид периодически проверяет наличие новых писем в списке почтовых ящиков.
 Group: Applications/Internet
@@ -10,7 +10,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL: https://github.com/F1ash/plasmaMailChecker
 BuildArch: noarch
 
-Requires: python, PyQt4, PyKDE4
+Requires: python, PyQt4, PyKDE4, python-SocksiPy
 BuildRequires: qt-devel
 
 %description
@@ -50,6 +50,10 @@ make install DESTDIR=$RPM_BUILD_ROOT/usr
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+
+* Sun Feb 15 2012 Fl@sh <kaperang07@gmail.com> - 1.5.20-14.R
+- added python-SocksiPy require;
+- version updated
 
 * Sun Feb 10 2012 Fl@sh <kaperang07@gmail.com> - 1.4.20-13.R
 - version updated

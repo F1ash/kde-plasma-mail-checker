@@ -271,6 +271,11 @@ Checking</source>
     </message>
     <message>
         <location filename="main.py" line="871"/>
+        <source>Proxy</source>
+        <translation>Прокси</translation>
+    </message>
+    <message>
+        <location filename="main.py" line="871"/>
         <source>EXAMPLES</source>
         <translation>Примеры</translation>
     </message>
@@ -380,6 +385,54 @@ ToolTip :</source>
         <location filename="Buttons.py" line="40"/>
         <source>Save the filters</source>
         <translation>Сохранить фильтр</translation>
+    </message>
+</context>
+<context>
+    <name>Proxy</name>
+    <message>
+        <location filename="Proxy.py" line="20"/>
+        <source>Enable\Disable the Proxy</source>
+        <translation>Включть \ выключить прокси</translation>
+    </message>
+    <message>
+        <location filename="Proxy.py" line="30"/>
+        <source>Save</source>
+        <translation>Сохранить</translation>
+    </message>
+    <message>
+        <location filename="Proxy.py" line="60"/>
+        <source>UserName :</source>
+        <translation>Имя пользователя :</translation>
+    </message>
+    <message>
+        <location filename="Proxy.py" line="61"/>
+        <source>Password :</source>
+        <translation>Пароль :</translation>
+    </message>
+    <message>
+        <location filename="Proxy.py" line="55"/>
+        <source>Proxy Port</source>
+        <translation>Порт прокси</translation>
+    </message>
+    <message>
+        <location filename="Proxy.py" line="46"/>
+        <source>Proxy address</source>
+        <translation>Адрес прокси</translation>
+    </message>
+    <message>
+        <location filename="Proxy.py" line="72"/>
+        <source>SocksiPy module loaded</source>
+        <translation>SocksiPy модуль загружен</translation>
+    </message>
+    <message>
+        <location filename="Proxy.py" line="73"/>
+        <source>SocksiPy module not loaded</source>
+        <translation>SocksiPy модуль не загружен</translation>
+    </message>
+    <message>
+        <location filename="Proxy.py" line="38"/>
+        <source>Proxy type</source>
+        <translation>Тип прокси</translation>
     </message>
 </context>
 </TS>

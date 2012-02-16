@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from Functions import *
+from MailFunc import *
+import sys
 
 if __name__ == '__main__':
+	#sys.stdout = open('/tmp/threadMailChecker' + time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
 	account, passw, fileName = sys.argv[1], sys.argv[2], sys.argv[3]
 	#print dateStamp(), account, passw, fileName, '  thread'
 	if (account, passw) == ('','') :
 		Result = (False, 0, 0, '', '', '', '-')
 	else :
+		loadSocketModule()
 		Result = ( checkMail( [account, passw] ) )
 	suff = ['.Result', '.all', '.new', '.msg', '.content', '.encoding', '.unRead']
 	for i in xrange(len(suff)) :
@@ -19,4 +22,5 @@ if __name__ == '__main__':
 		else :
 			res_ = QString(Result[i]).toUtf8().data()
 		f.write(res_)
-		f.close
+		f.close()
+	#sys.stdout.close()

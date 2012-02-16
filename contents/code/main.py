@@ -10,6 +10,7 @@ try :
 	from Functions import *
 	from MailProgExec import MailProgExec
 	from Filter import Filters
+	from Proxy import ProxySettings
 	from Examples import Examples
 	from Translator import Translator
 	from PyQt4.QtCore import *
@@ -85,7 +86,6 @@ class ThreadCheckMail(QThread):
 			path = self.user_or_sys('code/mail.py')
 			i = 0
 			for accountData in self.accData :
-				#RESULT += [checkMail(accountData)]
 				if WAIT :
 					str_ = str(randomString(24))
 					Data = QStringList()
@@ -820,6 +820,8 @@ class plasmaMailChecker(plasmascript.Applet):
 		parent.addPage(self.akonadiResources, self.tr._translate("Akonadi Mail Resources"))
 		self.filters = Filters(self, parent)
 		parent.addPage(self.filters, self.tr._translate("Filters"))
+		self.proxy = ProxySettings(self, parent)
+		parent.addPage(self.proxy, self.tr._translate("Proxy"))
 		self.examples = Examples(self.user_or_sys('EXAMPLES'), parent)
 		parent.addPage(self.examples, self.tr._translate("EXAMPLES"))
 		self.connect(parent, SIGNAL("okClicked()"), self.configAccepted)
@@ -842,6 +844,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			return None
 		self.appletSettings.refreshSettings(self)
 		self.fontsNcolour.refreshSettings(self)
+		Settings.setValue('UseProxy', 'True' if self.proxy.enableProxy.checkState()==Qt.Checked else 'False')
 		#print dateStamp() ,  self.formFactor(), '---'
 		x = ''
 		try:
