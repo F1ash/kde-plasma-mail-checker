@@ -220,6 +220,31 @@ def addAccount(account, data_ = ['']):
 	LOCK.unlock()
 	pass
 
+def readAccountData(account = ''):
+	LOCK.lock()
+	global Settings
+	Settings.beginGroup(account)
+	serv_ = Settings.value('server').toString()
+	port_ = Settings.value('port').toString()
+	if port_ == '' : port_ =  '0'
+	login_ = Settings.value('login').toString()
+	authMethod_ = Settings.value('authentificationMethod').toString()
+	connMethod_ = Settings.value('connectMethod').toString()
+	last_ = Settings.value('lastElemValue').toString()
+	enable = Settings.value('Enabled').toString()
+	if str(connMethod_) == 'imap' :
+		inbox = Settings.value('Inbox').toString()
+	else :
+		inbox = ''
+	if Settings.contains('CommandLine') :
+		command = Settings.value('CommandLine').toString()
+	else :
+		command = ''
+	Settings.endGroup()
+	LOCK.unlock()
+	return [str(serv_), str(port_), login_, '', \
+			str(authMethod_), str(connMethod_), str(last_), str(enable), inbox, command]
+
 def initPOP3Cache():
 	LOCK.lock()
 	global Settings
