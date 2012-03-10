@@ -24,8 +24,9 @@ try :
 		ModuleExist = True
 		from PyKDE4.akonadi import Akonadi
 		from AkonadiMod import *
-	except :
+	except Exception, err:
 		ModuleExist = False
+		print err
 	finally :
 		pass
 	RESULT = []
