@@ -71,7 +71,7 @@ class ThreadCheckMail(QThread):
 		elif os.path.exists(var1) :
 			return var1
 		else :
-			return kdehome
+			return os.path.expanduser('~/kde-plasma-mail-checker/contents/' + path_)
 
 	def readResult(self):
 		global RESULT
@@ -89,10 +89,11 @@ class ThreadCheckMail(QThread):
 			for accountData in self.accData :
 				if WAIT :
 					str_ = str(randomString(24))
+					with open('/dev/shm/' + str_, 'wb') as f:
+						f.write(accountData[1].toLocal8Bit().data())
 					Data = QStringList()
 					Data.append(path)
 					Data.append(accountData[0])
-					Data.append(accountData[1])
 					Data.append(str_)
 					self.accountThread += ['']
 					self.accountThread[i] = QProcess()
@@ -113,7 +114,7 @@ class ThreadCheckMail(QThread):
 						#print bool(node[2]), node[0], ' ????'
 						key_ = key_ or pid_exists(node[0], 0)
 
-		except x :
+		except Exception, x :
 			self.Timer.stop()
 			print dateStamp() ,  x, '  thread'
 		finally :
@@ -454,7 +455,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		elif os.path.exists(var1) :
 			return var1
 		else :
-			return self.kdehome
+			return os.path.join(os.path.expanduser('~/kde-plasma-mail-checker/'), path_)
 
 	def createDialogWidget(self):
 		global Settings

@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
 
 from MailFunc import *
-import sys
+from Functions import randomString
+import sys, os, os.path
 
 if __name__ == '__main__':
 	#sys.stdout = open('/tmp/threadMailChecker' + time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
-	account, passw, fileName = sys.argv[1], sys.argv[2], sys.argv[3]
-	#print dateStamp(), account, passw, fileName, '  thread'
+	account, fileName = sys.argv[1], sys.argv[2]
+	if os.path.isfile('/dev/shm/' + fileName) :
+		with open('/dev/shm/' + fileName, 'rb') as f: l = f.read()
+		with open('/dev/shm/' + fileName, 'wb') as f: f.write(randomString(48))
+		os.remove('/dev/shm/' + fileName)
+		while l.endswith('\n') : l.remove('\n')
+		passw = l
+	else : passw = ''
+	#print dateStamp(), (account, passw, fileName), '  thread'
 	if (account, passw) == ('','') :
 		Result = (False, 0, 0, '', '', '', '-')
 	else :
