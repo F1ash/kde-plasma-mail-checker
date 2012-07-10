@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from imapUTF7 import imapUTF7Decode, imapUTF7Encode
+from imapUTF7 import imapUTF7Encode
 from PyQt4.QtCore import QString, QSettings, QMutex
-import poplib, imaplib, string, time, datetime, locale, socket
+import poplib, imaplib, time, datetime, locale, socket
 
 global ErrorMsg
 ErrorMsg = ''
@@ -55,10 +55,10 @@ def losedBlank(str_raw):
 		поэтому добавляем пробел в конце обработанной фразы
 	"""
 	STR_ = ''
-	for str_ in string.split(str_raw, ' ') :
+	for str_ in str_raw.split(' ') :
 		_str = str_.rpartition('?=')
 		if _str[1] != '' and _str[2] != '' :
-			STR_ += string.join([ _str[0], losedBlank( _str[2] ) ], '?= ') + ' '
+			STR_ += ''.join([ _str[0], '?= ', losedBlank( _str[2] )]) + ' '
 		else :
 			STR_ += str_ + ' '
 	return STR_
@@ -103,8 +103,8 @@ def defineUIDL(accountName = '', str_ = ''):
 		print dateStamp(), x, '  defUidl'
 	finally :
 		for uid_ in STR :
-			# print dateStamp(), string.split(uid_, '\n')[0] , '--- ', str_
-			if str_ == string.split(uid_, '\n')[0] :
+			# print dateStamp(), uid_.split('\n')[0] , '--- ', str_
+			if str_ == uid_.split('\n')[0] :
 				Result = False
 				break
 	return Result
@@ -160,7 +160,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 
 				countAll = int(m.stat()[0])
 				for uidl_ in m.uidl()[1] :
-					currentElemUid = string.split(uidl_,' ')[1]
+					currentElemUid = uidl_.split(' ')[1]
 					mailUidls += [currentElemUid + '\n']
 					if defineUIDL(accountData[0], currentElemUid) :
 						From = ''
@@ -168,7 +168,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 						Date = ''
 						Code = ''
 						Next = ''
-						for str_ in m.top( int(string.split(uidl_,' ')[0]) , 0)[1] :
+						for str_ in m.top( int(uidl_.split(' ')[0]) , 0)[1] :
 							if str_[:5] == 'From:' or (Next == 'From' and str_[:1] == ' ') :
 								Next = 'From'
 								From += losedBlank(str_) + ' '
@@ -178,7 +178,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 								Subj += losedBlank(str_) + ' '
 								#print dateStamp(), Subj
 							elif str_[:13].lower() == 'content-type:' \
-								 and string.find(str_.lower(), 'text/plain') > -1 \
+								 and str_.lower().find('text/plain') > -1 \
 								 or (Next == 'Code' and str_[:1] == ' ') :
 								Next = 'Code'
 								Code += codeDetect(str_)
@@ -234,6 +234,26 @@ def checkNewMailPOP3(accountData = ['', '']):
 
 	return probeError, countAll, countNew, NewMailAttributes, encoding, '-'
 
+def getCurrentElemTime(m, i):
+	currentElemTime_raw = m.fetch(i,"INTERNALDATE")[1][0].split(' ')
+	currentElemTime_Internal = currentElemTime_raw[1] + ' ' \
+							 + currentElemTime_raw[2] + ' ' \
+							 + currentElemTime_raw[3] + ' ' \
+							 + currentElemTime_raw[4]
+	# print dateStamp(), currentElemTime_Internal
+	date_ = imaplib.Internaldate2tuple(currentElemTime_Internal)
+	return str(time.mktime(date_))
+
+def getMailAttributes(m, i):
+	Date = ''
+	From = ''
+	Subj = ''
+	Date = m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date)])")[1][0][1].replace('\r\n\r\n', '')
+	From = m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (from)])")[1][0][1].replace('\r\n\r\n', '')
+	Subj = m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (subject)])")[1][0][1].replace('\r\n\r\n', '')
+	# NewMailAttributes += m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date from subject)])")[1][0][1]
+	return Date, From, Subj
+
 def checkNewMailIMAP4(accountData = ['', '']):
 	global Settings
 	global ErrorMsg
@@ -266,23 +286,10 @@ def checkNewMailIMAP4(accountData = ['', '']):
 				countAll = int(answer[1][0])
 				i = countAll
 				while i > 0 :
-					currentElemTime_raw = string.split(m.fetch(i,"INTERNALDATE")[1][0],' ')
-					currentElemTime_Internal = currentElemTime_raw[1] + ' ' \
-												+ currentElemTime_raw[2] + ' ' \
-												+ currentElemTime_raw[3] + ' ' \
-												+ currentElemTime_raw[4]
-					# print dateStamp(), currentElemTime_Internal
-					date_ = imaplib.Internaldate2tuple(currentElemTime_Internal)
-					currentElemTime = str(time.mktime(date_))
+					currentElemTime = getCurrentElemTime(m, i)
 					# print dateStamp(), currentElemTime
 					if currentElemTime > lastElemTime :
-						Date = ''
-						From = ''
-						Subj = ''
-						Date = string.replace(m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date)])")[1][0][1], '\r\n\r\n', '')
-						From = string.replace(m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (from)])")[1][0][1], '\r\n\r\n', '')
-						Subj = string.replace(m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (subject)])")[1][0][1], '\r\n\r\n', '')
-						# NewMailAttributes += m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date from subject)])")[1][0][1]
+						Date, From, Subj = getMailAttributes(m, i)
 						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ----==------'
 						encoding += '\n'
@@ -299,14 +306,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 			probeError, countAll, countNew = False, 0, 0
 
 		if newMailExist :
-			lastElemTime_raw = string.split(m.fetch(countAll,"INTERNALDATE")[1][0],' ')
-			lastElemTime_Internal = lastElemTime_raw[1] + ' ' \
-									+ lastElemTime_raw[2] + ' ' \
-									+ lastElemTime_raw[3] + ' ' \
-									+ lastElemTime_raw[4]
-			# print dateStamp(), lastElemTime_Internal
-			date_ = imaplib.Internaldate2tuple(lastElemTime_Internal)
-			lastElemTime = str(time.mktime(date_))
+			lastElemTime = getCurrentElemTime(m, countAll)
 			# print dateStamp(), lastElemTime
 			Settings.beginGroup(accountData[0])
 			Settings.setValue('lastElemValue', lastElemTime)

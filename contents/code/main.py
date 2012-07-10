@@ -13,6 +13,7 @@ try :
 	from Proxy import ProxySettings
 	from Examples import Examples
 	from Translator import Translator
+	from IdleMailing import IdleMailing
 	from PyQt4.QtCore import *
 	from PyQt4.QtGui import *
 	from PyKDE4.kdecore import *
@@ -34,7 +35,7 @@ try :
 	ErrorMsg = ''
 	warningMsg = ''
 	#sys.stderr = open('/dev/shm/errorMailChecker' + str(time.time()) + '.log','w')
-	sys.stdout = open('/tmp/outMailChecker' + time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
+	#sys.stdout = open('/tmp/outMailChecker' + time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
 except ImportError, warningMsg :
 	print "ImportError", warningMsg
 finally:
@@ -99,7 +100,7 @@ class ThreadCheckMail(QThread):
 					self.accountThread[i] = QProcess()
 					start, pid = self.accountThread[i].startDetached('/usr/bin/python', Data, os.getcwd())
 					self.dataList += [(pid, str_, start)]
-					#print dateStamp() ,  start, pid, Data.join(' ').toUtf8().data()
+					print dateStamp() ,  start, pid, Data.join(' ').toUtf8().data()
 				else :
 					break
 				i += 1
@@ -134,11 +135,11 @@ class ThreadCheckMail(QThread):
 		print dateStamp() ,  WAIT, '  changed WAIT'
 		ErrorMsg += 'Timeout thread error\n'
 		print dateStamp() ,  'Mail thread timeout terminating...'
-		self.Timer.stop()
 		#QApplication.postEvent(self.Parent, QEvent(1010))
 		self._terminate()
 
 	def _terminate(self):
+		self.Timer.stop()
 		global WAIT
 		LOCK.lockForRead()
 		WAIT = False
@@ -156,11 +157,13 @@ class ThreadCheckMail(QThread):
 		self.quit()
 
 class plasmaMailChecker(plasmascript.Applet):
+	idleThreadMessage = pyqtSignal(dict)
 	def __init__(self, parent = None):
 		plasmascript.Applet.__init__(self,parent)
 
 		self.initStat = False
 		self.checkResult = []
+		self.idleMailingList = []
 
 		self.panelIcon = Plasma.IconWidget()
 		self.icon = Plasma.IconWidget()
@@ -221,6 +224,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.connect(self, SIGNAL('access'), self.processInit)
 		self.connect(self, SIGNAL('killThread'), self.killMailCheckerThread)
 		#self.connect(self, SIGNAL('finished()'), self.loop , SLOT(self.T._terminate()))
+		self.idleThreadMessage.connect(self.idleMessage)
 
 		self.maxShowedMail = int(self.initValue('MaxShowedMail', '1024'))
 		AutoRun = self.initValue('AutoRun')
@@ -604,19 +608,46 @@ class plasmaMailChecker(plasmascript.Applet):
 		if not (self.wallet is None) :
 			self.wallet.setFolder('plasmaMailChecker')
 			if not self.T.isRunning() :
-				# print dateStamp() ,  'start'
+				#print dateStamp() ,  'start'
 				accData = []
 				for accountName in string.split(Settings.value('Accounts').toString(),';') :
 					Settings.beginGroup(accountName)
 					enable = Settings.value('Enabled').toString()
+					connectMethod = Settings.value('connectMethod').toString()
 					Settings.endGroup()
+					print accountName, connectMethod
 					if str(enable) == '1' :
-						accData += [(accountName, self.wallet.readPassword(accountName)[1])]
+						data = (accountName, self.wallet.readPassword(accountName)[1])
+						if connectMethod == 'imap\idle' :
+							exist = False
+							for item in self.idleMailingList :
+								if accountName == item.name :
+									exist = True
+									break
+							if not exist :
+								self.idleMailingList.append(IdleMailing(data, self))
+						else :
+							accData.append(data)
 					else :
-						accData += [('','')]
+						# delete the disabled accounts within idle mode
+						exist = False
+						for item in self.idleMailingList :
+							if accountName == item.name : item.stop()
+							exist = item
+							break
+						if exist : self.idleMailingList.remove(exist)
+						accData.append(('',''))
 				self.T = ThreadCheckMail(self, accData, self.waitThread)
 				print dateStamp() ,  'time for wait thread : ', self.waitThread
 				self.T.start()
+				print dateStamp() , ' starting idles mail:', self.idleMailingList
+				for item in self.idleMailingList :
+					try :
+						print item.name
+						if not item.runned : item.start()
+					except Exception, _ :
+						print dateStamp(), _
+					finally : pass
 			else :
 				#print dateStamp() ,  'isRunning : send signal to kill...'
 				#self.emit(SIGNAL('killThread'))
@@ -646,7 +677,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					self.panelIcon.toolTip(), \
 					self.headerPref + self.tr._translate('Click for Start\Stop') +  self.headerSuff, \
 					self.panelIcon.icon() ) )
-		else:
+		else :
 			noCheck = True
 			path_ = self.stopIconPath
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -686,7 +717,7 @@ class plasmaMailChecker(plasmascript.Applet):
 						text_2 = self.countTTSPref + '<pre>' + self.tr._translate('New : ') + \
 								 str(self.checkResult[i][2]) + '</pre><pre>UnRead : ' + \
 								 str(self.checkResult[i][6]) + '</pre>' + self.countTTSSuff
-				else:
+				else :
 					self.label[i].setStyleSheet(self.accountColourStyle)
 					self.countList[i].setStyleSheet(self.countColourStyle)
 					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -742,8 +773,7 @@ class plasmaMailChecker(plasmascript.Applet):
 										{0 : 0}, '' )
 			i = 0
 			while i < countOfNodes and not overLoad :
-				""" collected mail headers for each account
-				"""
+				""" collected mail headers for each account """
 				str_ = self.checkResult[i][4]
 				encoding = string.split(self.checkResult[i][5], '\n')
 				STR_ = ''
@@ -898,9 +928,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				print dateStamp() ,  x, '  _entP_2'
 			finally:
 				pass
-			#global T
-			if self.T.isRunning() :
-				self.emit(SIGNAL('killThread'))
+			self.emit(SIGNAL('killThread'))
 			savePOP3Cache()
 			self.monitor_isnt_exist()
 			self.initStat = False
@@ -926,6 +954,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.disconnect(self, SIGNAL('access'), self.processInit)
 		self.disconnect(self, SIGNAL('destroyed()'), self.eventClose)
 		self.disconnect(self, SIGNAL('killThread'), self.killMailCheckerThread)
+		self.idleThreadMessage.disconnect(self.idleMessage)
 		if 'monitor' in dir(self) :
 			self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
 			del self.monitorTimer
@@ -961,7 +990,17 @@ class plasmaMailChecker(plasmascript.Applet):
 		#self.loop.quit()
 		if 'T' in dir(self):
 			#print dateStamp() ,'   killMetod Up'
-			self.T._terminate()
+			while self.T.isRunning() : self.T._terminate()
+		# stopping idles mail
+		for item in self.idleMailingList :
+			try :
+				if item.runned :
+					item.stop()
+					while item.isRunning() : item.terminate()
+			except Exception, _ :
+				print dateStamp(), _
+			finally : pass
+		self.idleMailingList = []
 
 	def mouseDoubleClickEvent(self, ev):
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -1007,6 +1046,91 @@ class plasmaMailChecker(plasmascript.Applet):
 			return True
 		else :
 			return False
+
+	def __del__(self): self.eventClose()
+
+	def idleMessage(self, d):
+		print d
+		if d['state'] == -1 :
+			# stopping emitted idle mail
+			itm = None
+			for item in self.idleMailingList :
+				if item.name == d['acc'] : itm = item
+			print self.idleMailingList, '<--'
+			if itm is not None :
+				self.eventNotification( itm.name + 'is not active.' )
+				self.idleMailingList.remove(itm)
+			return None
+		if d['state'] == -2 :
+			self.eventNotification( "In %s error: %s"%(d['acc'], d['msg']) )
+			return None
+		i = 0
+		self.listNewMail = ''
+		if 'accountList' not in dir(self) : self.accountList = []
+		for accountName in self.accountList :
+			try :
+				if d['acc'] == accountName :
+					self.listNewMail += '<pre>' + accountName + '(IDLE)&#09;' + \
+											str(d['msg'][1]) + ' | ' + \
+											str(d['msg'][2]) + '</pre>'
+					newMailExist = True
+					self.label[i].setStyleSheet(self.accountSColourStyle)
+					self.countList[i].setStyleSheet(self.countSColourStyle)
+					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+						accountName_ = self.accSPref + accountName + self.accSSuff
+						accountTT = self.accTTSPref + self.tr._translate('Account') + \
+									self.accTTSSuff + ' ' + accountName + '\n(IDLE)'
+						text_1 = self.countSPref + str(d['msg'][0]) + ' | ' + \
+								str(d['msg'][1]) + self.countSSuff
+						text_2 = self.countTTSPref + '<pre>' + self.tr._translate('New : ') + \
+								str(d['msg'][1]) + '</pre><pre>UnRead : ' + \
+								str(d['msg'][2]) + '</pre>' + self.countTTSSuff
+
+					if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) and self.initStat :
+						self.label[i].setText(accountName_)
+						self.label[i].setToolTip(accountTT)
+						self.countList[i].setText(text_1)
+						self.countList[i].setToolTip(text_2)
+				else : break
+				i += 1
+			except Exception, _ :
+				print dateStamp(), _
+			finally : pass
+		if d['state'] :
+			if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
+				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
+								self.panelIcon.toolTip(), \
+								self.headerPref + self.listNewMail + self.headerSuff, \
+								self.panelIcon.icon() ) )
+			''' detect count of new mail '''
+			countOfAllNewMail = d['msg'][2]
+			overLoad = False
+			if self.maxShowedMail < countOfAllNewMail :
+				overLoad = True
+				self.eventNotification('<b>' + self.tr._translate('There are more then') + '\n' + \
+										'&#09;' + str(self.maxShowedMail) + \
+										' (' + str(countOfAllNewMail) + ') ' + \
+										self.tr._translate('messages.') + '</b>', \
+										{0 : 0}, '' )
+			if not overLoad :
+				j = 0
+				STR_ = ''
+				for _str in string.split(d['msg'][3], '\r\n\r\n') :
+					if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
+						_str_raw = htmlWrapper(mailAttrToSTR(_str), self.mailAttrColor)
+						## None is means deprecated mail header
+						if _str_raw is None :
+							j += 1
+							continue
+						STR_ += '\n' + self.tr._translate('In ') + \
+								self.fieldBoxPref + d['acc'] + self.fieldBoxSuff + ':\n' + \
+								_str_raw + '\n'
+					j += 1
+				if STR_ != '' :
+					msg = '<b><u>' + self.tr._translate('New Message(s) :') + '</u></b>' + STR_
+					self.eventNotification( msg, \
+											{0 : 0}, \
+											self.accountCommand[ d['acc'] ])
 
 class EditAccounts(QWidget):
 	def __init__(self, obj = None, parent = None):
@@ -1089,6 +1213,7 @@ class EditAccounts(QWidget):
 		self.connectMethodBox = KComboBox()
 		self.connectMethodBox.addItem('POP3',QVariant('pop'))
 		self.connectMethodBox.addItem('IMAP4',QVariant('imap'))
+		self.connectMethodBox.addItem('IMAP4\IDLE',QVariant('imap\idle'))
 		self.connect(self.connectMethodBox, SIGNAL("currentIndexChanged(const QString&)"), self.showCatalogChoice)
 		self.HB2Layout.addWidget(self.connectMethodBox,1,0)
 
@@ -1163,7 +1288,7 @@ class EditAccounts(QWidget):
 
 	def showCatalogChoice(self, str_):
 		#print dateStamp() , 'signal received'
-		if str_ == 'IMAP4' :
+		if str_ in ('IMAP4', 'IMAP4\IDLE') :
 			if 'resultString' not in dir(self) :
 				self.resultString = 'INBOX'
 			catalog = EnterMailBox(self.resultString, self)
@@ -1321,7 +1446,7 @@ class EditAccounts(QWidget):
 			enable = '1'
 		else:
 			enable = '0'
-		if str(connectMethod) == 'imap' :
+		if str(connectMethod) in ('imap', 'imap\idle') :
 			inbox = self.resultString
 		else :
 			inbox = None
@@ -1622,15 +1747,16 @@ class Font_n_Colour(QWidget):
 		self.init()
 
 	def user_or_sys(self, path_):
-		kdehome = unicode(KGlobal.dirs().localkdedir())
+		kdehome = self.Parent.kdehome
 		var1 = kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/' + path_
 		var2 = '/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-mail-checker/contents/' + path_
+		#print [var1, var2]
 		if os.path.exists(var2) :
 			return var2
 		elif os.path.exists(var1) :
 			return var1
 		else :
-			return kdehome
+			return os.path.join(os.path.expanduser('~/kde-plasma-mail-checker/contents/'), path_)
 
 	def init(self):
 		self.layout = QGridLayout()
