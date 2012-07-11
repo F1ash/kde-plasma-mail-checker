@@ -26,7 +26,7 @@ Support Akonadi (mimeType : "message/rfc822") resources monitoring
 kde-plasma-mail-checker
 Плазмоид периодически проверяет наличие новых писем
 в списке почтовых ящиков.
-Поддерживаются POP3\IMAP4 протоколы с None\SSL аутентификацией.
+Поддерживаются POP3\IMAP4(+IDLE) протоколы с None\SSL аутентификацией.
 Пароли к почтовым ящикам содержатся в зашифрованном виде.
 Плазмоид использует KDE-оповещение.
 Плазмоид может отслеживать получение новой почты средствами Akonadi.
@@ -51,6 +51,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 * Wed Jul 11 2012 Fl@sh <kaperang07@gmail.com> - 1.6.27-1
+- improved description
 - version updated
 
 * Sun Jun 24 2012 Fl@sh <kaperang07@gmail.com> - 1.5.25-1
