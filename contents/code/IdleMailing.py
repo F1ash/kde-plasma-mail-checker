@@ -22,7 +22,7 @@ def idle(connection):
 			#yield uid, message
 			return uid, message
 	else:
-		raise Exception("IDLE not handled? : %s" % response)
+		raise Exception("IDLE not handled? : %s." % response)
 
 def done(connection):
 	connection.send("DONE\r\n")
@@ -56,7 +56,7 @@ class IdleMailing(QThread):
 
 		for i in xrange(countProbe) :
 			try :
-				print 'probe', i+1
+				#print 'probe', i+1
 				self.msleep(500)
 				if self.authentificationData[4] == 'SSL' :
 					self.mail = imaplib.IMAP4_SSL(self.authentificationData[0], self.authentificationData[1])

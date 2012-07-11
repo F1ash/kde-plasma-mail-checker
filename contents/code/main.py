@@ -35,7 +35,7 @@ try :
 	ErrorMsg = ''
 	warningMsg = ''
 	#sys.stderr = open('/dev/shm/errorMailChecker' + str(time.time()) + '.log','w')
-	#sys.stdout = open('/tmp/outMailChecker' + time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
+	sys.stdout = open('/tmp/outMailChecker' + time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
 except ImportError, warningMsg :
 	print "ImportError", warningMsg
 finally:
@@ -1050,19 +1050,41 @@ class plasmaMailChecker(plasmascript.Applet):
 	def __del__(self): self.eventClose()
 
 	def idleMessage(self, d):
-		print d
+		#print d
 		if d['state'] == -1 :
 			# stopping emitted idle mail
 			itm = None
 			for item in self.idleMailingList :
 				if item.name == d['acc'] : itm = item
-			print self.idleMailingList, '<--'
+			#print self.idleMailingList, '<--'
 			if itm is not None :
-				self.eventNotification( itm.name + 'is not active.' )
+				self.eventNotification( itm.name + ' is not active.' )
 				self.idleMailingList.remove(itm)
+			#print self.idleMailingList, '<--|'
+			i = 0
+			if 'accountList' not in dir(self) : self.accountList = []
+			for accountName in self.accountList :
+				try :
+					if d['acc'] == accountName :
+						self.label[i].setStyleSheet(self.accountColourStyle)
+						self.countList[i].setStyleSheet(self.countColourStyle)
+						if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+							accountName_ = self.accPref + accountName + self.accSuff
+							accountTT = self.accTTPref + self.tr._translate('Account') + \
+										self.accTTSuff + ' ' + accountName + ' (IDLE stopped)'
+
+						if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) :
+							self.label[i].setText(accountName_)
+							self.label[i].setToolTip(accountTT)
+						break
+					i += 1
+				except Exception, _ :
+					print dateStamp(), _
+				finally : pass
 			return None
 		if d['state'] == -2 :
-			self.eventNotification( "In %s error: %s"%(d['acc'], d['msg']) )
+			self.eventNotification( "In %s error: %s"%(d['acc'], \
+									str([QString(s).toLocal8Bit().data() for s in d['msg']])) )
 			return None
 		i = 0
 		self.listNewMail = ''
@@ -1079,19 +1101,18 @@ class plasmaMailChecker(plasmascript.Applet):
 					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 						accountName_ = self.accSPref + accountName + self.accSSuff
 						accountTT = self.accTTSPref + self.tr._translate('Account') + \
-									self.accTTSSuff + ' ' + accountName + '\n(IDLE)'
+									self.accTTSSuff + ' ' + accountName + ' (IDLE)'
 						text_1 = self.countSPref + str(d['msg'][0]) + ' | ' + \
 								str(d['msg'][1]) + self.countSSuff
 						text_2 = self.countTTSPref + '<pre>' + self.tr._translate('New : ') + \
 								str(d['msg'][1]) + '</pre><pre>UnRead : ' + \
 								str(d['msg'][2]) + '</pre>' + self.countTTSSuff
 
-					if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) and self.initStat :
+					if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) :
 						self.label[i].setText(accountName_)
 						self.label[i].setToolTip(accountTT)
 						self.countList[i].setText(text_1)
 						self.countList[i].setToolTip(text_2)
-				else : break
 				i += 1
 			except Exception, _ :
 				print dateStamp(), _
