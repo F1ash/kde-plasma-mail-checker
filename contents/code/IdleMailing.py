@@ -147,7 +147,7 @@ class IdleMailing(QThread):
 				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': -2, 'msg': msg})
 		try :
 			self.mail.done()
-			self.mail.close()
+			if answer[0] == 'OK': self.mail.close()
 		except Exception, _ :
 			print dateStamp(), _
 		finally : pass

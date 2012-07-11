@@ -20,7 +20,7 @@ Start/stop mail checking in plasmoid.
 
 Description:
 	Plasmoid should periodic check for new messages in configured accounts.
-	Supported protocols: POP3/POP3S/IMAP4/IMAP4S.
+	Supported protocols: POP3/POP3S/IMAP4/IMAP4S + IMAP4_IDLE.
 	Passwords for accounts stored in encrypted container.
 	Plasmoid use KDE-notification for events about new mail.
 	It one maybe contain in plasma workspace and in plasma panel.
