@@ -3,6 +3,7 @@
 from PyQt4.QtCore import QThread, QSettings
 from imapUTF7 import imapUTF7Encode
 from MailFunc import readAccountData, dateStamp, getMailAttributes, getCurrentElemTime
+from Functions import SIGNERRO, SIGNSTOP, SIGNINIT, SIGNDATA
 import imaplib
 import time
 
@@ -71,7 +72,7 @@ class IdleMailing(QThread):
 						unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
 						# send signal with countAll & unSeen for show init data to main thread
 						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': 0, \
-														'msg': [countAll, 0, unSeen, '']})
+														'msg': [countAll, SIGNINIT, unSeen, '']})
 						i = countAll
 						NewMailAttributes = ''
 						newMailExist = False
@@ -95,7 +96,7 @@ class IdleMailing(QThread):
 						Settings.endGroup()
 						if newMailExist :
 							# send data to main thread for change mail data & notify
-							self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': 1, \
+							self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
 															'msg': [countAll, countNew, \
 																	unSeen, NewMailAttributes]})
 						break
@@ -133,18 +134,18 @@ class IdleMailing(QThread):
 						Settings.endGroup()
 						Settings.sync()
 						# send data to main thread for change mail data & notify
-						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': 1, \
+						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
 														'msg': [countAll, 1, unSeen, NewMailAttributes]})
 					else :
 						# send data to main thread for change mail data & notify
-						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': 0, \
+						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
 														'msg': [countAll, 0, unSeen, '']})
 				except Exception, _ :
 					# send error messasge to main thread
-					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': -2, 'msg': _})
+					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': _})
 			else :
 				# send error messasge to main thread
-				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': -2, 'msg': msg})
+				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': msg})
 		try :
 			self.mail.done()
 			if answer[0] == 'OK': self.mail.close()
@@ -159,7 +160,7 @@ class IdleMailing(QThread):
 		self.runned = False
 		print dateStamp(), self.name, 'stopped'
 		# send signal about shutdown to main thread
-		self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': -1, 'msg': ''})
+		self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNSTOP, 'msg': ''})
 
 	def stop(self):
 		self.key = False

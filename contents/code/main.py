@@ -1051,7 +1051,7 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def idleMessage(self, d):
 		#print d
-		if d['state'] == -1 :
+		if d['state'] == SIGNSTOP :
 			# stopping emitted idle mail
 			itm = None
 			for item in self.idleMailingList :
@@ -1082,7 +1082,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					print dateStamp(), _
 				finally : pass
 			return None
-		if d['state'] == -2 :
+		if d['state'] == SIGNERRO :
 			self.eventNotification( "In %s error: %s"%(d['acc'], \
 									str([QString(s).toLocal8Bit().data() for s in d['msg']])) )
 			return None
@@ -1117,7 +1117,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			except Exception, _ :
 				print dateStamp(), _
 			finally : pass
-		if d['state'] :
+		if d['state'] == SIGNDATA :
 			if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
 								self.panelIcon.toolTip(), \
@@ -2775,4 +2775,3 @@ class AkonadiResources(QWidget):
 
 def CreateApplet(parent):
 	return plasmaMailChecker(parent)
-

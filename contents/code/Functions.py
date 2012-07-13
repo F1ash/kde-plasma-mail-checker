@@ -3,6 +3,12 @@
 from PyQt4.QtCore import QString, QSettings, QMutex
 import os, string, time, os.path, random, email.header, datetime, locale
 
+# idle thread states
+SIGNERRO = -2
+SIGNSTOP = -1
+SIGNINIT = 0
+SIGNDATA = 1
+
 LOCK = QMutex()
 Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 
