@@ -37,4 +37,4 @@ Notes:
 Known issues:
 	If you internet connection is too slow, you need increase time value in "Autoexit of connect" parameter.
 
-Tested on Fedora 14 (kdebase-workspace-python-applet-4.5.3-3.fc14.x86_64), Fedora15, Fedora16
+Tested on Fedora 14 (kdebase-workspace-python-applet-4.5.3-3.fc14.x86_64), Fedora15, Fedora16, Fedora17

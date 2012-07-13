@@ -48,16 +48,16 @@ class IdleMailing(QThread):
 			mailBox = 'INBOX'
 		else :
 			mailBox = unicode(QString(self.authentificationData[8]).toUtf8().data(), 'utf-8')
-		self.msleep(500)
+		#self.msleep(500)
 		countProbe = int(Settings.value('CountProbe').toString())
-		print dateStamp(), mailBox, imapUTF7Encode(mailBox), countProbe
+		#print dateStamp(), mailBox, imapUTF7Encode(mailBox), countProbe
 		lastElemTime = self.authentificationData[6]
-		self.msleep(500)
+		#self.msleep(500)
 
 		for i in xrange(countProbe) :
 			try :
 				#print 'probe', i+1
-				self.msleep(500)
+				#self.msleep(500)
 				if self.authentificationData[4] == 'SSL' :
 					self.mail = imaplib.IMAP4_SSL(self.authentificationData[0], self.authentificationData[1])
 				else :
@@ -102,7 +102,7 @@ class IdleMailing(QThread):
 			except Exception, _ :
 				print dateStamp(), _
 			finally : pass
-		self.msleep(500)
+		#self.msleep(500)
 		print dateStamp(), self.name, 'is runned && ', self.runned, 'connected', self.authentificationData[4]
 		count = 0
 		while self.key and self.runned and count < countProbe :
