@@ -994,9 +994,8 @@ class plasmaMailChecker(plasmascript.Applet):
 		# stopping idles mail
 		for item in self.idleMailingList :
 			try :
-				if item.runned :
-					item.stop()
-					while item.isRunning() : item.terminate()
+				item.stop()
+				#while item.isRunning() : item.terminate()
 			except Exception, _ :
 				print dateStamp(), _
 			finally : pass
@@ -1071,7 +1070,7 @@ class plasmaMailChecker(plasmascript.Applet):
 						if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 							accountName_ = self.accPref + accountName + self.accSuff
 							accountTT = self.accTTPref + self.tr._translate('Account') + \
-										self.accTTSuff + ' ' + accountName + ' (IDLE stopped)'
+										self.accTTSuff + ' ' + accountName + '<br>(IDLE stopped)'
 
 						if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) :
 							self.label[i].setText(accountName_)
@@ -1101,7 +1100,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 						accountName_ = self.accSPref + accountName + self.accSSuff
 						accountTT = self.accTTSPref + self.tr._translate('Account') + \
-									self.accTTSSuff + ' ' + accountName + ' (IDLE)'
+									self.accTTSSuff + ' ' + accountName + '<br>(IDLE)'
 						text_1 = self.countSPref + str(d['msg'][0]) + ' | ' + \
 								str(d['msg'][1]) + self.countSSuff
 						text_2 = self.countTTSPref + '<pre>' + self.tr._translate('New : ') + \

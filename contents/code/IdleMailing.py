@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from PyQt4.QtCore import QThread, QSettings
+from PyQt4.QtCore import QThread, QSettings, QTimer
 from imapUTF7 import imapUTF7Encode
 from MailFunc import readAccountData, dateStamp, getMailAttributes, getCurrentElemTime
-from Functions import SIGNERRO, SIGNSTOP, SIGNINIT, SIGNDATA
+from Functions import SIGNERRO, SIGNSTOP, SIGNINIT, SIGNDATA, LOCK
 import imaplib
 import time
 
@@ -33,6 +33,8 @@ imaplib.IMAP4.idle = idle
 imaplib.IMAP4.done = done
 #####
 
+TIMEOUT = 30
+
 class IdleMailing(QThread):
 	def __init__(self, data = (), parent = None):
 		QThread.__init__(self, parent)
@@ -41,34 +43,105 @@ class IdleMailing(QThread):
 		self.name = data[0]
 		self.passw = data[1]
 		self.runned = False
+		self.timer = QTimer()
+		self.countProbe = int(Settings.value('CountProbe').toString())
+
+	def runIdle(self):
+		self.restarting = False
+		errorCount = 0
+		while self.key :
+			try :
+				#print "+idle: %s <-- key; %s <-- errorz"%(self.key, errorCount)
+				uid, msg = (None, '')
+				if self.key : uid, msg = self.mail.idle()
+			except Exception, _ :
+				print dateStamp(), _
+				if not self.restarting : errorCount += 1
+				uid, msg = (None, _)
+			finally : pass
+			#print dateStamp(), uid, msg, 'uid, msg'
+			if msg == "EXISTS" and self.key :
+				try :
+					self.mail.done()
+					NewMailAttributes = ''
+					currentElemTime = getCurrentElemTime(self.mail, uid)
+					# print dateStamp(), currentElemTime
+					unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
+					countAll = len(self.mail.search(None, 'All')[1][0].split())
+					if currentElemTime > self.lastElemTime :
+						Date, From, Subj = getMailAttributes(self.mail, uid)
+						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
+						#print dateStamp(), NewMailAttributes, '   ----==------', unSeen, countAll
+						self.lastElemTime = currentElemTime
+						Settings.beginGroup(self.name)
+						Settings.setValue('lastElemValue', self.lastElemTime)
+						Settings.endGroup()
+						Settings.sync()
+						# send data to main thread for change mail data & notify
+						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
+														'msg': [countAll, 1, unSeen, NewMailAttributes]})
+					else :
+						# send data to main thread for change mail data
+						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
+														'msg': [countAll, 0, unSeen, '']})
+				except Exception, _ :
+					# send error messasge to main thread
+					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': _})
+				finally :
+					# successfull probe is clear the errorCount
+					errorCount = 0
+					#print 'Success probe: error counter cleared'
+			elif self.key and not self.restarting :
+				# send error messasge to main thread
+				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': msg})
+			elif self.restarting :
+				self.setRestartingState(False)
+				unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
+				countAll = len(self.mail.search(None, 'All')[1][0].split())
+				# send data to main thread for change mail data
+				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
+												'msg': [countAll, 0, unSeen, '']})
+			# limit of errors shutdown idle thread
+			if errorCount == self.countProbe :
+				self.key = False
+		self.runned = False
+		#print dateStamp(), 'limit errors or key off'
+
+	def setRestartingState(self, state):
+		self.restarting = state
+
+	def restartIdle(self):
+		try : self.mail.done()
+		except Exception, _ : print dateStamp(), _
+		finally : pass
+		#print 'restart IDLE'
+		self.setRestartingState(True)
 
 	def run(self):
 		self.key = True
+		self.answer = []
+		self.timer.timeout.connect(self.restartIdle)
 		self.authentificationData = readAccountData(self.name)
 		if self.authentificationData[8] == '' :
 			mailBox = 'INBOX'
 		else :
 			mailBox = unicode(QString(self.authentificationData[8]).toUtf8().data(), 'utf-8')
-		#self.msleep(500)
-		countProbe = int(Settings.value('CountProbe').toString())
 		#print dateStamp(), mailBox, imapUTF7Encode(mailBox), countProbe
-		lastElemTime = self.authentificationData[6]
-		#self.msleep(500)
+		self.lastElemTime = self.authentificationData[6]
 
-		for i in xrange(countProbe) :
+		for j in xrange(self.countProbe) :
 			try :
-				#print 'probe', i+1
-				#self.msleep(500)
+				#print 'probe', j+1
 				if self.authentificationData[4] == 'SSL' :
 					self.mail = imaplib.IMAP4_SSL(self.authentificationData[0], self.authentificationData[1])
 				else :
 					self.mail = imaplib.IMAP4(self.authentificationData[0], self.authentificationData[1])
 
 				if self.mail.login( self.authentificationData[2], self.passw )[0] == 'OK' :
-					answer = self.mail.select(imapUTF7Encode(mailBox))
-					if answer[0] == 'OK':
+					self.answer = self.mail.select(imapUTF7Encode(mailBox))
+					if self.answer[0] == 'OK' and self.key :
 						self.runned = True
-						countAll = int(answer[1][0])
+						countAll = int(self.answer[1][0])
 						unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
 						# send signal with countAll & unSeen for show init data to main thread
 						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': 0, \
@@ -77,10 +150,10 @@ class IdleMailing(QThread):
 						NewMailAttributes = ''
 						newMailExist = False
 						countNew = 0
-						while i > 0 :
+						while i > 0 and self.key :
 							currentElemTime = getCurrentElemTime(self.mail, i)
 							# print dateStamp(), currentElemTime
-							if currentElemTime > lastElemTime :
+							if currentElemTime > self.lastElemTime :
 								Date, From, Subj = getMailAttributes(self.mail, i)
 								NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
 								#print dateStamp(), NewMailAttributes, '   ----==------'
@@ -89,85 +162,59 @@ class IdleMailing(QThread):
 							else:
 								break
 							i += -1
-						lastElemTime = getCurrentElemTime(self.mail, countAll)
-						# print dateStamp(), lastElemTime
-						Settings.beginGroup(self.name)
-						Settings.setValue('lastElemValue', lastElemTime)
-						Settings.endGroup()
-						if newMailExist :
-							# send data to main thread for change mail data & notify
-							self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
-															'msg': [countAll, countNew, \
-																	unSeen, NewMailAttributes]})
+						if self.key :
+							self.lastElemTime = getCurrentElemTime(self.mail, countAll)
+							# print dateStamp(), self.lastElemTime
+							Settings.beginGroup(self.name)
+							Settings.setValue('lastElemValue', self.lastElemTime)
+							Settings.endGroup()
+							if newMailExist :
+								# send data to main thread for change mail data & notify
+								self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
+																'msg': [countAll, countNew, \
+																		unSeen, NewMailAttributes]})
 						break
 			except Exception, _ :
 				print dateStamp(), _
 			finally : pass
-		#self.msleep(500)
 		print dateStamp(), self.name, 'is runned && ', self.runned, 'connected', self.authentificationData[4]
-		count = 0
-		while self.key and self.runned and count < countProbe :
-			#for uid, msg in self.mail.idle():
+		if self.key and self.runned :
+			self.timer.start(TIMEOUT*1000)
+			self.runIdle()
+		else : self.runned = False
+		if not self.runned :
 			try :
-				uid, msg = self.mail.idle()
-			except Exception, _ :
-				print dateStamp(), _
-				count += 1
-				uid, msg = (None, _)
-			finally : pass
-			print dateStamp(), uid, msg, 'uid, msg'
-			if msg == "EXISTS":
-				try :
+				if self.key :
 					self.mail.done()
-					NewMailAttributes = ''
-					currentElemTime = getCurrentElemTime(self.mail, uid)
-					# print dateStamp(), currentElemTime
-					unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
-					countAll = len(self.mail.search(None, 'All')[1][0].split())
-					if currentElemTime > lastElemTime :
-						Date, From, Subj = getMailAttributes(self.mail, uid)
-						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
-						#print dateStamp(), NewMailAttributes, '   ----==------', unSeen, countAll
-						lastElemTime = currentElemTime
-						Settings.beginGroup(self.name)
-						Settings.setValue('lastElemValue', lastElemTime)
-						Settings.endGroup()
-						Settings.sync()
-						# send data to main thread for change mail data & notify
-						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
-														'msg': [countAll, 1, unSeen, NewMailAttributes]})
-					else :
-						# send data to main thread for change mail data & notify
-						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
-														'msg': [countAll, 0, unSeen, '']})
-				except Exception, _ :
-					# send error messasge to main thread
-					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': _})
-			else :
-				# send error messasge to main thread
-				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': msg})
+					print dateStamp(), self.name, '-idle'
+			except Exception, _ : print dateStamp(), _
+			finally : pass
+			self._shutdown()
+
+	def stop(self):
+		LOCK.lock()
+		self.key = False
 		try :
 			self.mail.done()
-			if answer[0] == 'OK': self.mail.close()
-		except Exception, _ :
-			print dateStamp(), _
+			print dateStamp(), self.name, '-idle'
+		except Exception, _ : print dateStamp(), _
 		finally : pass
-		try :
-			self.mail.logout()
-		except Exception, _ :
-			print dateStamp(), _
+		#print self.key, '<-- key off'
+		LOCK.unlock()
+
+	def _shutdown(self):
+		self.timer.stop()
+		try : self.timer.timeout.disconnect(self.restartIdle)
+		except Exception, _ : print dateStamp(), _
 		finally : pass
-		self.runned = False
+		print dateStamp(), self.name, 'timer shutdown'
+		if self.answer != [] and self.answer[0] == 'OK' : self.mail.close()
+		print dateStamp(), self.name, 'dir close'
+		self.mail.logout()
+		print dateStamp(), self.name, 'logout'
 		print dateStamp(), self.name, 'stopped'
 		# send signal about shutdown to main thread
 		self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNSTOP, 'msg': ''})
 
-	def stop(self):
-		self.key = False
-		self.mail.done()
-		self.mail.close()
-		self.mail.logout()
-
 	def __del__(self):
 		self.stop()
-
