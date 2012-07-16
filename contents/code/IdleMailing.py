@@ -96,11 +96,12 @@ class IdleMailing(QThread):
 				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': msg})
 			elif self.restarting :
 				self.setRestartingState(False)
+				new = len(self.mail.search(None, 'New')[1][0].split())
 				unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
 				countAll = len(self.mail.search(None, 'All')[1][0].split())
 				# send data to main thread for change mail data
 				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
-												'msg': [countAll, 0, unSeen, '']})
+												'msg': [countAll, new, unSeen, '']})
 			# limit of errors shutdown idle thread
 			if errorCount == self.countProbe :
 				self.key = False
@@ -144,8 +145,8 @@ class IdleMailing(QThread):
 						countAll = int(self.answer[1][0])
 						unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
 						# send signal with countAll & unSeen for show init data to main thread
-						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': 0, \
-														'msg': [countAll, SIGNINIT, unSeen, '']})
+						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
+														'msg': [countAll, 0, unSeen, '']})
 						i = countAll
 						NewMailAttributes = ''
 						newMailExist = False

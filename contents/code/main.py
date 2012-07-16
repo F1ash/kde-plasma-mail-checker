@@ -1123,7 +1123,7 @@ class plasmaMailChecker(plasmascript.Applet):
 								self.headerPref + self.listNewMail + self.headerSuff, \
 								self.panelIcon.icon() ) )
 			''' detect count of new mail '''
-			countOfAllNewMail = d['msg'][2]
+			countOfAllNewMail = d['msg'][1]
 			overLoad = False
 			if self.maxShowedMail < countOfAllNewMail :
 				overLoad = True
