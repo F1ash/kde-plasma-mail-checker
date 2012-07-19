@@ -1,7 +1,7 @@
 # LANG=ru_RU.UTF-8
 
 Установить при необходимости:
-	kdebase-workspace-python-applet
+	kdebase-workspace-python-applet (F14)
 
 Вывод ошибок сессии в:
 	~/.xsession-errors
@@ -49,6 +49,5 @@ M@ilChecker использует бумажник умолчанию или ал
 	(Например: ru.qm, de.qm, ge.qm). По умолчанию, язык английский.
 
 Тестировано на :
-	Fedora14
-	kdebase-workspace-python-applet-4.5.3-3.fc14.x86_64
-	Fedora15, Fedora16
+	Fedora14 (kdebase-workspace-python-applet-4.5.3-3.fc14.x86_64)
+	Fedora15, Fedora16, Fedora17

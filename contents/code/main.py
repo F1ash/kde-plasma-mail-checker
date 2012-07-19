@@ -1,4 +1,24 @@
 # -*- coding: utf-8 -*-
+#  main.py
+#  
+#  Copyright 2012 Flash <kaperang07@gmail.com>
+#  
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#  
+#  
 
 try :
 	global warningMsg
@@ -615,7 +635,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					enable = Settings.value('Enabled').toString()
 					connectMethod = Settings.value('connectMethod').toString()
 					Settings.endGroup()
-					print accountName, connectMethod
+					print dateStamp() , accountName, connectMethod
 					if str(enable) == '1' :
 						data = (accountName, self.wallet.readPassword(accountName)[1])
 						if connectMethod == 'imap\idle' :
@@ -643,7 +663,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				print dateStamp() , ' starting idles mail:', self.idleMailingList
 				for item in self.idleMailingList :
 					try :
-						print item.name
+						#print item.name
 						if not item.runned : item.start()
 					except Exception, _ :
 						print dateStamp(), _
@@ -881,7 +901,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		x = ''
 		try:
 			self.Timer.stop()
-			# останов потока проверки почты перед изменением GUI
+			# stopping mailChecking thread
 			self.emit(SIGNAL('killThread'))
 		except AttributeError, x:
 			print dateStamp() ,  x, '  acceptConf_1'
@@ -1049,9 +1069,9 @@ class plasmaMailChecker(plasmascript.Applet):
 	def __del__(self): self.eventClose()
 
 	def idleMessage(self, d):
-		#print d
+		# print d
+		# stopping emitted idle mail
 		if d['state'] == SIGNSTOP :
-			# stopping emitted idle mail
 			itm = None
 			for item in self.idleMailingList :
 				if item.name == d['acc'] : itm = item
@@ -1081,10 +1101,14 @@ class plasmaMailChecker(plasmascript.Applet):
 					print dateStamp(), _
 				finally : pass
 			return None
+		#
+		# show error notify from emitted idle mail
 		if d['state'] == SIGNERRO :
 			self.eventNotification( "In %s error: %s"%(d['acc'], \
 									str([QString(s).toLocal8Bit().data() for s in d['msg']])) )
 			return None
+		#
+		# show init or new mail data and notify
 		i = 0
 		self.listNewMail = ''
 		if 'accountList' not in dir(self) : self.accountList = []

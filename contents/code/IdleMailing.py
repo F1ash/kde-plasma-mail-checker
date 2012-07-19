@@ -1,4 +1,24 @@
 # -*- coding: utf-8 -*-
+#  IdleMailing.py
+#  
+#  Copyright 2012 Flash <kaperang07@gmail.com>
+#  
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#  
+#  
 
 from PyQt4.QtCore import QThread, QSettings, QTimer
 from imapUTF7 import imapUTF7Encode
@@ -15,19 +35,15 @@ def idle(connection):
 	tag = connection._new_tag()
 	connection.send("%s IDLE\r\n" % tag)
 	response = connection.readline()
-	connection.loop = True
 	if response == '+ idling\r\n':
-		while connection.loop:
-			resp = connection.readline()
-			uid, message = resp[2:-2].split(' ')
-			#yield uid, message
-			return uid, message
+		resp = connection.readline()
+		uid, message = resp[2:-2].split(' ')
+		return uid, message
 	else:
 		raise Exception("IDLE not handled? : %s." % response)
 
 def done(connection):
 	connection.send("DONE\r\n")
-	connection.loop = False
 
 imaplib.IMAP4.idle = idle
 imaplib.IMAP4.done = done
@@ -94,7 +110,7 @@ class IdleMailing(QThread):
 			elif self.key and not self.restarting :
 				# send error messasge to main thread
 				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': msg})
-			elif self.restarting :
+			elif self.key and self.restarting :
 				self.setRestartingState(False)
 				new = len(self.mail.search(None, 'New')[1][0].split())
 				unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
@@ -102,21 +118,23 @@ class IdleMailing(QThread):
 				# send data to main thread for change mail data
 				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
 												'msg': [countAll, new, unSeen, '']})
+			elif not self.key : print dateStamp(), 'key off'
 			# limit of errors shutdown idle thread
 			if errorCount == self.countProbe :
 				self.key = False
+				print dateStamp(), 'errors limit '
 		self.runned = False
-		#print dateStamp(), 'limit errors or key off'
 
 	def setRestartingState(self, state):
 		self.restarting = state
 
 	def restartIdle(self):
-		try : self.mail.done()
+		try :
+			self.mail.done()
+			self.setRestartingState(True)
+			print 'restart IDLE'
 		except Exception, _ : print dateStamp(), _
 		finally : pass
-		#print 'restart IDLE'
-		self.setRestartingState(True)
 
 	def run(self):
 		self.key = True
@@ -127,7 +145,7 @@ class IdleMailing(QThread):
 			mailBox = 'INBOX'
 		else :
 			mailBox = unicode(QString(self.authentificationData[8]).toUtf8().data(), 'utf-8')
-		#print dateStamp(), mailBox, imapUTF7Encode(mailBox), countProbe
+		print dateStamp(), mailBox, imapUTF7Encode(mailBox), self.countProbe
 		self.lastElemTime = self.authentificationData[6]
 
 		for j in xrange(self.countProbe) :
@@ -182,15 +200,15 @@ class IdleMailing(QThread):
 		if self.key and self.runned :
 			self.timer.start(TIMEOUT*1000)
 			self.runIdle()
-		else : self.runned = False
-		if not self.runned :
-			try :
-				if self.key :
-					self.mail.done()
-					print dateStamp(), self.name, '-idle'
-			except Exception, _ : print dateStamp(), _
-			finally : pass
-			self._shutdown()
+		self.timer.stop()
+		self.runned = False
+		try :
+			if self.key :
+				self.mail.done()
+				print dateStamp(), self.name, '-idle'
+		except Exception, _ : print dateStamp(), _
+		finally : self.key = False
+		self._shutdown()
 
 	def stop(self):
 		LOCK.lock()
@@ -204,14 +222,18 @@ class IdleMailing(QThread):
 		LOCK.unlock()
 
 	def _shutdown(self):
-		self.timer.stop()
 		try : self.timer.timeout.disconnect(self.restartIdle)
 		except Exception, _ : print dateStamp(), _
 		finally : pass
-		print dateStamp(), self.name, 'timer shutdown'
-		if self.answer != [] and self.answer[0] == 'OK' : self.mail.close()
+		print dateStamp(), self.name, 'timer shutdown & disconnected'
+		if self.answer != [] and self.answer[0] == 'OK' :
+			try : self.mail.close()
+			except Exception, _ : print dateStamp(), _
+			finally : pass
 		print dateStamp(), self.name, 'dir close'
-		self.mail.logout()
+		try: self.mail.logout()
+		except Exception, _ : print dateStamp(), _
+		finally : pass
 		print dateStamp(), self.name, 'logout'
 		print dateStamp(), self.name, 'stopped'
 		# send signal about shutdown to main thread
