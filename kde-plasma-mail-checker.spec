@@ -40,8 +40,8 @@ make %{?_smp_mflags}
 make install DESTDIR=$RPM_BUILD_ROOT/usr
 
 %files
-%{_kde4_datadir}/kde4/services/%{name}.desktop
-%{_kde4_appsdir}/plasma/plasmoids/%{name}
+%{_datadir}/kde4/services/%{name}.desktop
+%{_datadir}/kde4/apps/plasma/plasmoids/%{name}
 %doc README README_RU COPYING
 
 %changelog
