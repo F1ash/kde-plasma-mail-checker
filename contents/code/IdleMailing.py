@@ -70,10 +70,10 @@ class IdleMailing(QThread):
 				#print "+idle: %s <-- key; %s <-- errorz"%(self.key, errorCount)
 				uid, msg = (None, '')
 				if self.key : uid, msg = self.mail.idle()
-			except Exception, _ :
-				print dateStamp(), _
+			except Exception, err :
+				print dateStamp(), err
 				if not self.restarting : errorCount += 1
-				uid, msg = (None, _)
+				uid, msg = (None, err)
 			finally : pass
 			#print dateStamp(), uid, msg, 'uid, msg'
 			if msg == "EXISTS" and self.key :
@@ -100,9 +100,9 @@ class IdleMailing(QThread):
 						# send data to main thread for change mail data
 						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
 														'msg': [countAll, 0, unSeen, '']})
-				except Exception, _ :
+				except Exception, err :
 					# send error messasge to main thread
-					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': _})
+					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': err})
 				finally :
 					# successfull probe is clear the errorCount
 					errorCount = 0
@@ -112,12 +112,13 @@ class IdleMailing(QThread):
 				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': msg})
 			elif self.key and self.restarting :
 				self.setRestartingState(False)
-				new = len(self.mail.search(None, 'New')[1][0].split())
 				unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
 				countAll = len(self.mail.search(None, 'All')[1][0].split())
+				# maybe need try -- except
+				# imaplib.abort: command: SEARCH => socket error: EOF
 				# send data to main thread for change mail data
 				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
-												'msg': [countAll, new, unSeen, '']})
+												'msg': [countAll, 0, unSeen, '']})
 			elif not self.key : print dateStamp(), 'key off'
 			# limit of errors shutdown idle thread
 			if errorCount == self.countProbe :
@@ -133,7 +134,7 @@ class IdleMailing(QThread):
 			self.mail.done()
 			self.setRestartingState(True)
 			print 'restart IDLE'
-		except Exception, _ : print dateStamp(), _
+		except Exception, err : print dateStamp(), err
 		finally : pass
 
 	def run(self):
@@ -193,8 +194,8 @@ class IdleMailing(QThread):
 																'msg': [countAll, countNew, \
 																		unSeen, NewMailAttributes]})
 						break
-			except Exception, _ :
-				print dateStamp(), _
+			except Exception, err :
+				print dateStamp(), err
 			finally : pass
 		print dateStamp(), self.name, 'is runned && ', self.runned, 'connected', self.authentificationData[4]
 		if self.key and self.runned :
@@ -206,7 +207,7 @@ class IdleMailing(QThread):
 			if self.key :
 				self.mail.done()
 				print dateStamp(), self.name, '-idle'
-		except Exception, _ : print dateStamp(), _
+		except Exception, err : print dateStamp(), err
 		finally : self.key = False
 		self._shutdown()
 
@@ -216,23 +217,23 @@ class IdleMailing(QThread):
 		try :
 			self.mail.done()
 			print dateStamp(), self.name, '-idle'
-		except Exception, _ : print dateStamp(), _
+		except Exception, err : print dateStamp(), err
 		finally : pass
 		#print self.key, '<-- key off'
 		LOCK.unlock()
 
 	def _shutdown(self):
 		try : self.timer.timeout.disconnect(self.restartIdle)
-		except Exception, _ : print dateStamp(), _
+		except Exception, err : print dateStamp(), err
 		finally : pass
 		print dateStamp(), self.name, 'timer shutdown & disconnected'
 		if self.answer != [] and self.answer[0] == 'OK' :
 			try : self.mail.close()
-			except Exception, _ : print dateStamp(), _
+			except Exception, err : print dateStamp(), err
 			finally : pass
 		print dateStamp(), self.name, 'dir close'
 		try: self.mail.logout()
-		except Exception, _ : print dateStamp(), _
+		except Exception, err : print dateStamp(), err
 		finally : pass
 		print dateStamp(), self.name, 'logout'
 		print dateStamp(), self.name, 'stopped'

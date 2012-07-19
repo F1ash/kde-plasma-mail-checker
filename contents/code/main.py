@@ -665,8 +665,8 @@ class plasmaMailChecker(plasmascript.Applet):
 					try :
 						#print item.name
 						if not item.runned : item.start()
-					except Exception, _ :
-						print dateStamp(), _
+					except Exception, err :
+						print dateStamp(), err
 					finally : pass
 			else :
 				#print dateStamp() ,  'isRunning : send signal to kill...'
@@ -1016,8 +1016,8 @@ class plasmaMailChecker(plasmascript.Applet):
 			try :
 				item.stop()
 				#while item.isRunning() : item.terminate()
-			except Exception, _ :
-				print dateStamp(), _
+			except Exception, err :
+				print dateStamp(), err
 			finally : pass
 		self.idleMailingList = []
 
@@ -1097,8 +1097,8 @@ class plasmaMailChecker(plasmascript.Applet):
 							self.label[i].setToolTip(accountTT)
 						break
 					i += 1
-				except Exception, _ :
-					print dateStamp(), _
+				except Exception, err :
+					print dateStamp(), err
 				finally : pass
 			return None
 		#
@@ -1137,8 +1137,8 @@ class plasmaMailChecker(plasmascript.Applet):
 						self.countList[i].setText(text_1)
 						self.countList[i].setToolTip(text_2)
 				i += 1
-			except Exception, _ :
-				print dateStamp(), _
+			except Exception, err :
+				print dateStamp(), err
 			finally : pass
 		if d['state'] == SIGNDATA :
 			if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
