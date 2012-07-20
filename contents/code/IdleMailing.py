@@ -25,7 +25,7 @@ from imapUTF7 import imapUTF7Encode
 from MailFunc import readAccountData, dateStamp, getMailAttributes, getCurrentElemTime
 from Functions import SIGNERRO, SIGNSTOP, SIGNINIT, SIGNDATA, LOCK
 import imaplib
-import time
+from random import randint
 
 Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 
@@ -66,15 +66,19 @@ class IdleMailing(QThread):
 		self.restarting = False
 		errorCount = 0
 		while self.key :
+			# random deviation [0-12] sec
+			delay = TIMEOUT*1000 + randint(0, 12)*1000
+			self.timer.setInterval(delay)
+			self.timer.start()
+			#print "+idle: %s <-- R; %s <-- E; %s <-- D"%(self.restarting, errorCount, delay)
 			try :
-				#print "+idle: %s <-- key; %s <-- errorz"%(self.key, errorCount)
 				uid, msg = (None, '')
 				if self.key : uid, msg = self.mail.idle()
 			except Exception, err :
-				print dateStamp(), err
 				if not self.restarting : errorCount += 1
 				uid, msg = (None, err)
 			finally : pass
+			if self.timer.isActive() : self.timer.stop()
 			#print dateStamp(), uid, msg, 'uid, msg'
 			if msg == "EXISTS" and self.key :
 				try :
@@ -106,7 +110,6 @@ class IdleMailing(QThread):
 				finally :
 					# successfull probe is clear the errorCount
 					errorCount = 0
-					#print 'Success probe: error counter cleared'
 			elif self.key and not self.restarting :
 				# send error messasge to main thread
 				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': msg})
@@ -124,7 +127,10 @@ class IdleMailing(QThread):
 			if errorCount == self.countProbe :
 				self.key = False
 				print dateStamp(), 'errors limit '
-		self.runned = False
+		#
+		# idle out
+		self.timer.timeout.disconnect(self.restartIdle)
+		print dateStamp(), self.name, 'timer stopped & disconnected'
 
 	def setRestartingState(self, state):
 		self.restarting = state
@@ -133,7 +139,7 @@ class IdleMailing(QThread):
 		try :
 			self.mail.done()
 			self.setRestartingState(True)
-			print 'restart IDLE'
+			#print 'restart IDLE'
 		except Exception, err : print dateStamp(), err
 		finally : pass
 
@@ -146,7 +152,7 @@ class IdleMailing(QThread):
 			mailBox = 'INBOX'
 		else :
 			mailBox = unicode(QString(self.authentificationData[8]).toUtf8().data(), 'utf-8')
-		print dateStamp(), mailBox, imapUTF7Encode(mailBox), self.countProbe
+		#print dateStamp(), mailBox, imapUTF7Encode(mailBox), self.countProbe
 		self.lastElemTime = self.authentificationData[6]
 
 		for j in xrange(self.countProbe) :
@@ -197,36 +203,19 @@ class IdleMailing(QThread):
 			except Exception, err :
 				print dateStamp(), err
 			finally : pass
-		print dateStamp(), self.name, 'is runned && ', self.runned, 'connected', self.authentificationData[4]
-		if self.key and self.runned :
-			self.timer.start(TIMEOUT*1000)
-			self.runIdle()
-		self.timer.stop()
+		print dateStamp(), self.name, 'is runned:', self.runned, 'crypted:', self.authentificationData[4]
+		if self.key and self.runned : self.runIdle()
 		self.runned = False
-		try :
-			if self.key :
-				self.mail.done()
-				print dateStamp(), self.name, '-idle'
-		except Exception, err : print dateStamp(), err
-		finally : self.key = False
+		self.key = False
 		self._shutdown()
 
 	def stop(self):
 		LOCK.lock()
 		self.key = False
-		try :
-			self.mail.done()
-			print dateStamp(), self.name, '-idle'
-		except Exception, err : print dateStamp(), err
-		finally : pass
 		#print self.key, '<-- key off'
 		LOCK.unlock()
 
 	def _shutdown(self):
-		try : self.timer.timeout.disconnect(self.restartIdle)
-		except Exception, err : print dateStamp(), err
-		finally : pass
-		print dateStamp(), self.name, 'timer shutdown & disconnected'
 		if self.answer != [] and self.answer[0] == 'OK' :
 			try : self.mail.close()
 			except Exception, err : print dateStamp(), err
@@ -236,7 +225,7 @@ class IdleMailing(QThread):
 		except Exception, err : print dateStamp(), err
 		finally : pass
 		print dateStamp(), self.name, 'logout'
-		print dateStamp(), self.name, 'stopped'
+		print dateStamp(), self.name, 'thread stopped'
 		# send signal about shutdown to main thread
 		self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNSTOP, 'msg': ''})
 

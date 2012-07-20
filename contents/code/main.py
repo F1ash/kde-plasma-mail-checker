@@ -111,7 +111,11 @@ class ThreadCheckMail(QThread):
 				if WAIT :
 					str_ = str(randomString(24))
 					with open('/dev/shm/' + str_, 'wb') as f:
-						f.write(accountData[1].toLocal8Bit().data())
+						if isinstance(accountData[1], basestring) :
+							_str = accountData[1]
+						else :
+							_str = accountData[1].toLocal8Bit().data()
+						f.write(_str)
 					Data = QStringList()
 					Data.append(path)
 					Data.append(accountData[0])
@@ -257,16 +261,8 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def initTitle(self):
 		global VERSION
-		fileName = self.kdehome + 'share/apps/plasma/plasmoids/kde-plasma-mail-checker/metadata.desktop'
-		if os.path.exists('/usr/share/kde4/services/kde-plasma-mail-checker.desktop') :
-			with open('/usr/share/kde4/services/kde-plasma-mail-checker.desktop') as f :
-				str_ = f.read()
-			list_ = string.split(str_, '\n')
-			for _str in list_ :
-				if 'X-KDE-PluginInfo-Version' in _str :
-					VERSION = string.split(_str, '=')[1]
-					break
-		elif os.path.exists(fileName) :
+		fileName = self.user_or_sys('metadata.desktop')
+		if os.path.exists(fileName) :
 			with open(fileName) as f :
 				str_ = f.read()
 			list_ = string.split(str_, '\n')
@@ -635,7 +631,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					enable = Settings.value('Enabled').toString()
 					connectMethod = Settings.value('connectMethod').toString()
 					Settings.endGroup()
-					print dateStamp() , accountName, connectMethod
+					#print dateStamp() , accountName.toLocal8Bit().data(), connectMethod
 					if str(enable) == '1' :
 						data = (accountName, self.wallet.readPassword(accountName)[1])
 						if connectMethod == 'imap\idle' :
@@ -660,13 +656,13 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.T = ThreadCheckMail(self, accData, self.waitThread)
 				print dateStamp() ,  'time for wait thread : ', self.waitThread
 				self.T.start()
-				print dateStamp() , ' starting idles mail:', self.idleMailingList
+				#print dateStamp() , ' starting idles mail:', self.idleMailingList
 				for item in self.idleMailingList :
 					try :
 						#print item.name
 						if not item.runned : item.start()
 					except Exception, err :
-						print dateStamp(), err
+						print dateStamp(), err, 'in', item.name.toLocal8Bit().data()
 					finally : pass
 			else :
 				#print dateStamp() ,  'isRunning : send signal to kill...'
@@ -1126,7 +1122,7 @@ class plasmaMailChecker(plasmascript.Applet):
 						accountTT = self.accTTSPref + self.tr._translate('Account') + \
 									self.accTTSSuff + ' ' + accountName + '<br>(IDLE)'
 						text_1 = self.countSPref + str(d['msg'][0]) + ' | ' + \
-								str(d['msg'][1]) + self.countSSuff
+								str(d['msg'][2]) + self.countSSuff
 						text_2 = self.countTTSPref + '<pre>' + self.tr._translate('New : ') + \
 								str(d['msg'][1]) + '</pre><pre>UnRead : ' + \
 								str(d['msg'][2]) + '</pre>' + self.countTTSSuff
