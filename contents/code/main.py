@@ -631,7 +631,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					enable = Settings.value('Enabled').toString()
 					connectMethod = Settings.value('connectMethod').toString()
 					Settings.endGroup()
-					#print dateStamp() , accountName.toLocal8Bit().data(), connectMethod
+					#print dateStamp() , accountName.toLocal8Bit().data(), connectMethod, enable
 					if str(enable) == '1' :
 						data = (accountName, self.wallet.readPassword(accountName)[1])
 						if connectMethod == 'imap\idle' :
@@ -642,17 +642,20 @@ class plasmaMailChecker(plasmascript.Applet):
 									break
 							if not exist :
 								self.idleMailingList.append(IdleMailing(data, self))
+							accData.append(('', ''))
 						else :
 							accData.append(data)
 					else :
 						# delete the disabled accounts within idle mode
 						exist = False
 						for item in self.idleMailingList :
-							if accountName == item.name : item.stop()
-							exist = item
-							break
+							if accountName == item.name :
+								item.stop()
+								exist = item
+								break
+						#print exist, accountName.toLocal8Bit().data()
 						if exist : self.idleMailingList.remove(exist)
-						accData.append(('',''))
+						accData.append(('', ''))
 				self.T = ThreadCheckMail(self, accData, self.waitThread)
 				print dateStamp() ,  'time for wait thread : ', self.waitThread
 				self.T.start()
@@ -714,10 +717,15 @@ class plasmaMailChecker(plasmascript.Applet):
 		newMailExist = False
 		self.listNewMail = ''
 		x = ''
-		if 'accountList' not in dir(self) : self.accountList = []
+		if 'accountList' not in dir(self) : self.accountList = QStringList()
+		#for item in self.accountList : print item.toLocal8Bit().data(), 'accList'
 		for accountName in self.accountList :
+			Settings.beginGroup(accountName)
+			connectMethod = Settings.value('connectMethod').toString()
+			Settings.endGroup()
+			IDLE = True if connectMethod == 'imap\idle' else False
 			try :
-				if int(self.checkResult[i][2]) > 0 :
+				if int(self.checkResult[i][2]) > 0 and not IDLE :
 					self.listNewMail += '<pre>' + accountName + '&#09;' + \
 										 str(self.checkResult[i][2]) + ' | ' + \
 										 str(self.checkResult[i][6]) + '</pre>'
@@ -733,7 +741,7 @@ class plasmaMailChecker(plasmascript.Applet):
 						text_2 = self.countTTSPref + '<pre>' + self.tr._translate('New : ') + \
 								 str(self.checkResult[i][2]) + '</pre><pre>UnRead : ' + \
 								 str(self.checkResult[i][6]) + '</pre>' + self.countTTSSuff
-				else :
+				elif int(self.checkResult[i][2]) < 1 and not IDLE :
 					self.label[i].setStyleSheet(self.accountColourStyle)
 					self.countList[i].setStyleSheet(self.countColourStyle)
 					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -746,7 +754,8 @@ class plasmaMailChecker(plasmascript.Applet):
 								 str(self.checkResult[i][2]) + '</pre><pre>UnRead : ' + \
 								 str(self.checkResult[i][6]) + '</pre>' + self.countTTSuff
 
-				if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) and self.initStat :
+				if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) \
+												and self.initStat and not IDLE :
 					self.label[i].setText(accountName_)
 					self.label[i].setToolTip(accountTT)
 					self.countList[i].setText(text_1)
@@ -1006,7 +1015,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		#self.loop.quit()
 		if 'T' in dir(self):
 			#print dateStamp() ,'   killMetod Up'
-			while self.T.isRunning() : self.T._terminate()
+			if self.T.isRunning() : self.T._terminate()
 		# stopping idles mail
 		for item in self.idleMailingList :
 			try :
@@ -1077,7 +1086,8 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.idleMailingList.remove(itm)
 			#print self.idleMailingList, '<--|'
 			i = 0
-			if 'accountList' not in dir(self) : self.accountList = []
+			if 'accountList' not in dir(self) : self.accountList = QStringList()
+			#for item in self.accountList : print item.toLocal8Bit().data(), 'accList_IDLE'
 			for accountName in self.accountList :
 				try :
 					if d['acc'] == accountName :
@@ -1107,7 +1117,8 @@ class plasmaMailChecker(plasmascript.Applet):
 		# show init or new mail data and notify
 		i = 0
 		self.listNewMail = ''
-		if 'accountList' not in dir(self) : self.accountList = []
+		if 'accountList' not in dir(self) : self.accountList = QStringList()
+		#for item in self.accountList : print item.toLocal8Bit().data(), 'accList_IDLE1'
 		for accountName in self.accountList :
 			try :
 				if d['acc'] == accountName :
