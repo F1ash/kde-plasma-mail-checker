@@ -1,5 +1,5 @@
 Name: kde-plasma-mail-checker
-Version: 1.7.34
+Version: 1.7.35
 Release: 1%{?dist}
 Summary: KDE Plasmoid for periodically checking a new messages in the mailboxes list
 Summary(ru): Плазмоид периодически проверяет наличие новых писем в списке почтовых ящиков
@@ -9,7 +9,9 @@ Source0: http://cloud.github.com/downloads/F1ash/plasmaMailChecker/%{name}-%{ver
 URL: https://github.com/F1ash/plasmaMailChecker
 BuildArch: noarch
 
-Requires: python, PyQt4, PyKDE4, python-SocksiPy
+Requires: PyKDE4, python-SocksiPy
+BuildRequires: kde-settings
+# for building the translator`s dictionary
 BuildRequires: qt-devel
 
 %description
@@ -40,11 +42,16 @@ make %{?_smp_mflags}
 make install DESTDIR=$RPM_BUILD_ROOT/usr
 
 %files
-%{_datadir}/kde4/services/%{name}.desktop
-%{_datadir}/kde4/apps/plasma/plasmoids/%{name}
+%{_kde4_datadir}/kde4/services/%{name}.desktop
+%{_kde4_appsdir}/plasma/plasmoids/%{name}
 %doc README README_RU COPYING
 
 %changelog
+* Mon Jul 23 2012 Fl@sh <kaperang07@gmail.com> - 1.7.35-1
+- added kde-settings build require
+- fixed file path
+- version updated
+
 * Fri Jul 20 2012 Fl@sh <kaperang07@gmail.com> - 1.7.34-1
 - version updated
 
