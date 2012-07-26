@@ -115,13 +115,18 @@ class IdleMailing(QThread):
 				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': msg})
 			elif self.key and self.restarting :
 				self.setRestartingState(False)
-				unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
-				countAll = len(self.mail.search(None, 'All')[1][0].split())
-				# maybe need try -- except
-				# imaplib.abort: command: SEARCH => socket error: EOF
+				new = 0
+				unSeen = 0
+				countAll = 0
+				try :
+					new = len(self.mail.search(None, 'New')[1][0].split())
+					unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
+					countAll = len(self.mail.search(None, 'All')[1][0].split())
+				except imaplib.abort, err : print dateStamp(), err
+				finally : pass
 				# send data to main thread for change mail data
 				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
-												'msg': [countAll, 0, unSeen, '']})
+												'msg': [countAll, new, unSeen, '']})
 			elif not self.key : print dateStamp(), 'key off'
 			# limit of errors shutdown idle thread
 			if errorCount == self.countProbe :
