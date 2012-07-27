@@ -122,11 +122,11 @@ class IdleMailing(QThread):
 					new = len(self.mail.search(None, 'New')[1][0].split())
 					unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
 					countAll = len(self.mail.search(None, 'All')[1][0].split())
+					# send data to main thread for change mail data
+					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
+													'msg': [countAll, new, unSeen, '']})
 				except imaplib.abort, err : print dateStamp(), err
 				finally : pass
-				# send data to main thread for change mail data
-				self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
-												'msg': [countAll, new, unSeen, '']})
 			elif not self.key : print dateStamp(), 'key off'
 			# limit of errors shutdown idle thread
 			if errorCount == self.countProbe :
