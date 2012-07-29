@@ -67,7 +67,7 @@ class IdleMailing(QThread):
 		errorCount = 0
 		while self.key :
 			# random deviation [0-12] sec
-			delay = TIMEOUT*1000 + randint(0, 12)*1000
+			delay = TIMEOUT*1000 + randint(1, 11999)
 			self.timer.setInterval(delay)
 			self.timer.start()
 			#print "+idle: %s <-- R; %s <-- E; %s <-- D"%(self.restarting, errorCount, delay)
@@ -125,7 +125,7 @@ class IdleMailing(QThread):
 					# send data to main thread for change mail data
 					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
 													'msg': [countAll, new, unSeen, '']})
-				except imaplib.abort, err : print dateStamp(), err
+				except Exception, err : print dateStamp(), err
 				finally : pass
 			elif not self.key : print dateStamp(), 'key off'
 			# limit of errors shutdown idle thread
