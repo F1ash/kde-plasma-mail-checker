@@ -1296,7 +1296,7 @@ class EditAccounts(QWidget):
 		self.accountCommand.setToolTip(self.tr._translate("Exec command activated in notification.\nSee for : EXAMPLES."))
 		self.accountCommand.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
 		self.accountCommand.setEditable(True)
-		templates = Translator().user_or_sys('templates')
+		templates = self.Parent.user_or_sys('contents/code/templates')
 		if os.path.isfile(templates) :
 			with open(templates, 'rb') as f :
 				texts = f.read().split('\n')
