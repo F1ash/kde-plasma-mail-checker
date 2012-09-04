@@ -50,7 +50,7 @@ make install DESTDIR=$RPM_BUILD_ROOT/usr
 * Tue Sep 4 2012 Fl@sh <kaperang07@gmail.com> - 1.7.38-1
 - version updated
 
-* Sub Aug 18 2012 Fl@sh <kaperang07@gmail.com> - 1.7.37-1
+* Sat Aug 18 2012 Fl@sh <kaperang07@gmail.com> - 1.7.37-1
 - version updated
 
 * Thu Aug 2 2012 Fl@sh <kaperang07@gmail.com> - 1.7.36-1
