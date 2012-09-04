@@ -135,7 +135,7 @@ class IdleMailing(QThread):
 		#
 		# idle out
 		self.timer.timeout.disconnect(self.restartIdle)
-		print dateStamp(), self.name, 'timer stopped & disconnected'
+		print dateStamp(), self.name.toLocal8Bit().data(), 'timer stopped & disconnected'
 
 	def setRestartingState(self, state):
 		self.restarting = state
@@ -208,7 +208,7 @@ class IdleMailing(QThread):
 			except Exception, err :
 				print dateStamp(), err
 			finally : pass
-		print dateStamp(), self.name, 'is runned:', self.runned, 'crypted:', self.authentificationData[4]
+		print dateStamp(), self.name.toLocal8Bit().data(), 'is runned:', self.runned, 'crypted:', self.authentificationData[4]
 		if self.key and self.runned : self.runIdle()
 		self.runned = False
 		self.key = False
@@ -225,12 +225,12 @@ class IdleMailing(QThread):
 			try : self.mail.close()
 			except Exception, err : print dateStamp(), err
 			finally : pass
-		print dateStamp(), self.name, 'dir close'
+		print dateStamp(), self.name.toLocal8Bit().data(), 'dir close'
 		try: self.mail.logout()
 		except Exception, err : print dateStamp(), err
 		finally : pass
-		print dateStamp(), self.name, 'logout'
-		print dateStamp(), self.name, 'thread stopped'
+		print dateStamp(), self.name.toLocal8Bit().data(), 'logout'
+		print dateStamp(), self.name.toLocal8Bit().data(), 'thread stopped'
 		# send signal about shutdown to main thread
 		self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNSTOP, 'msg': ''})
 
