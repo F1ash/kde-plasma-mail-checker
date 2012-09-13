@@ -219,33 +219,9 @@ def checkNewMailPOP3(accountData = ['', '']):
 
 		m.quit()
 
-	except poplib.error_proto, x :
-		print dateStamp(), x, '  POP3_1'
-		ErrorMsg += '\n' + unicode(x[0],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except socket.error, x :
-		print dateStamp(), x, '  POP3_2'
+	except Exception, x:
+		print dateStamp(), x, '  POP3'
 		ErrorMsg += '\n' + unicode(str(x),'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except socket.gaierror, x :
-		print dateStamp(), x, '  POP3_3'
-		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except UnicodeDecodeError, x :
-		print dateStamp(), x, '  POP3_4'
-		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except x:
-		print dateStamp(), x, '  POP3_5'
-		ErrorMsg += 'Unknown Error\n'
 		probeError = False
 		countAll = 0
 		countNew = 0
@@ -344,33 +320,9 @@ def checkNewMailIMAP4(accountData = ['', '']):
 
 		Settings.sync()
 
-	except imaplib.IMAP4.error, x :
-		print dateStamp(), x, '  IMAP4_1'
+	except Exception, x :
+		print dateStamp(), x, '  IMAP4'
 		ErrorMsg += '\n' + unicode(str(x),'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except socket.error, x :
-		print dateStamp(), x, '  IMAP4_2'
-		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except socket.gaierror, x :
-		print dateStamp(), x, '  IMAP4_3'
-		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except UnicodeDecodeError, x :
-		print dateStamp(), x, '  IMAP4_4'
-		ErrorMsg += '\n' + unicode(x[1],'UTF-8')
-		probeError = False
-		countAll = 0
-		countNew = 0
-	except x:
-		print dateStamp(), x, '  IMAP4_5'
-		ErrorMsg += 'Unknown Error\n'
 		probeError = False
 		countAll = 0
 		countNew = 0
