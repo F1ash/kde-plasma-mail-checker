@@ -100,8 +100,8 @@ class IdleMailing(QThread):
 					NewMailAttributes = ''
 					currentElemTime = getCurrentElemTime(self.mail, uid)
 					# print dateStamp(), currentElemTime
-					unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
 					countAll = len(self.mail.search(None, 'All')[1][0].split())
+					unSeen = countAll - len(self.mail.search(None, 'Seen')[1][0].split())
 					if currentElemTime > self.lastElemTime :
 						Date, From, Subj = getMailAttributes(self.mail, uid)
 						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
@@ -134,8 +134,8 @@ class IdleMailing(QThread):
 				countAll = 0
 				try :
 					new = len(self.mail.search(None, 'New')[1][0].split())
-					unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
 					countAll = len(self.mail.search(None, 'All')[1][0].split())
+					unSeen = countAll - len(self.mail.search(None, 'Seen')[1][0].split())
 					# send data to main thread for change mail data
 					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
 													'msg': [countAll, new, unSeen, '']})
@@ -201,7 +201,7 @@ class IdleMailing(QThread):
 					if self.answer[0] == 'OK' and self.key :
 						self.runned = True
 						countAll = int(self.answer[1][0])
-						unSeen = len(self.mail.search(None, 'UnSeen')[1][0].split())
+						unSeen = countAll - len(self.mail.search(None, 'Seen')[1][0].split())
 						# send signal with countAll & unSeen for show init data to main thread
 						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
 														'msg': [countAll, 0, unSeen, '']})

@@ -278,8 +278,8 @@ def checkNewMailIMAP4(accountData = ['', '']):
 			#print dateStamp(), mailBox, imapUTF7Encode(mailBox)
 			answer = m.select(imapUTF7Encode(mailBox))
 			if answer[0] == 'OK':
-				unSeen = len(m.search(None, 'UnSeen')[1][0].split())
 				countAll = int(answer[1][0])
+				unSeen = countAll - len(m.search(None, 'Seen')[1][0].split())
 				i = countAll
 				while i > 0 :
 					currentElemTime = getCurrentElemTime(m, i)
