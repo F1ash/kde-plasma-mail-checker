@@ -1024,7 +1024,6 @@ class plasmaMailChecker(plasmascript.Applet):
 			except Exception, err :
 				print dateStamp(), err
 			finally : pass
-		self.idleMailingList = []
 
 	def mouseDoubleClickEvent(self, ev):
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :

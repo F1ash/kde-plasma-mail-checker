@@ -35,8 +35,10 @@ def idle(connection):
 	tag = connection._new_tag()
 	connection.send("%s IDLE\r\n" % tag)
 	response = connection.readline()
+	#print dateStamp(), [response]
 	if response == '+ idling\r\n':
 		resp = connection.readline()
+		#print dateStamp(), [resp]
 		uid, message = resp[2:-2].split(' ')
 		return uid, message
 	else:
@@ -45,8 +47,20 @@ def idle(connection):
 def done(connection):
 	connection.send("DONE\r\n")
 
+def idled(connection):
+	tag = connection._new_tag()
+	connection.send("%s CAPABILITY\r\n" % tag)
+	#print dateStamp(), "%s CAPABILITY\r\n" % tag
+	resp = connection.readline()
+	serves = resp.lower().split()
+	resp = connection.readline()
+	#print dateStamp(), serves
+	#print dateStamp(), resp
+	return 'idle' in serves
+
 imaplib.IMAP4.idle = idle
 imaplib.IMAP4.done = done
+imaplib.IMAP4.idled = idled
 #####
 
 TIMEOUT = 30
@@ -127,7 +141,9 @@ class IdleMailing(QThread):
 													'msg': [countAll, new, unSeen, '']})
 				except Exception, err : print dateStamp(), err
 				finally : pass
-			elif not self.key : print dateStamp(), 'key off'
+			elif not self.key :
+				print dateStamp(), 'key off'
+				self.mail.done()
 			# limit of errors shutdown idle thread
 			if errorCount == self.countProbe :
 				self.key = False
@@ -167,6 +183,18 @@ class IdleMailing(QThread):
 					self.mail = imaplib.IMAP4_SSL(self.authentificationData[0], self.authentificationData[1])
 				else :
 					self.mail = imaplib.IMAP4(self.authentificationData[0], self.authentificationData[1])
+				idled = self.mail.idled()
+				if idled :
+					msg = "IDLE mode is available"
+				else :
+					msg = "IDLE mode isn`t available"
+				print dateStamp(), "%s for %s" % (msg, self.name.toLocal8Bit().data())
+				if not idled :
+					self.key = False
+					# send unavailable notify
+					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, \
+													'msg': [msg]})
+					break
 
 				if self.mail.login( self.authentificationData[2], self.passw )[0] == 'OK' :
 					self.answer = self.mail.select(imapUTF7Encode(mailBox))
@@ -208,6 +236,7 @@ class IdleMailing(QThread):
 			except Exception, err :
 				print dateStamp(), err
 			finally : pass
+
 		print dateStamp(), self.name.toLocal8Bit().data(), 'is runned:', self.runned, 'crypted:', self.authentificationData[4]
 		if self.key and self.runned : self.runIdle()
 		self.runned = False
@@ -218,6 +247,7 @@ class IdleMailing(QThread):
 		LOCK.lock()
 		self.key = False
 		#print self.key, '<-- key off'
+		self.mail.done()
 		LOCK.unlock()
 
 	def _shutdown(self):
