@@ -33,16 +33,17 @@ Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 # see for: https://raw.github.com/athoune/imapidle/master/src/imapidle.py
 def idle(connection):
 	tag = connection._new_tag()
+	#print dateStamp(), "%s IDLE\r\n" % tag
 	connection.send("%s IDLE\r\n" % tag)
 	response = connection.readline()
 	#print dateStamp(), [response]
 	if response == '+ idling\r\n':
 		resp = connection.readline()
 		#print dateStamp(), [resp]
-		uid, message = resp[2:-2].split(' ')
-		return uid, message
-	else:
-		raise Exception("IDLE not handled? : %s." % response)
+		if resp != '' :
+			uid, message = resp[2:-2].split(' ')
+			return uid, message
+	raise Exception("IDLE not handled? : %s." % response)
 
 def done(connection):
 	connection.send("DONE\r\n")
