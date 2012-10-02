@@ -22,9 +22,9 @@
 
 from PyQt4.QtCore import QThread, QSettings, QTimer
 from imapUTF7 import imapUTF7Encode
-from MailFunc import readAccountData, dateStamp, getMailAttributes, getCurrentElemTime
+from MailFunc import readAccountData, dateStamp, getMailAttributes, getCurrentElemTime, clearBlank
 from Functions import SIGNERRO, SIGNSTOP, SIGNINIT, SIGNDATA, LOCK
-import imaplib
+import imaplib, string
 from random import randint
 
 Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
@@ -105,7 +105,9 @@ class IdleMailing(QThread):
 					unSeen = countAll - len(self.mail.search(None, 'Seen')[1][0].split())
 					if currentElemTime > self.lastElemTime :
 						Date, From, Subj = getMailAttributes(self.mail, uid)
-						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
+						NewMailAttributes += clearBlank(Date) + '\r\n' + \
+											 clearBlank(From) + '\r\n' + \
+											 clearBlank(Subj) + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ----==------', unSeen, countAll
 						self.lastElemTime = currentElemTime
 						Settings.beginGroup(self.name)
@@ -114,7 +116,8 @@ class IdleMailing(QThread):
 						Settings.sync()
 						# send data to main thread for change mail data & notify
 						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
-														'msg': [countAll, 1, unSeen, NewMailAttributes]})
+														'msg': [countAll, 1, unSeen, NewMailAttributes, \
+																str(uid)]})
 					else :
 						# send data to main thread for change mail data
 						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
@@ -176,6 +179,7 @@ class IdleMailing(QThread):
 			mailBox = unicode(QString(self.authentificationData[8]).toUtf8().data(), 'utf-8')
 		#print dateStamp(), mailBox, imapUTF7Encode(mailBox), self.countProbe
 		self.lastElemTime = self.authentificationData[6]
+		newMailIds = []
 
 		for j in xrange(self.countProbe) :
 			try :
@@ -214,8 +218,11 @@ class IdleMailing(QThread):
 							currentElemTime = getCurrentElemTime(self.mail, i)
 							# print dateStamp(), currentElemTime
 							if currentElemTime > self.lastElemTime :
+								newMailIds.append(str(i))
 								Date, From, Subj = getMailAttributes(self.mail, i)
-								NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
+								NewMailAttributes += clearBlank(Date) + '\r\n' + \
+													 clearBlank(From) + '\r\n' + \
+													 clearBlank(Subj) + '\r\n\r\n'
 								#print dateStamp(), NewMailAttributes, '   ----==------'
 								newMailExist = newMailExist or True
 								countNew += 1
@@ -232,7 +239,8 @@ class IdleMailing(QThread):
 								# send data to main thread for change mail data & notify
 								self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
 																'msg': [countAll, countNew, \
-																		unSeen, NewMailAttributes]})
+																		unSeen, NewMailAttributes, \
+																		string.join(newMailIds, ' ')]})
 						break
 			except Exception, err :
 				print dateStamp(), err

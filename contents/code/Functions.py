@@ -39,6 +39,8 @@ dltLocal = datetime.timedelta(hours = dltHours, minutes = dltMinutes)
 lang = locale.getdefaultlocale()
 char_set = string.ascii_letters + string.digits
 
+_0_ = ' <||> '
+
 def loadSocksModule(loadModule = None):
 	proxyLoad = False
 	if ( loadModule is None and Settings.value('UseProxy', 'False')=='True' ) or loadModule :
@@ -212,7 +214,7 @@ def readDataFiles(fileName):
 	return bool(dataToSTR(path_ + '.Result')), int(dataToSTR(path_ + '.all')), \
 		   int(dataToSTR(path_ + '.new')), str(dataToSTR(path_ + '.msg')), \
 		   str(dataToSTR(path_ + '.content')), str(dataToSTR(path_ + '.encoding')), \
-		   str(dataToSTR(path_ + '.unRead'))
+		   str(dataToSTR(path_ + '.unRead')), str(dataToSTR(path_ + '.Ids'))
 
 def randomString(j = 1):
 	#return "".join( [random.choice(string.letters) for i in xrange(j)] )

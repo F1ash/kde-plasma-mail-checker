@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-#  mail.py
+#  mailViewer.py
 #  
 #  Copyright 2012 Flash <kaperang07@gmail.com>
 #  
@@ -21,34 +20,30 @@
 #  
 
 from MailFunc import *
+from Functions import _0_
 import sys, os, os.path
+#from PyQt4 import QtCore
+#from MailBox import MainWindow
 
 if __name__ == '__main__':
-	#sys.stdout = open('/tmp/threadMailChecker' + time.strftime("_%Y_%m_%d_%H:%M:%S", time.localtime()) + '.log','w')
-	account, fileName = sys.argv[1], sys.argv[2]
+	fileName = sys.argv[1]
+	accIds = sys.argv[2:]
 	if os.path.isfile('/dev/shm/' + fileName) :
 		with open('/dev/shm/' + fileName, 'rb') as f: l = f.read()
+		print (l), ' file'
 		with open('/dev/shm/' + fileName, 'wb') as f: f.write(''.join(['' for i in xrange(len(l))]))
 		os.remove('/dev/shm/' + fileName)
 		while l.endswith('\n') : l.remove('\n')
-		passw = l
-	else : passw = ''
-	#print dateStamp(), (account, passw, fileName), '  thread'
-	if (account, passw) == ('','') :
-		Result = (False, 0, 0, '', '', '', '-', '')
+		''' (accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd) '''
+		accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd = \
+			l.split(_0_)
 	else :
-		loadSocketModule()
-		Result = ( checkMail( [account, passw] ) )
-	suff = ['.Result', '.all', '.new', '.msg', '.content', '.encoding', '.unRead', '.Ids']
-	#print Result, ' -- Result in mail.py'
-	for i in xrange(len(suff)) :
-		f = open('/dev/shm/' + fileName + suff[i], 'w')
-		if type(Result[i]) is bool or type(Result[i]) is int :
-			res_ = str(Result[i])
-		elif type(Result[i]) is str :
-			res_ = Result[i]
-		else :
-			res_ = QString(Result[i]).toUtf8().data()
-		f.write(res_)
-		f.close()
-	#sys.stdout.close()
+		accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd = \
+			['' for i in xrange(8)]
+	#print dateStamp(), (accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd), '  viewer:'
+	#print dateStamp(), accIds, ' uids'
+	
+
+	#app = QtGui.QApplication(sys.argv)
+	#main = MainWindow()
+	#sys.exit(app.exec_())

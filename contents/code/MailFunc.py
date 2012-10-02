@@ -22,7 +22,7 @@
 
 from imapUTF7 import imapUTF7Encode
 from PyQt4.QtCore import QString, QSettings, QMutex
-import poplib, imaplib, time, datetime, locale, socket
+import poplib, imaplib, time, datetime, locale, socket, string
 
 global ErrorMsg
 ErrorMsg = ''
@@ -154,6 +154,11 @@ def readAccountData(account = ''):
 	return [str(serv_), str(port_), login_, '', \
 			str(authMethod_), str(connMethod_), str(last_), str(enable), inbox, command]
 
+def clearBlank(s):
+	while s.startswith('\r') or s.startswith('\n') : s = s[1:]
+	while s.endswith('\r') or s.endswith('\n') : s = s[:-1]
+	return ' ' if s == '' else s
+
 def checkNewMailPOP3(accountData = ['', '']):
 	global ErrorMsg
 	encoding = ''
@@ -167,6 +172,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 		countAll = 0
 		authentificationData = readAccountData(accountData[0])
 		lastElemUid = authentificationData[6]
+		newMailIds = []
 
 		if authentificationData[4] == 'SSL' :
 			m = poplib.POP3_SSL(authentificationData[0], authentificationData[1])
@@ -180,15 +186,16 @@ def checkNewMailPOP3(accountData = ['', '']):
 
 				countAll = int(m.stat()[0])
 				for uidl_ in m.uidl()[1] :
-					currentElemUid = uidl_.split(' ')[1]
+					currentMailId, currentElemUid = uidl_.split()
 					mailUidls += [currentElemUid + '\n']
 					if defineUIDL(accountData[0], currentElemUid) :
+						newMailIds.append(currentMailId)
 						From = ''
 						Subj = ''
 						Date = ''
 						Code = ''
 						Next = ''
-						for str_ in m.top( int(uidl_.split(' ')[0]) , 0)[1] :
+						for str_ in m.top( int(currentMailId) , 0)[1] :
 							if str_[:5] == 'From:' or (Next == 'From' and str_[:1] == ' ') :
 								Next = 'From'
 								From += losedBlank(str_) + ' '
@@ -206,7 +213,9 @@ def checkNewMailPOP3(accountData = ['', '']):
 								Date += str_
 								#print dateStamp(), Date
 							else : Next = ''
-						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
+						NewMailAttributes += clearBlank(Date) + '\r\n' + \
+											 clearBlank(From) + '\r\n' + \
+											 clearBlank(Subj) + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ------'
 						encoding += Code + '\n'
 						#print encoding, '  encoding POP3'
@@ -228,7 +237,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 	finally:
 		pass
 
-	return probeError, countAll, countNew, NewMailAttributes, encoding, '-'
+	return probeError, countAll, countNew, NewMailAttributes, encoding, '-', newMailIds
 
 def getCurrentElemTime(m, i):
 	currentElemTime_raw = m.fetch(i,"INTERNALDATE")[1][0].split(' ')
@@ -264,6 +273,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 		unSeen = 0
 		authentificationData = readAccountData(accountData[0])
 		lastElemTime = authentificationData[6]
+		newMailIds = []
 
 		if authentificationData[4] == 'SSL' :
 			m = imaplib.IMAP4_SSL(authentificationData[0], authentificationData[1])
@@ -285,8 +295,11 @@ def checkNewMailIMAP4(accountData = ['', '']):
 					currentElemTime = getCurrentElemTime(m, i)
 					# print dateStamp(), currentElemTime
 					if currentElemTime > lastElemTime :
+						newMailIds.append(str(i))
 						Date, From, Subj = getMailAttributes(m, i)
-						NewMailAttributes += Date + '\r\n' + From + '\r\n' + Subj + '\r\n\r\n'
+						NewMailAttributes += clearBlank(Date) + '\r\n' + \
+											 clearBlank(From) + '\r\n' + \
+											 clearBlank(Subj) + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ----==------'
 						encoding += '\n'
 						newMailExist = newMailExist or True
@@ -329,7 +342,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 	finally:
 		pass
 
-	return probeError, countAll, countNew, NewMailAttributes, encoding, unSeen
+	return probeError, countAll, countNew, NewMailAttributes, encoding, unSeen, newMailIds
 
 def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', ''], acc = ''):
 	global ErrorMsg
@@ -338,10 +351,11 @@ def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', ''], acc = '')
 	new_ = 0
 	encoding = ''
 	unSeen = '-'
+	newMailIds = None
 	i = 0
 	while i < probe_ :
 		#print dateStamp(), 'Probe ', i + 1, to_unicode(authData[0])
-		test_, all_, new_, content, encoding, unSeen = checkNewMail(authData)
+		test_, all_, new_, content, encoding, unSeen, newMailIds = checkNewMail(authData)
 		if test_ :
 			Result = True
 			break
@@ -349,7 +363,8 @@ def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', ''], acc = '')
 		if i == probe_ :
 			ErrorMsg += "\nCan`t connect to server\non Account : " + to_unicode(acc) + '\n'
 	#print dateStamp(), ErrorMsg, '  errors'
-	return Result, all_, new_, ErrorMsg, QString(content).toUtf8(), encoding, str(unSeen)
+	ids = '' if newMailIds is None else string.join(newMailIds, ' ')
+	return Result, all_, new_, ErrorMsg, QString(content).toUtf8(), encoding, str(unSeen), ids
 
 def checkMail(accountData = ['', '']):
 	global Settings
@@ -379,4 +394,4 @@ def checkMail(accountData = ['', '']):
 			Msg = 'ConnectMethod Error\n'
 	else:
 		Msg = 'AccountName Error\n'
-	return False, 0, 0, Msg, '', '', '-'
+	return False, 0, 0, Msg, '', '', '-', ''

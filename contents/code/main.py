@@ -217,6 +217,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.stopIconPath = self.user_or_sys('contents/icons/mailChecker_stop.png')
 		self.webIconPath = self.user_or_sys('contents/icons/mailChecker_web.png')
 		self.usualIconPath = self.user_or_sys('contents/icons/mailChecker.png')
+		self.pathToViewer = self.user_or_sys('contents/code/mailViewer.py')
 
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 			self.titleLayout = QGraphicsLinearLayout()
@@ -800,12 +801,12 @@ class plasmaMailChecker(plasmascript.Applet):
 			while i < countOfNodes and not overLoad :
 				""" collected mail headers for each account """
 				str_ = self.checkResult[i][4]
-				encoding = string.split(self.checkResult[i][5], '\n')
+				encoding = self.checkResult[i][5].split('\n')
 				STR_ = ''
 				if str_ not in ['', ' ', '0'] :
 					#print dateStamp() ,  str_
 					j = 0
-					for _str in string.split(str_, '\r\n\r\n') :
+					for _str in str_.split('\r\n\r\n') :
 						if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
 							_str_raw = htmlWrapper(mailAttrToSTR(_str, encoding[j]), self.mailAttrColor)
 							## None is means deprecated mail header
@@ -818,7 +819,7 @@ class plasmaMailChecker(plasmascript.Applet):
 						j += 1
 				if STR_ != '' :
 					self.eventNotification('<b><u>' + self.tr._translate('New Message(s) :') + '</u></b>' + STR_, \
-											{0 : 0}, \
+											{self.accountList[i] : self.checkResult[i][7]}, \
 											self.accountCommand[ self.accountList[i] ])
 				i += 1
 
@@ -1179,7 +1180,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				if STR_ != '' :
 					msg = '<b><u>' + self.tr._translate('New Message(s) :') + '</u></b>' + STR_
 					self.eventNotification( msg, \
-											{0 : 0}, \
+											{d['acc'] : d['msg'][4]}, \
 											self.accountCommand[ d['acc'] ])
 
 class EditAccounts(QWidget):
@@ -2689,9 +2690,9 @@ class AkonadiResources(QWidget):
 			else:
 				enable = '0'
 			Settings.beginGroup('Akonadi account')
-			Settings.setValue(accountName, self.collectionID.text() + ' <||> ' + enable + ' <||> ' + \
-								self.collectionResource.text() + ' <||> ' + self.nameColl + \
-								' <||> ' + self.accountCommand.text())
+			Settings.setValue(accountName, self.collectionID.text() + _0_ + enable + _0_ + \
+								self.collectionResource.text() + _0_ + self.nameColl + \
+								_0_ + self.accountCommand.text())
 			Settings.endGroup()
 
 			self.accountList += [accountName]
@@ -2716,7 +2717,7 @@ class AkonadiResources(QWidget):
 		Settings.beginGroup('Akonadi account')
 		data = Settings.value(accountName).toString()
 		Settings.endGroup()
-		parameterList = string.split(data, ' <||> ')
+		parameterList = string.split(data, _0_)
 		self.stringEditor.setText(accountName)
 		self.collectionID.setText(parameterList[0])
 		if parameterList.count() > 1 and str(parameterList[1]) == '1' :
@@ -2746,9 +2747,9 @@ class AkonadiResources(QWidget):
 			else:
 				enable = '0'
 			Settings.beginGroup('Akonadi account')
-			Settings.setValue(str_, self.collectionID.text() + ' <||> ' + enable + ' <||> ' + \
-								self.collectionResource.text() + ' <||> ' + self.nameColl + \
-								' <||> ' + self.accountCommand.text())
+			Settings.setValue(str_, self.collectionID.text() + _0_ + enable + _0_ + \
+								self.collectionResource.text() + _0_ + self.nameColl + \
+								_0_ + self.accountCommand.text())
 			Settings.endGroup()
 			self.clearFields()
 
