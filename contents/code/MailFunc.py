@@ -159,6 +159,15 @@ def clearBlank(s):
 	while s.endswith('\r') or s.endswith('\n') : s = s[:-1]
 	return ' ' if s == '' else s
 
+def popAuth(serv, port, login, passw, authMthd):
+	go = False
+	popMail = poplib.POP3_SSL if authMthd == 'SSL' else poplib.POP3
+	m = popMail(serv, port)
+	if m.user(login)[:3] == '+OK' :
+		if m.pass_(passw)[:3] == '+OK' :
+			go = True
+	return m, go
+
 def checkNewMailPOP3(accountData = ['', '']):
 	global ErrorMsg
 	encoding = ''
@@ -173,17 +182,12 @@ def checkNewMailPOP3(accountData = ['', '']):
 		authentificationData = readAccountData(accountData[0])
 		lastElemUid = authentificationData[6]
 		newMailIds = []
-
-		if authentificationData[4] == 'SSL' :
-			m = poplib.POP3_SSL(authentificationData[0], authentificationData[1])
-		else :
-			m = poplib.POP3(authentificationData[0], authentificationData[1])
-
-		#auth_login = m.user(authentificationData[2])
-		if m.user(authentificationData[2])[:3] == '+OK' :
-			#auth_passw = m.pass_( accountData[1] )
-			if m.pass_( accountData[1] )[:3] == '+OK' :
-
+		m, go = popAuth(authentificationData[0], \
+						authentificationData[1], \
+						authentificationData[2], \
+						accountData[1], \
+						authentificationData[4])
+		if go :
 				countAll = int(m.stat()[0])
 				for uidl_ in m.uidl()[1] :
 					currentMailId, currentElemUid = uidl_.split()
@@ -259,6 +263,32 @@ def getMailAttributes(m, i):
 	# NewMailAttributes += m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date from subject)])")[1][0][1]
 	return Date, From, Subj
 
+def imapAuth(serv, port, login, passw, authMthd, inbox):
+	answer = [None, None]
+	m = None
+	if authMthd == 'SSL' :
+		m = imaplib.IMAP4_SSL(serv, port)
+	else :
+		m = imaplib.IMAP4(serv, port)
+	tag = m._new_tag()
+	m.send("%s CAPABILITY\r\n" % tag)
+	#print dateStamp(), "%s CAPABILITY\r\n" % tag
+	resp = m.readline()
+	serves = resp.lower().split()
+	resp = m.readline()
+	#print dateStamp(), serves
+	#print dateStamp(), resp
+	idleable = True if 'idle' in serves else False
+
+	if m.login(login, passw)[0] == 'OK' :
+		if inbox == '' :
+			mailBox = 'INBOX'
+		else :
+			mailBox = unicode(QString(inbox).toUtf8().data(), 'utf-8')
+		#print dateStamp(), mailBox, imapUTF7Encode(mailBox)
+		answer = m.select(imapUTF7Encode(mailBox))
+	return answer, m, idleable
+
 def checkNewMailIMAP4(accountData = ['', '']):
 	global Settings
 	global ErrorMsg
@@ -275,19 +305,10 @@ def checkNewMailIMAP4(accountData = ['', '']):
 		lastElemTime = authentificationData[6]
 		newMailIds = []
 
-		if authentificationData[4] == 'SSL' :
-			m = imaplib.IMAP4_SSL(authentificationData[0], authentificationData[1])
-		else :
-			m = imaplib.IMAP4(authentificationData[0], authentificationData[1])
-
-		if m.login( authentificationData[2], accountData[1] )[0] == 'OK' :
-			if authentificationData[8] == '' :
-				mailBox = 'INBOX'
-			else :
-				mailBox = unicode(QString(authentificationData[8]).toUtf8().data(), 'utf-8')
-			#print dateStamp(), mailBox, imapUTF7Encode(mailBox)
-			answer = m.select(imapUTF7Encode(mailBox))
-			if answer[0] == 'OK':
+		answer, m, idleable = imapAuth(authentificationData[0], authentificationData[1], \
+				authentificationData[2], accountData[1], \
+				authentificationData[4], authentificationData[8])
+		if answer[0] == 'OK' :
 				countAll = int(answer[1][0])
 				unSeen = countAll - len(m.search(None, 'Seen')[1][0].split())
 				i = countAll
@@ -307,9 +328,6 @@ def checkNewMailIMAP4(accountData = ['', '']):
 					else:
 						break
 					i += -1
-			else:
-				#print dateStamp(), 'selectDirError'
-				probeError, countAll, countNew = False, 0, 0
 		else:
 			#print dateStamp(), 'AuthError'
 			probeError, countAll, countNew = False, 0, 0

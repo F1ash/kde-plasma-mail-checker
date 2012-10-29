@@ -122,7 +122,6 @@ def mailAttrToSTR(str_, headerCode = ''):
 	Subj = ''
 	Date = ''
 	STR_= str_
-	#print '\n\n New header fields'
 	#print STR_, '\n'
 	for different in ['\r\nFrom', '\r\nSubject: ', ''] :
 		if different != '' :
@@ -146,7 +145,7 @@ def mailAttrToSTR(str_, headerCode = ''):
 
 def decodeMailSTR(str_, headerCode = ''):
 	obj = ''
-	_str = str_.replace('"', ' &quot; ')
+	_str = '' if str_ is None else str_.replace('"', ' &quot; ')
 	for part_str in email.header.decode_header(_str) :
 		try :
 			if part_str[1] is None :

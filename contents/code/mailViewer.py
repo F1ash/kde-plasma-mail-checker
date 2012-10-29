@@ -22,15 +22,14 @@
 from MailFunc import *
 from Functions import _0_
 import sys, os, os.path
-#from PyQt4 import QtCore
-#from MailBox import MainWindow
+from PyQt4 import QtGui
+from Viewer.MainWindow import MainWindow
 
 if __name__ == '__main__':
 	fileName = sys.argv[1]
 	accIds = sys.argv[2:]
 	if os.path.isfile('/dev/shm/' + fileName) :
 		with open('/dev/shm/' + fileName, 'rb') as f: l = f.read()
-		print (l), ' file'
 		with open('/dev/shm/' + fileName, 'wb') as f: f.write(''.join(['' for i in xrange(len(l))]))
 		os.remove('/dev/shm/' + fileName)
 		while l.endswith('\n') : l.remove('\n')
@@ -40,10 +39,17 @@ if __name__ == '__main__':
 	else :
 		accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd = \
 			['' for i in xrange(8)]
-	#print dateStamp(), (accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd), '  viewer:'
-	#print dateStamp(), accIds, ' uids'
-	
 
-	#app = QtGui.QApplication(sys.argv)
-	#main = MainWindow()
-	#sys.exit(app.exec_())
+	app = QtGui.QApplication(sys.argv)
+	data = {'mailBox'	: accName, \
+			'server'	: serv_, \
+			'port'		: port_, \
+			'login'		: login_, \
+			'authMthd'	: authMethod_, \
+			'connMthd'	: connMethod_, \
+			'inbox'		: inbox, \
+			'password'	: accPaswd, \
+			'ids'		: accIds}
+	main = MainWindow(data)
+	main.show()
+	sys.exit(app.exec_())

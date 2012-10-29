@@ -53,16 +53,16 @@ class MailProgExec(QThread):
 			## accName decode after accPswd for getting correct account password
 			if not isinstance(accName, basestring) :
 				accName = accName.toLocal8Bit().data()
-			pathToViewer = parent.pathToViewer
-			print dateStamp() , (accName, serv_, port_, login_, authMethod_, \
-								connMethod_, inbox, accPswd, accIds)
+			pathToViewer = parent.user_or_sys('contents/code/mailViewer.py')
+			#print dateStamp() , (accName, serv_, port_, login_, authMethod_, \
+			#					connMethod_, inbox, accPswd, accIds)
 			str_ = str(randomString(24))
 			with open('/dev/shm/' + str_, 'wb') as f:
 				f.write(string.join((accName, serv_, port_, login_, authMethod_, \
 								connMethod_, inbox, accPswd), _0_))
 			''' prepare command for integrated viewer '''
 			self.command = string.join(('/usr/bin/python', pathToViewer, str_, accIds), ' ')
-			print accName, accIds, command, self.command
+			#print accName, accIds, command, self.command
 		else :
 			''' prepare command '''
 			if not isinstance(__str, basestring) :
@@ -72,7 +72,7 @@ class MailProgExec(QThread):
 			itemId = str(param.values()[0])
 			_command = command.replace('%dir_id', collId).replace('%mail_id', itemId)
 			self.command = '' if _command == '' else '/bin/bash -c "%s"' % _command
-			print collId, itemId, command, self.command
+			#print collId, itemId, command, self.command
 
 	def run(self):
 		accountThread = QProcess()

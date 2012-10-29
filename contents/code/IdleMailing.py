@@ -22,7 +22,7 @@
 
 from PyQt4.QtCore import QThread, QSettings, QTimer
 from imapUTF7 import imapUTF7Encode
-from MailFunc import readAccountData, dateStamp, getMailAttributes, getCurrentElemTime, clearBlank
+from MailFunc import readAccountData, dateStamp, getMailAttributes, getCurrentElemTime, clearBlank, imapAuth
 from Functions import SIGNERRO, SIGNSTOP, SIGNINIT, SIGNDATA, LOCK
 import imaplib, string
 from random import randint
@@ -48,20 +48,8 @@ def idle(connection):
 def done(connection):
 	connection.send("DONE\r\n")
 
-def idled(connection):
-	tag = connection._new_tag()
-	connection.send("%s CAPABILITY\r\n" % tag)
-	#print dateStamp(), "%s CAPABILITY\r\n" % tag
-	resp = connection.readline()
-	serves = resp.lower().split()
-	resp = connection.readline()
-	#print dateStamp(), serves
-	#print dateStamp(), resp
-	return 'idle' in serves
-
 imaplib.IMAP4.idle = idle
 imaplib.IMAP4.done = done
-imaplib.IMAP4.idled = idled
 #####
 
 TIMEOUT = 30
@@ -173,37 +161,30 @@ class IdleMailing(QThread):
 		self.answer = []
 		self.timer.timeout.connect(self.restartIdle)
 		self.authentificationData = readAccountData(self.name)
-		if self.authentificationData[8] == '' :
-			mailBox = 'INBOX'
-		else :
-			mailBox = unicode(QString(self.authentificationData[8]).toUtf8().data(), 'utf-8')
-		#print dateStamp(), mailBox, imapUTF7Encode(mailBox), self.countProbe
 		self.lastElemTime = self.authentificationData[6]
 		newMailIds = []
 
 		for j in xrange(self.countProbe) :
 			try :
 				#print 'probe', j+1
-				if self.authentificationData[4] == 'SSL' :
-					self.mail = imaplib.IMAP4_SSL(self.authentificationData[0], self.authentificationData[1])
-				else :
-					self.mail = imaplib.IMAP4(self.authentificationData[0], self.authentificationData[1])
-				idled = self.mail.idled()
-				if idled :
+				self.answer, self.mail, idleable = imapAuth(\
+						self.authentificationData[0], self.authentificationData[1], \
+						self.authentificationData[2], self.passw, \
+						self.authentificationData[4], self.authentificationData[8])
+				#print self.answer, self.mail, idleable
+				if idleable :
 					msg = "IDLE mode is available"
 				else :
 					msg = "IDLE mode isn`t available"
 				print dateStamp(), "%s for %s" % (msg, self.name.toLocal8Bit().data())
-				if not idled :
+				if not idleable :
 					self.key = False
 					# send unavailable notify
 					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, \
 													'msg': [msg]})
 					break
 
-				if self.mail.login( self.authentificationData[2], self.passw )[0] == 'OK' :
-					self.answer = self.mail.select(imapUTF7Encode(mailBox))
-					if self.answer[0] == 'OK' and self.key :
+				if self.answer[0] == 'OK' and self.key :
 						self.runned = True
 						countAll = int(self.answer[1][0])
 						unSeen = countAll - len(self.mail.search(None, 'Seen')[1][0].split())
