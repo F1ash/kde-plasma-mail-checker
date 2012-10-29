@@ -1,3 +1,4 @@
+< integrated mail Viewer (non-Akonadi) >
 thunderbird mailbox://someone@pop.example.net/Inbox
 evolution -c mail
 /usr/bin/qdbus org.kde.kmail /KMail org.kde.kmail.kmail.selectFolder %dir_id; /usr/bin/wmctrl -x -R kmail
