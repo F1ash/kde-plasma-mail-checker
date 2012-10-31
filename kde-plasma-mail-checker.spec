@@ -22,7 +22,7 @@ Passwords for accounts stored in encrypted container.
 Plasmoid use KDE-notification for events about new mail.
 Support Akonadi (mimeType : "message/rfc822") resources monitoring
 (getting new mail).
-Support intagreted mail viewer (for non-Akonadi accounts).
+Support integrated mail viewer (for non-Akonadi accounts).
 
 %description -l ru
 kde-plasma-mail-checker
