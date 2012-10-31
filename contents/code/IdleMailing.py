@@ -229,7 +229,6 @@ class IdleMailing(QThread):
 
 		print dateStamp(), self.name.toLocal8Bit().data(), 'is runned:', self.runned, 'crypted:', self.authentificationData[4]
 		if self.key and self.runned : self.runIdle()
-		self.runned = False
 		self.key = False
 		self._shutdown()
 
@@ -253,6 +252,7 @@ class IdleMailing(QThread):
 		print dateStamp(), self.name.toLocal8Bit().data(), 'thread stopped'
 		# send signal about shutdown to main thread
 		self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNSTOP, 'msg': ''})
+		self.runned = False
 
 	def __del__(self):
 		self.stop()

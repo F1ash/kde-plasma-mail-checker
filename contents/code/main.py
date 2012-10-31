@@ -65,6 +65,22 @@ finally:
 GeneralLOCK = QMutex()
 LOCK = QReadWriteLock()
 
+class WaitIdle(QThread):
+	def __init__(self, parent = None):
+		QThread.__init__(self, parent)
+
+		self.Parent = parent
+		self.key = False
+
+	def run(self):
+		while not self.key and len(self.Parent.idleMailingList) :
+			self.msleep(500)
+		self.Parent.idleingStopped.emit()
+
+	def __del__(self):
+		self.key = True
+		self.quit()
+
 class ThreadCheckMail(QThread):
 	def __init__(self, obj = None, accountData = [('', '')], timeout = 120, parent = None):
 		QThread.__init__(self, parent)
@@ -182,6 +198,7 @@ class ThreadCheckMail(QThread):
 
 class plasmaMailChecker(plasmascript.Applet):
 	idleThreadMessage = pyqtSignal(dict)
+	idleingStopped = pyqtSignal()
 	def __init__(self, parent = None):
 		plasmascript.Applet.__init__(self,parent)
 
@@ -249,6 +266,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.connect(self, SIGNAL('killThread'), self.killMailCheckerThread)
 		#self.connect(self, SIGNAL('finished()'), self.loop , SLOT(self.T._terminate()))
 		self.idleThreadMessage.connect(self.idleMessage)
+		self.idleingStopped.connect(self.idleingStoppedEvent)
 
 		self.maxShowedMail = int(self.initValue('MaxShowedMail', '1024'))
 		AutoRun = self.initValue('AutoRun')
@@ -586,6 +604,15 @@ class plasmaMailChecker(plasmascript.Applet):
 			newMailNotify.activated['unsigned int'].connect(shell_command.start)
 		newMailNotify.sendEvent()
 
+	def disableIconClick(self):
+		if self.connectIconsFlag :
+			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+				self.connectIconsFlag = not ( self.disconnect(self.icon, \
+					SIGNAL('clicked()'), self._enterPassword) )
+			else :
+				self.connectIconsFlag = not ( self.disconnect(self.panelIcon, \
+					SIGNAL('clicked()'), self._enterPassword) )
+
 	def _refreshData(self):
 		print dateStamp() , '_refresh'
 		if self.initStat :
@@ -594,19 +621,14 @@ class plasmaMailChecker(plasmascript.Applet):
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
 				self.labelStat.setText("<font color=green><b>" + self.tr._translate('..running..') + "</b></font>")
 				self.icon.setIcon(path_)
-				if self.connectIconsFlag :
-					self.connectIconsFlag = not ( self.disconnect(self.icon, SIGNAL('clicked()'), \
-																				self._enterPassword) )
 				self.icon.setToolTip(self.headerPref + self.tr._translate('Mail\nChecking') +  self.headerSuff)
 			else :
 				self.panelIcon.setIcon(path_)
-				if self.connectIconsFlag :
-					self.connectIconsFlag = not ( self.disconnect(self.panelIcon, SIGNAL('clicked()'), \
-																				self._enterPassword) )
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
 					self.panelIcon.toolTip(), \
 					self.headerPref + self.tr._translate('Mail\nChecking') +  self.headerSuff, \
 					self.panelIcon.icon() ) )
+			self.disableIconClick()
 		else:
 			path_ = self.stopIconPath
 			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -662,8 +684,12 @@ class plasmaMailChecker(plasmascript.Applet):
 				#print dateStamp() , ' starting idles mail:', self.idleMailingList
 				for item in self.idleMailingList :
 					try :
-						#print item.name
-						if not item.runned : item.start()
+						if not item.runned :
+							item.start()
+							state = ' started'
+						else :
+							state = ' runned'
+						#print item.name, state
 					except Exception, err :
 						print dateStamp(), err, 'in', item.name.toLocal8Bit().data()
 					finally : pass
@@ -844,7 +870,6 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.connectIconsFlag = self.connect(self.icon, SIGNAL('clicked()'), self._enterPassword)
 			else :
 				self.connectIconsFlag = self.connect(self.panelIcon, SIGNAL('clicked()'), self._enterPassword)
-
 		GeneralLOCK.unlock()
 
 	def createIconWidget(self):
@@ -903,19 +928,13 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.fontsNcolour.refreshSettings(self)
 		Settings.setValue('UseProxy', 'True' if self.proxy.enableProxy.checkState()==Qt.Checked else 'False')
 		#print dateStamp() ,  self.formFactor(), '---'
+		self.disableIconClick()
 		x = ''
 		try:
 			self.Timer.stop()
-			# stopping mailChecking thread
-			self.emit(SIGNAL('killThread'))
-		except AttributeError, x:
+		except Exception, x :
 			print dateStamp() ,  x, '  acceptConf_1'
-			pass
-		except x :
-			print dateStamp() ,  x, '  acceptConf_2'
-		finally:
-			pass
-		savePOP3Cache()
+		finally : pass
 		# refresh color & font Variables
 		self.initPrefixAndSuffix()
 		if 'dialog' in dir(self) : del self.dialog
@@ -925,10 +944,8 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.initTitle()
 			self.TitleDialog.setText(self.headerPref + self.title + self.headerSuff)
 			self.createDialogWidget()
-		self.monitor_isnt_exist()
-		self.initStat = False
 		self.connect(self, SIGNAL('refresh'), self.refreshData)
-		self.emit(SIGNAL('refresh'))
+		self.emit(SIGNAL('killThread'))
 
 	def configDenied(self):
 		del self.dialog
@@ -943,22 +960,16 @@ class plasmaMailChecker(plasmascript.Applet):
 				#print dateStamp() ,  '_eP_1'
 				return None
 		else :
+			self.disableIconClick()
 			x = ''
 			try:
 				self.Timer.stop()
-			except AttributeError, x :
-				print dateStamp() ,  x, '  _entP_1'
-				pass
-			except x :
-				print dateStamp() ,  x, '  _entP_2'
+			except Exception, x :
+				print dateStamp() ,  x, '  _entP'
 			finally:
 				pass
 			self.emit(SIGNAL('killThread'))
-			savePOP3Cache()
-			self.monitor_isnt_exist()
-			self.initStat = False
 			print dateStamp() ,  'stop_eP'
-			self.emit(SIGNAL('refresh'))
 
 	def enterPassword(self):
 		self.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
@@ -980,6 +991,8 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.disconnect(self, SIGNAL('destroyed()'), self.eventClose)
 		self.disconnect(self, SIGNAL('killThread'), self.killMailCheckerThread)
 		self.idleThreadMessage.disconnect(self.idleMessage)
+		self.idleingStopped.disconnect(self.idleingStoppedEvent)
+		self.disableIconClick()
 		if 'monitor' in dir(self) :
 			self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
 			del self.monitorTimer
@@ -1020,10 +1033,19 @@ class plasmaMailChecker(plasmascript.Applet):
 		for item in self.idleMailingList :
 			try :
 				item.stop()
-				#while item.isRunning() : item.terminate()
 			except Exception, err :
 				print dateStamp(), err
 			finally : pass
+		if len(self.idleMailingList) :
+			''' wait for idle terminate '''
+			i = WaitIdle(self)
+			i.start()
+
+	def idleingStoppedEvent(self):
+		savePOP3Cache()
+		self.monitor_isnt_exist()
+		self.initStat = False
+		self.emit(SIGNAL('refresh'))
 
 	def mouseDoubleClickEvent(self, ev):
 		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
@@ -1079,10 +1101,6 @@ class plasmaMailChecker(plasmascript.Applet):
 			itm = None
 			for item in self.idleMailingList :
 				if item.name == d['acc'] : itm = item
-			#print self.idleMailingList, '<--'
-			if itm is not None :
-				self.eventNotification( itm.name + ' is not active.' )
-				self.idleMailingList.remove(itm)
 			#print self.idleMailingList, '<--|'
 			i = 0
 			if 'accountList' not in dir(self) : self.accountList = QStringList()
@@ -1105,6 +1123,10 @@ class plasmaMailChecker(plasmascript.Applet):
 				except Exception, err :
 					print dateStamp(), err
 				finally : pass
+			if itm is not None :
+				self.eventNotification( itm.name + ' is not active.' )
+				self.idleMailingList.remove(itm)
+			#print self.idleMailingList, '<--'
 			return None
 		#
 		# show error notify from emitted idle mail

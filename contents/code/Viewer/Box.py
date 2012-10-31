@@ -104,8 +104,8 @@ def getMail(obj, m, protocol):
 		msg = message_from_string(_Mail)
 		#print msg.items()
 		Date = msg.get('Date')
-		From = msg.get('From')
-		Subj = msg.get('Subject')
+		From = msg.get('From').replace('\r\n', '').replace('\t', ' ')
+		Subj = msg.get('Subject').replace('\r\n', '').replace('\t', ' ')
 		if Date is None : Date = ''
 		Date = 'Date: ' + Date
 		obj.Parent.mailAttr.emit({\

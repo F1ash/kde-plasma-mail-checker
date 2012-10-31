@@ -242,7 +242,8 @@ Checking</source>
     <message>
         <location filename="main.py" line="818"/>
         <source>Accounts</source>
-        <translation>Учётки</translation>
+        <translation>Учётные
+записи</translation>
     </message>
     <message>
         <location filename="main.py" line="820"/>
