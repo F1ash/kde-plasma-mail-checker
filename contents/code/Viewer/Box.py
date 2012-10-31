@@ -254,8 +254,8 @@ class Box(QTabWidget):
 			fileName = os.path.join(self.iconDatabasePath, d['data'][2])
 			with open(fileName, 'wb') as f : f.write(data)
 			wdg = QLabel()
-			#wdg.setPixmap(QPixmap(QString(fileName)))
 			wdg.setText('<a href="%s">Inserted image</a>' % fileName)
+			#wdg.setPixmap(QPixmap(QString(fileName)))
 			wdg.setAlignment(Qt.AlignLeft)
 		else :
 			wdg = QLabel(data)
