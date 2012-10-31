@@ -32,11 +32,13 @@ install: build
 	$(INSTALL) $(CODE)/ru.qm $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/ru.qm
 	$(INSTALL) $(CODE)/templates $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/templates
 	$(INSTALL) $(CODE)/Proxy.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/Proxy.py
+	$(INSTALL) $(CODE)/Proxy.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/Viewer/__init__.py
+	$(INSTALL) $(CODE)/Proxy.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/Viewer/Box.py
+	$(INSTALL) $(CODE)/Proxy.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/Viewer/Mail.py
+	$(INSTALL) $(CODE)/Proxy.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/Viewer/MainWindow.py
 	$(INSTALL) $(ICONS)/mailChecker.png $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/mailChecker.png
 	$(INSTALL) $(ICONS)/mailChecker_stop.png $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/mailChecker_stop.png
 	$(INSTALL) $(ICONS)/mailChecker_web.png $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/mailChecker_web.png
-	$(INSTALL) $(ICONS)/color.png $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/color.png
-	$(INSTALL) $(ICONS)/font.png $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/font.png
 
 contents/code/ru.qm:
 	$(LRELEASE) $(CODE)/ru.ts -qm $(CODE)/ru.qm
