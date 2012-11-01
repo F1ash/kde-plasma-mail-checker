@@ -29,6 +29,12 @@ SIGNSTOP = -1
 SIGNINIT = 0
 SIGNDATA = 1
 
+# ports
+POP3_PORT = 110
+POP3_SSL_PORT = 995
+IMAP4_PORT = 143
+IMAP4_SSL_PORT = 993
+
 LOCK = QMutex()
 Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 

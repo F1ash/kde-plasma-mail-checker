@@ -1287,6 +1287,7 @@ class EditAccounts(QWidget):
 		self.connectMethodBox.addItem('IMAP4',QVariant('imap'))
 		self.connectMethodBox.addItem('IMAP4\IDLE',QVariant('imap\idle'))
 		self.connect(self.connectMethodBox, SIGNAL("currentIndexChanged(const QString&)"), self.showCatalogChoice)
+		self.connect(self.connectMethodBox, SIGNAL("currentIndexChanged(const QString&)"), self.changePort)
 		self.HB2Layout.addWidget(self.connectMethodBox,1,0)
 
 		self.HB2Layout.addWidget(QLabel(self.tr._translate("Encrypt : ")),0,1)
@@ -1295,6 +1296,7 @@ class EditAccounts(QWidget):
 		self.cryptBox.addItem('None',QVariant('None'))
 		self.cryptBox.addItem('SSL',QVariant('SSL'))
 		#self.cryptBox.addItem('TLS',QVariant('TLS'))
+		self.connect(self.cryptBox, SIGNAL("currentIndexChanged(const QString&)"), self.changePort)
 		self.HB2Layout.addWidget(self.cryptBox,1,1)
 
 		self.HB2Layout.addWidget(QLabel(self.tr._translate("Changes : ")),0,2)
@@ -1357,6 +1359,24 @@ class EditAccounts(QWidget):
 		self.accountListBox.itemClicked.disconnect(self.enable_Del_n_Edit)
 		self.editAccountItem.setEnabled(True)
 		self.delAccountItem.setEnabled(True)
+
+	def changePort(self, str_):
+		port = [POP3_PORT, POP3_SSL_PORT, IMAP4_PORT, IMAP4_SSL_PORT]
+		connectMethod = self.connectMethodBox.itemData(self.connectMethodBox.currentIndex()).toString()
+		cryptMethod = self.cryptBox.itemData(self.cryptBox.currentIndex()).toString()
+		if str(connectMethod) in ('imap', 'imap\idle') :
+			if POP3_PORT in port : port.remove(POP3_PORT)
+			if POP3_SSL_PORT in port : port.remove(POP3_SSL_PORT)
+		else :
+			if IMAP4_PORT in port : port.remove(IMAP4_PORT)
+			if IMAP4_SSL_PORT in port : port.remove(IMAP4_SSL_PORT)
+		if str(cryptMethod) == 'None' :
+			if IMAP4_SSL_PORT in port : port.remove(IMAP4_SSL_PORT)
+			if POP3_SSL_PORT in port : port.remove(POP3_SSL_PORT)
+		else :
+			if IMAP4_PORT in port : port.remove(IMAP4_PORT)
+			if POP3_PORT in port : port.remove(POP3_PORT)
+		self.portBox.setValue(port[0] if len(port) else 0)
 
 	def showCatalogChoice(self, str_):
 		#print dateStamp() , 'signal received'
@@ -1458,8 +1478,6 @@ class EditAccounts(QWidget):
 			#print dateStamp() ,  str_, '-', str(parameterList[5]), '-', i
 			if str_ == str(parameterList[5]) :
 				self.connectMethodBox.setCurrentIndex(i)
-			elif i == count_ - 1 :
-				self.connectMethodBox.setCurrentIndex(0)
 			i += 1
 		i = 0
 		count_ = int(self.cryptBox.count())
@@ -1468,8 +1486,6 @@ class EditAccounts(QWidget):
 			#print dateStamp() ,  str_, '-', str(parameterList[4]), '-', i
 			if str_ == str(parameterList[4]) :
 				self.cryptBox.setCurrentIndex(i)
-			elif i == count_ - 1 :
-				self.cryptBox.setCurrentIndex(0)
 			i += 1
 		#print dateStamp() ,  parameterList[1]
 		self.portBox.setValue(int(parameterList[1]))
