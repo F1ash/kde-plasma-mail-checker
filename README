@@ -7,6 +7,8 @@ Paths and files:
 	Error log file: $HOME/.xsession-errors
 	Debug log file: /tmp/outMailChecker_%Y_%m_%d_%H:%S.log
 	Configuration file: $HOME/.config/plasmaMailChecker/plasmaMailChecker.conf
+	Filter files: $HOME/.config/plasmaMailChecker/filter.from,
+		$HOME/.config/plasmaMailChecker/filter.subj
 
 Path for your POP3 accounts uidl cache:
 		$HOME/.cache/plasmaMailChecker/<accountName>.cache
@@ -36,5 +38,4 @@ Notes:
 Known issues:
 	If you internet connection is too slow, you need increase time value in "Autoexit of connect" parameter.
 
-Tested on Fedora14 (kdebase-workspace-python-applet-4.5.3-3.fc14.x86_64), Fedora15, Fedora16,
-	Fedora17, Fedora18
+Tested on Fedora14 (kdebase-workspace-python-applet-4.5.3-3.fc14.x86_64) -- Fedora18
