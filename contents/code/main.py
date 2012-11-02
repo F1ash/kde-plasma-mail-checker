@@ -544,6 +544,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		timeOut = self.initValue('TimeOut', '600')
 		self.waitThread = self.initValue('WaitThread', '120')
 		self.maxShowedMail = int(self.initValue('MaxShowedMail', '1024'))
+		self.mailsInGroup = int(self.initValue('MailsInGroup', '5'))
 
 		self.initStat = True
 		initPOP3Cache()
@@ -828,9 +829,12 @@ class plasmaMailChecker(plasmascript.Applet):
 				str_ = self.checkResult[i][4]
 				encoding = self.checkResult[i][5].split('\n')
 				STR_ = ''
+				numbers = self.checkResult[i][7].split()
 				if str_ not in ['', ' ', '0'] :
 					#print dateStamp() ,  str_
 					j = 0
+					k = 0
+					groups = 0
 					for _str in str_.split('\r\n\r\n') :
 						if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
 							_str_raw = htmlWrapper(mailAttrToSTR(_str, encoding[j]), self.mailAttrColor)
@@ -838,14 +842,34 @@ class plasmaMailChecker(plasmascript.Applet):
 							if _str_raw is None :
 								j += 1
 								continue
+							''' grouping mail '''
 							STR_ += '\n' + self.tr._translate('In ') + \
-									self.fieldBoxPref + self.accountList[i] + self.fieldBoxSuff + ':\n' + \
-									_str_raw + '\n'
+									self.fieldBoxPref + self.accountList[i] + \
+									self.fieldBoxSuff + ':\n' + _str_raw + '\n'
+							k += 1
+							if k == self.mailsInGroup :
+								''' mail group notification '''
+								l = groups * k
+								m = l + k
+								#print [numbers[l:m]], (l, m)
+								self.eventNotification('<b><u>' + \
+										self.tr._translate('New Message(s) :') + \
+										'</u></b>' + STR_, \
+										{self.accountList[i] : string.join(numbers[l:m], ' ')}, \
+										self.accountCommand[ self.accountList[i] ])
+								k = 0
+								groups += 1
+								STR_ = ''
 						j += 1
+				''' tail of mail group notification '''
 				if STR_ != '' :
-					self.eventNotification('<b><u>' + self.tr._translate('New Message(s) :') + '</u></b>' + STR_, \
-											{self.accountList[i] : self.checkResult[i][7]}, \
-											self.accountCommand[ self.accountList[i] ])
+					l = groups * self.mailsInGroup
+					#print [numbers[l:]]
+					self.eventNotification('<b><u>' + \
+										self.tr._translate('New Message(s) :') + \
+										'</u></b>' + STR_, \
+										{self.accountList[i] : string.join(numbers[l:], ' ')}, \
+										self.accountCommand[ self.accountList[i] ])
 				i += 1
 
 		if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
@@ -1186,6 +1210,9 @@ class plasmaMailChecker(plasmascript.Applet):
 			if not overLoad :
 				j = 0
 				STR_ = ''
+				k = 0
+				groups = 0
+				numbers = d['msg'][4].split()
 				for _str in string.split(d['msg'][3], '\r\n\r\n') :
 					if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
 						_str_raw = htmlWrapper(mailAttrToSTR(_str), self.mailAttrColor)
@@ -1196,11 +1223,25 @@ class plasmaMailChecker(plasmascript.Applet):
 						STR_ += '\n' + self.tr._translate('In ') + \
 								self.fieldBoxPref + d['acc'] + self.fieldBoxSuff + ':\n' + \
 								_str_raw + '\n'
+						k += 1
+						if k == self.mailsInGroup :
+							''' mail group notification '''
+							l = groups * k
+							m = l + k
+							self.eventNotification('<b><u>' + \
+									self.tr._translate('New Message(s) :') + \
+									'</u></b>' + STR_, \
+									{d['acc'] : string.join(numbers[l:m], ' ')}, \
+									self.accountCommand[ d['acc'] ])
+							k = 0
+							groups += 1
+							STR_ = ''
 					j += 1
 				if STR_ != '' :
+					l = groups * self.mailsInGroup
 					msg = '<b><u>' + self.tr._translate('New Message(s) :') + '</u></b>' + STR_
 					self.eventNotification( msg, \
-											{d['acc'] : d['msg'][4]}, \
+											{d['acc'] : string.join(numbers[l:], ' ')}, \
 											self.accountCommand[ d['acc'] ])
 
 class EditAccounts(QWidget):
@@ -1595,6 +1636,7 @@ class AppletSettings(QWidget):
 		self.prnt = parent
 		self.tr = Translator('AppletSettings')
 		global Settings
+		global ModuleExist
 
 		timeOut = self.initValue('TimeOut', '600')
 		AutoRun = self.initValue('AutoRun', '0')
@@ -1605,6 +1647,7 @@ class AppletSettings(QWidget):
 		showVersion = self.initValue('ShowVersion', '1')
 		timeOutGroup = self.initValue('TimeOutGroup', '3')
 		maxShowedMail = self.initValue('MaxShowedMail', '1024')
+		mailsInGroup = self.initValue('MailsInGroup', '5')
 
 		self.layout = QGridLayout()
 
@@ -1652,18 +1695,30 @@ class AppletSettings(QWidget):
 		self.layout.addWidget(self.showVersionBox,6,5)
 
 		self.timeOutGroupLabel = QLabel(self.tr._translate("Group Akonadi events timeout (sec.):"))
+		self.timeOutGroupLabel.setEnabled(ModuleExist)
 		self.layout.addWidget(self.timeOutGroupLabel, 7, 0)
 		self.timeOutGroupBox = KIntSpinBox(1, 200, 1, int(timeOutGroup), self)
 		self.timeOutGroupBox.setMaximumWidth(75)
+		self.timeOutGroupBox.setEnabled(ModuleExist)
 		self.layout.addWidget(self.timeOutGroupBox, 7, 5)
 
 		self.maxMailLabel = QLabel(self.tr._translate("Max Count of Showed Mail :"))
 		self.layout.addWidget(self.maxMailLabel, 8, 0)
 		self.maxMailBox = KIntSpinBox(1, 1024, 1, int(maxShowedMail), self)
 		self.maxMailBox.setMaximumWidth(75)
+		self.maxMailBox.valueChanged[int].connect(self.showMailGroupping)
 		self.layout.addWidget(self.maxMailBox, 8, 5)
 
+		self.mailInGroupLabel = QLabel('\t' + self.tr._translate("Count of Mail in Group for account:"))
+		self.mailInGroupLabel.setEnabled(False)
+		self.layout.addWidget(self.mailInGroupLabel, 9, 0)
+		self.mailInGroupBox = KIntSpinBox(1, 10, 1, int(mailsInGroup), self)
+		self.mailInGroupBox.setMaximumWidth(75)
+		self.mailInGroupBox.setEnabled(False)
+		self.layout.addWidget(self.mailInGroupBox, 9, 5)
+
 		self.setLayout(self.layout)
+		self.maxMailBox.valueChanged.emit(int(maxShowedMail))
 
 	def initValue(self, key_, default = '0'):
 		global Settings
@@ -1674,6 +1729,16 @@ class AppletSettings(QWidget):
 			Settings.setValue(key_, QVariant(default))
 			#print dateStamp() ,  key_, Settings.value(key_).toString()
 			return default
+
+	def stateChanged(self, state):
+		self.mailInGroupLabel.setEnabled(state)
+		self.mailInGroupBox.setEnabled(state)
+
+	def showMailGroupping(self, i):
+		if i > self.mailInGroupBox.value() :
+			self.stateChanged(True)
+		else :
+			self.stateChanged(False)
 
 	def refreshSettings(self, parent = None):
 		global Settings
@@ -1688,6 +1753,7 @@ class AppletSettings(QWidget):
 		Settings.setValue('stayDebLog', str(self.stayDebLogBox.value()))
 		Settings.setValue('TimeOutGroup', str(self.timeOutGroupBox.value()))
 		Settings.setValue('MaxShowedMail', str(self.maxMailBox.value()))
+		Settings.setValue('MailsInGroup', str(self.mailInGroupBox.value()))
 		if self.AutoRunBox.isChecked() :
 			Settings.setValue('AutoRun', '1')
 		else:

@@ -186,7 +186,7 @@ def cleanDebugOutputLogFiles(stay = 1):
 	LIST = []
 	uid = os.geteuid()
 	for name_ in os.listdir('/tmp') :
-		name = '/tmp/' + name_
+		name = os.path.join('/tmp', name_)
 		if os.path.isfile(name) and name[:19] == '/tmp/outMailChecker' and os.stat(name).st_uid == uid :
 				LIST += [name]
 	while len(LIST) > stay :
