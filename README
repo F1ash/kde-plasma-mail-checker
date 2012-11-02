@@ -27,6 +27,7 @@ Description:
 	It one maybe contain in plasma workspace and in plasma panel.
 	Support Akonadi (mimeType : "message/rfc822") resources monitoring
 	(getting new mail).
+	Support integrated mail viewer (for non-Akonadi accounts).
 	Command line of Akonadi account must be used for execution of console command
 	(different from plasmoid process) - "View" in notification of some mail.
 	See for : EXAMPLES.

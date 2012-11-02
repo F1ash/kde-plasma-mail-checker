@@ -12,6 +12,10 @@
 Путь к файлу конфигурации апплета:
 	~/.config/plasmaMailChecker/plasmaMailChecker.conf
 
+Путь к файлам фильтров:
+	~/.config/plasmaMailChecker/filter.from
+	~/.config/plasmaMailChecker/filter.subj
+
 Путь к кешу uidl POP3 аккаунтов:
 	~/.cache/plasmaMailChecker/<accountName>.cache
 	к временному:
@@ -32,6 +36,7 @@ M@ilChecker использует бумажник умолчанию или ал
 	так и в панели.
 	Плазмоид может отслеживать изменения в источниках (resources) Akonadi
 	(mimeType : "message/rfc822"), то есть получение новой почты.
+	Есть встроенный просмотрщик почты (для обычных аккаунтов).
 	Командная строка Akonadi аккаунта предназначена для выполнения консольной
 	команды (отдельным от плазмоида процессом) просмотра соответствующего
 	письма в оповещении. Например, открыть папку с соответствующим письмом
@@ -49,5 +54,4 @@ M@ilChecker использует бумажник умолчанию или ал
 	(Например: ru.qm, de.qm, ge.qm). По умолчанию, язык английский.
 
 Тестировано на :
-	Fedora14 (kdebase-workspace-python-applet-4.5.3-3.fc14.x86_64)
-	Fedora15, Fedora16, Fedora17
+	Fedora14 (kdebase-workspace-python-applet-4.5.3-3.fc14.x86_64) -- Fedora18

@@ -1036,10 +1036,9 @@ class plasmaMailChecker(plasmascript.Applet):
 			except Exception, err :
 				print dateStamp(), err
 			finally : pass
-		if len(self.idleMailingList) :
-			''' wait for idle terminate '''
-			i = WaitIdle(self)
-			i.start()
+		''' wait for idle terminate '''
+		i = WaitIdle(self)
+		i.start()
 
 	def idleingStoppedEvent(self):
 		savePOP3Cache()
