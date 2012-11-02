@@ -154,3 +154,5 @@ added integrated mail viewer;
 v.1.8.47 :
 improvement for wait of change "icon-click" state;
 added detecting of ports;
+fixed initiation of the idleingStopped-signal,
+when idleMailingList is empty;
