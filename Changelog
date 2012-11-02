@@ -156,3 +156,4 @@ improvement for wait of change "icon-click" state;
 added detecting of ports;
 fixed initiation of the idleingStopped-signal,
 when idleMailingList is empty;
+added MailsInGroup Settings for display groups of mail in notification;
