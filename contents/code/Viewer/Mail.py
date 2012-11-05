@@ -26,9 +26,10 @@ class Mail(QWidget):
 	def __init__(self, idx = None, parent = None):
 		QWidget.__init__(self, parent)
 		self.idx = idx
-		self.fromField = QLabel('From:')
-		self.subjField = QLabel('Subj:')
-		self.dateField = QLabel('Date:')
+		self.tr = Translator('mailViewer')
+		self.fromField = QLabel(self.tr._translate('From:'))
+		self.subjField = QLabel(self.tr._translate('Subj:'))
+		self.dateField = QLabel(self.tr._translate('Date:'))
 		self.mailField = QSplitter()
 		self.mailField.setChildrenCollapsible(True)
 		self.mailField.setOrientation(Qt.Vertical)

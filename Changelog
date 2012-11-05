@@ -157,3 +157,7 @@ added detecting of ports;
 fixed initiation of the idleingStopped-signal,
 when idleMailingList is empty;
 added MailsInGroup Settings for display groups of mail in notification;
+
+v.1.8.48 :
+added displaying the multi-inserted "message/rfc822" in mailviewer;
+some improvements & fixes;

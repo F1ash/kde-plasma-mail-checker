@@ -22,71 +22,97 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from PyQt4.QtWebKit import QWebView, QWebPage, QWebFrame, QWebSettings
+from PyQt4.QtWebKit import QWebView, QWebPage, QWebSettings
 from Translator import Translator
 from Mail import Mail
 from MailFunc import imapAuth, popAuth
 from Functions import dateFormat, decodeMailSTR, randomString, dateStamp
 from email import message_from_string
-import os.path, os, shutil
+import os.path, os, shutil, string
 
 SIZE=32
 
+def textChain(text, contCharSet = ''):
+	if len(text.split('\r\n')) : d = '\r\n'
+	elif len(text.split('\n')) : d = '\n'
+	else : d = ''
+	chains = []
+	for chain in text.split(d) :
+		_chain = decodeMailSTR(chain, contCharSet).replace('&quot;', '"')
+		if type(_chain) not in (str, unicode) : _chain = chain
+		chains.append(_chain)
+	return string.join(chains, d)
+
+def emitInfo(obj, idx, cont_type, ll, data, fileName, nesting_level, boundary):
+	obj.Parent.mailData.emit({\
+		'number'	: idx, \
+		'type'		: cont_type, \
+		'data'		: (ll, data, fileName), \
+		'level'		: nesting_level , \
+		'boundary'	: boundary})
+
 def displayMailText(obj, msg, idx, parent_type = None, nesting_level = 0, \
 					boundary = None):
-	text = ''
 	fileName = ''
-	cont_type = msg.get_content_subtype()
 	if msg.is_multipart() :
+		cont_type = msg.get_content_type()
 		_boundary = msg.get_boundary()
+		if cont_type == 'message/rfc822' :
+			msg = msg.get_payload()[0]
+			#print msg.items()
+			_boundary = msg.get_boundary()
+			ll = '<pre><font color="red" style="background-color:yellow"><b>Type:%s<br>Level:%s<br>Boundary:%s</b></font></pre>' \
+					 % (cont_type, str(nesting_level + 1), _boundary)
+			Date = msg.get('Date')
+			From = 'From: ' + textChain(msg.get('From'))
+			Subj = 'Subj: ' + textChain(msg.get('Subject'))
+			if Date is None : Date = ''
+			Date = 'Date: ' + dateFormat('Date: ' + Date)
+			#print Date, From, Subj, '\n'
+			data = From + '\r\n' + Subj + '\r\n' + Date
+			emitInfo(obj, idx, 'header', ll, data, fileName, nesting_level + 1, _boundary)
+			_payload = msg.get_payload()
+			if type(_payload) not in (list, tuple) :
+				emitInfo(obj, idx, 'plain', ll, _payload, fileName, nesting_level + 1, _boundary)
+				return None
 		for _msg in msg.get_payload() :
 			displayMailText(obj, _msg, idx, cont_type, \
 							nesting_level + 1, \
 							_boundary)
 	else :
 		main_type = msg.get_content_maintype()
+		cont_type = msg.get_content_subtype()
 		ll = '<pre><font color="red" style="background-color:yellow"><b>Type:%s<br>Level:%s<br>Boundary:%s</b></font></pre>' \
 			  % (parent_type, str(nesting_level), boundary)
+		_contCharSet = msg.get_content_charset()
+		contCharSet = '' if _contCharSet is None else _contCharSet
+		_content = msg.get_payload(decode=True)
+		content = _content if contCharSet == '' else _content.decode(contCharSet)
 		if main_type == 'text' :
-			if cont_type in ('plain', 'html') :
-				_text = msg.get_payload(decode=True)
-				_contCharSet = msg.get_content_charset()
-				contCharSet = '' if _contCharSet is None else _contCharSet
-				text = decodeMailSTR(_text, contCharSet).replace('&quot;', '"')
-			elif cont_type in ('x-patch') :
-				_text = msg.get_payload(decode=True)
-				_contCharSet = msg.get_content_charset()
-				contCharSet = '' if _contCharSet is None else _contCharSet
-				text = decodeMailSTR(_text, contCharSet)
+			if cont_type in ('plain', 'html') : data = content.replace('&quot;', '"')
+			elif cont_type in ('x-patch') : data = content
 			else :
 				_type = msg.get_content_type()
-				text = 'Broken part: Unsupported format: %s.\n' % _type
+				data = content
+				cont_type = 'Unsupported format: %s.\n' % _type
 		elif main_type == "application" :
-			if cont_type in ('pgp-signature') :
-				_text = msg.get_payload(decode=True)
-				_contCharSet = msg.get_content_charset()
-				contCharSet = '' if _contCharSet is None else _contCharSet
-				text = decodeMailSTR(_text, contCharSet)
+			if cont_type in ('pgp-signature') : data = content
 			else :
+				data = content
 				_type = msg.get_content_type()
-				text = 'Broken part: Unsupported format: %s.\n' % _type
+				cont_type = 'Unsupported format: %s.\n' % _type
 		elif main_type == "image" :
-			text = msg.get_payload(decode=True)
+			data = content
 			#print '\n:', msg.items()
 			_res = msg.get('Content-ID')
 			itemName = '' if _res is None else _res
 			fileName = boundary + '_' + itemName.replace('<', '').replace('>', '')
 			cont_type = main_type
 		else :
+			data = content
 			_type = msg.get_content_type()
-			text = 'Broken part: Unsupported format: %s.\n' % _type
-		obj.Parent.mailData.emit({\
-					'number'	: idx, \
-					'type'		: cont_type, \
-					'data'		: (ll, text, fileName), \
-					'level'		: nesting_level , \
-					'prnt_type'	: parent_type , \
-					'boundary'	: boundary})
+			cont_type = 'Unsupported format: %s.\n' % _type
+		emitInfo(obj, idx, cont_type, ll, data, fileName, nesting_level, boundary)
 
 def getMail(obj, m, protocol):
 	data = obj.data
@@ -104,15 +130,15 @@ def getMail(obj, m, protocol):
 		msg = message_from_string(_Mail)
 		#print msg.items()
 		Date = msg.get('Date')
-		From = msg.get('From').replace('\r\n', '').replace('\t', ' ')
-		Subj = msg.get('Subject').replace('\r\n', '').replace('\t', ' ')
+		From = textChain(msg.get('From'))
+		Subj = textChain(msg.get('Subject'))
 		if Date is None : Date = ''
-		Date = 'Date: ' + Date
+		Date = dateFormat('Date: ' + Date)
 		obj.Parent.mailAttr.emit({\
 			'number'	: idx, \
-			'date'		: 'Date: ' + dateFormat(Date), \
-			'from'		: 'From: ' + decodeMailSTR(From).replace('&quot;', '"'), \
-			'subj'		: 'Subj: ' + decodeMailSTR(Subj).replace('&quot;', '"')})
+			'date'		: 'Date: ' + Date, \
+			'from'		: 'From: ' + From, \
+			'subj'		: 'Subj: ' + Subj})
 		displayMailText(obj, msg, idx)
 
 def recImap4Mail(obj):
@@ -182,7 +208,7 @@ class Box(QTabWidget):
 	def __init__(self, data = {}, parent = None):
 		QTabWidget.__init__(self, parent)
 		self.Parent = parent
-		self.tr = Translator('plasmaMailChecker')
+		self.tr = Translator('mailViewer')
 		self.mails = []
 		self.webViewWDGs = []
 		self.iconDatabasePath = os.path.join('/tmp', randomString(24))
@@ -230,7 +256,7 @@ class Box(QTabWidget):
 			fileName = os.path.join(self.iconDatabasePath, randomString(24) + '.html')
 			with open(fileName, 'w') as f : f.write(_data.encode('utf-32'))
 			wdg = QWebView()
-			#wdg.setToolTip(ll)
+			wdg.setToolTip(ll)
 			wdg.triggerPageAction(QWebPage.Reload, True)
 			wdg.triggerPageAction(QWebPage.Stop, True)
 			wdg.triggerPageAction(QWebPage.Back, True)
@@ -248,7 +274,7 @@ class Box(QTabWidget):
 		elif d['type'] in ('plain', 'x-patch', 'pgp-signature') :
 			wdg = QTextBrowser()
 			wdg.setText(data)
-			#wdg.setToolTip(ll)
+			wdg.setToolTip(ll)
 		elif d['type'] == 'image' :
 			''' create temporary image-file '''
 			fileName = os.path.join(self.iconDatabasePath, d['data'][2])
@@ -256,10 +282,21 @@ class Box(QTabWidget):
 			wdg = QLabel()
 			wdg.setText('<a href="%s">Inserted image</a>' % fileName)
 			#wdg.setPixmap(QPixmap(QString(fileName)))
+			wdg.setToolTip(ll)
+			wdg.setAlignment(Qt.AlignLeft)
+		elif d['type'] == 'header' :
+			wdg = QLabel()
+			wdg.setText(data)
+			wdg.setToolTip(ll)
 			wdg.setAlignment(Qt.AlignLeft)
 		else :
-			wdg = QLabel(data)
-			#wdg.setToolTip(ll)
+			''' create temporary file '''
+			fileName = os.path.join(self.iconDatabasePath, randomString(24))
+			with open(fileName, 'wb') as f : f.write(data)
+			wdg = QLabel()
+			wdg.setText('<a href="%s">%s</a>' % (fileName, d['type']))
+			wdg.setToolTip(ll)
+			wdg.setAlignment(Qt.AlignLeft)
 		splt = QSplitter()
 		splt.setOrientation(Qt.Horizontal)
 		splt.setChildrenCollapsible(True)

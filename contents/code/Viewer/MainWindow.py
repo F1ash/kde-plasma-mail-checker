@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
 	def __init__(self, data = {}, parent = None):
 		QMainWindow.__init__(self, parent)
 		self.runned = False
-		self.tr = Translator('plasmaMailChecker')
+		self.tr = Translator('mailViewer')
 		self.autoLoadImage = False
 		self.privateEnable = False
 
