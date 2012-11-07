@@ -28,9 +28,12 @@ from Mail import Mail
 from MailFunc import imapAuth, popAuth
 from Functions import dateFormat, decodeMailSTR, randomString, dateStamp
 from email import message_from_string
-import os.path, os, shutil, string
+import os.path, os, shutil, string, re
 
 SIZE=32
+URL_REGEXP = \
+r'[abefhlnmpstvw]*://(?:[a-zA-Z]|[0-9]|[$-_@.&+?=:#;]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+MAILTO_REGEXP = r'[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]+'
 
 def textChain(text, contCharSet = ''):
 	if len(text.split('\r\n')) : d = '\r\n'
@@ -51,16 +54,25 @@ def emitInfo(obj, idx, cont_type, ll, data, fileName, nesting_level, boundary):
 		'level'		: nesting_level , \
 		'boundary'	: boundary})
 
+def mailToString(str_):
+	items = []
+	for item in re.findall(MAILTO_REGEXP, str_) :
+		if item not in items : items.append(item)
+	if len(items) : str_ = '<a href="mailto:%s">%s</a>' % (items[0], str_)
+	return str_
+
 def displayMailText(obj, msg, idx, parent_type = None, nesting_level = 0, \
 					boundary = None):
 	fileName = ''
 	if msg.is_multipart() :
 		cont_type = msg.get_content_type()
-		_boundary = msg.get_boundary()
+		boundary_ = msg.get_boundary()
+		_boundary = boundary_ if boundary_ is None else boundary_.replace('/', '')
 		if cont_type == 'message/rfc822' :
 			msg = msg.get_payload()[0]
 			#print msg.items()
-			_boundary = msg.get_boundary()
+			boundary_ = msg.get_boundary()
+			_boundary = boundary_ if boundary_ is None else boundary_.replace('/', '')
 			ll = '<pre><font color="red" style="background-color:yellow"><b>Type:%s<br>Level:%s<br>Boundary:%s</b></font></pre>' \
 					 % (cont_type, str(nesting_level + 1), _boundary)
 			Date = msg.get('Date')
@@ -69,7 +81,7 @@ def displayMailText(obj, msg, idx, parent_type = None, nesting_level = 0, \
 			if Date is None : Date = ''
 			Date = 'Date: ' + dateFormat('Date: ' + Date)
 			#print Date, From, Subj, '\n'
-			data = From + '\r\n' + Subj + '\r\n' + Date
+			data = mailToString(From) + '\r\n' + Subj + '\r\n' + Date
 			emitInfo(obj, idx, 'header', ll, data, fileName, nesting_level + 1, _boundary)
 			_payload = msg.get_payload()
 			if type(_payload) not in (list, tuple) :
@@ -88,30 +100,16 @@ def displayMailText(obj, msg, idx, parent_type = None, nesting_level = 0, \
 		contCharSet = '' if _contCharSet is None else _contCharSet
 		_content = msg.get_payload(decode=True)
 		content = _content if contCharSet == '' else _content.decode(contCharSet)
-		if main_type == 'text' :
-			if cont_type in ('plain', 'html') : data = content.replace('&quot;', '"')
-			elif cont_type in ('x-patch') : data = content
-			else :
-				_type = msg.get_content_type()
-				data = content
-				cont_type = 'Unsupported format: %s.\n' % _type
-		elif main_type == "application" :
-			if cont_type in ('pgp-signature') : data = content
-			else :
-				data = content
-				_type = msg.get_content_type()
-				cont_type = 'Unsupported format: %s.\n' % _type
-		elif main_type == "image" :
-			data = content
-			#print '\n:', msg.items()
-			_res = msg.get('Content-ID')
-			itemName = '' if _res is None else _res
-			fileName = boundary + '_' + itemName.replace('<', '').replace('>', '')
-			cont_type = main_type
+		if main_type == 'text' and cont_type in ('plain', 'html') :
+			data = content.replace('&quot;', '"')
 		else :
 			data = content
-			_type = msg.get_content_type()
-			cont_type = 'Unsupported format: %s.\n' % _type
+			name_ = msg.get_param('name')
+			_name = '' if name_ is None else name_
+			_res = msg.get('Content-ID')
+			itemName = _name if _res is None else _res
+			fileName = boundary + '_' + itemName.replace('<', '').replace('>', '')
+			cont_type = msg.get_content_type()
 		emitInfo(obj, idx, cont_type, ll, data, fileName, nesting_level, boundary)
 
 def getMail(obj, m, protocol):
@@ -130,7 +128,7 @@ def getMail(obj, m, protocol):
 		msg = message_from_string(_Mail)
 		#print msg.items()
 		Date = msg.get('Date')
-		From = textChain(msg.get('From'))
+		From = mailToString(textChain(msg.get('From')))
 		Subj = textChain(msg.get('Subject'))
 		if Date is None : Date = ''
 		Date = dateFormat('Date: ' + Date)
@@ -177,6 +175,48 @@ def changeImagePath(data, boundary):
 		data = data.replace('src="cid:', 'src=" %s' % b)
 	if data.count('src= " cid:') :
 		data = data.replace('src= " cid:', 'src=" %s' % b)
+	return data
+
+def maximize(l):
+	_l = []
+	while len(l) :
+		i = max(l)
+		_l.append(i)
+		l.remove(i)
+	return _l
+
+def changeLink(data):
+	items = []
+	for item in re.findall(URL_REGEXP, data) :
+		if item not in items : items.append(item)
+	items = maximize(items)
+	for item in items :
+		i = items.index(item)
+		if i and items[i-1].startswith(item) :
+			_chunks = data.split(items[i-1])
+			chunks = []
+			for chunk in _chunks :
+				chunks.append(chunk.replace(item, '<a href="%s">%s</a>' % (item, item)))
+			data = string.join(chunks, items[i-1])
+		else :
+			data = data.replace(item, '<a href="%s">%s</a>' % (item, item))
+	items = []
+	for item in re.findall(MAILTO_REGEXP, data) :
+		if item not in items : items.append(item)
+	items = maximize(items)
+	for item in items :
+		i = items.index(item)
+		if i and items[i-1].startswith(item) :
+			_chunks = data.split(items[i-1])
+			chunks = []
+			for chunk in _chunks :
+				chunks.append(chunk.replace(item, '<a href="mailto:%s">%s</a>' % (item, item)))
+			data = string.join(chunks, items[i-1])
+		else :
+			data = data.replace(item, '<a href="mailto:%s">%s</a>' % (item, item))
+	data = data.replace('\r\n', '<br>')
+	data = data.replace('\n', '<br>')
+	data = data.replace('\t', '&#09;')
 	return data
 
 class GetMail(QThread):
@@ -256,7 +296,6 @@ class Box(QTabWidget):
 			fileName = os.path.join(self.iconDatabasePath, randomString(24) + '.html')
 			with open(fileName, 'w') as f : f.write(_data.encode('utf-32'))
 			wdg = QWebView()
-			wdg.setToolTip(ll)
 			wdg.triggerPageAction(QWebPage.Reload, True)
 			wdg.triggerPageAction(QWebPage.Stop, True)
 			wdg.triggerPageAction(QWebPage.Back, True)
@@ -271,32 +310,27 @@ class Box(QTabWidget):
 			#print dateStamp(), QUrl('file://' + fileName), '  created'
 			wdg.show()
 			self.webViewWDGs.append(wdg)
-		elif d['type'] in ('plain', 'x-patch', 'pgp-signature') :
+		elif d['type'] in ('plain') :
 			wdg = QTextBrowser()
-			wdg.setText(data)
-			wdg.setToolTip(ll)
-		elif d['type'] == 'image' :
-			''' create temporary image-file '''
-			fileName = os.path.join(self.iconDatabasePath, d['data'][2])
-			with open(fileName, 'wb') as f : f.write(data)
-			wdg = QLabel()
-			wdg.setText('<a href="%s">Inserted image</a>' % fileName)
-			#wdg.setPixmap(QPixmap(QString(fileName)))
-			wdg.setToolTip(ll)
-			wdg.setAlignment(Qt.AlignLeft)
+			wdg.setAcceptRichText(True)
+			wdg.setOpenExternalLinks(True)
+			wdg.setOpenLinks(True)
+			wdg.setHtml(changeLink(data))
 		elif d['type'] == 'header' :
 			wdg = QLabel()
 			wdg.setText(data)
-			wdg.setToolTip(ll)
+			wdg.linkHovered.connect(self.linkDisplay)
 			wdg.setAlignment(Qt.AlignLeft)
 		else :
 			''' create temporary file '''
-			fileName = os.path.join(self.iconDatabasePath, randomString(24))
+			fileName = os.path.join(self.iconDatabasePath, d['data'][2])
 			with open(fileName, 'wb') as f : f.write(data)
 			wdg = QLabel()
-			wdg.setText('<a href="%s">%s</a>' % (fileName, d['type']))
-			wdg.setToolTip(ll)
+			wdg.setOpenExternalLinks(True)
+			wdg.setText('<a href="%s">%s</a>' % (fileName, 'Inserted: %s' % d['type']))
+			wdg.linkHovered.connect(self.linkDisplay)
 			wdg.setAlignment(Qt.AlignLeft)
+		wdg.setToolTip(ll)
 		splt = QSplitter()
 		splt.setOrientation(Qt.Horizontal)
 		splt.setChildrenCollapsible(True)
@@ -307,6 +341,9 @@ class Box(QTabWidget):
 		splt.addWidget(wdg)
 		self.mails[i].mailField.addWidget(splt)
 		self.mails[i].setLayout(self.mails[i].layout)
+
+	def linkDisplay(self, s):
+		self.Parent.statusBar.showMessage(s)
 
 	def __del__(self):
 		shutil.rmtree(self.iconDatabasePath)

@@ -26,8 +26,11 @@ class Mail(QWidget):
 	def __init__(self, idx = None, parent = None):
 		QWidget.__init__(self, parent)
 		self.idx = idx
+		self.Parent = parent
 		self.tr = Translator('mailViewer')
 		self.fromField = QLabel(self.tr._translate('From:'))
+		self.fromField.setOpenExternalLinks(True)
+		self.fromField.linkHovered.connect(self.linkDisplay)
 		self.subjField = QLabel(self.tr._translate('Subj:'))
 		self.dateField = QLabel(self.tr._translate('Date:'))
 		self.mailField = QSplitter()
@@ -42,5 +45,8 @@ class Mail(QWidget):
 		self.layout.addWidget(self.dateField)
 		self.layout.addWidget(self.mailField)
 		self.setLayout(self.layout)
+
+	def linkDisplay(self, s):
+		self.Parent.Parent.statusBar.showMessage(s)
 
 	def __del__(self): self.close()
