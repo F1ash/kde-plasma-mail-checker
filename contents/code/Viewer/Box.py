@@ -32,8 +32,8 @@ import os.path, os, shutil, string, re
 
 SIZE=32
 URL_REGEXP = \
-r'[abefhlnmpstvw]*://(?:[a-zA-Z]|[0-9]|[$-_@.&+?=:#;]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
-MAILTO_REGEXP = r'[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]+'
+r'[abefhlnmpstvw]*://(?:[a-zA-Z]|[0-9]|[$-_@.&+?=:#~]|[!*\(\)]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+MAILTO_REGEXP = r'[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]'
 
 def textChain(text, contCharSet = ''):
 	if len(text.split('\r\n')) : d = '\r\n'
@@ -52,7 +52,7 @@ def emitInfo(obj, idx, cont_type, ll, data, fileName, nesting_level, boundary):
 		'type'		: cont_type, \
 		'data'		: (ll, data, fileName), \
 		'level'		: nesting_level , \
-		'boundary'	: boundary})
+		'boundary'	: str(boundary)})
 
 def mailToString(str_):
 	items = []
@@ -181,39 +181,35 @@ def maximize(l):
 	_l = []
 	while len(l) :
 		i = max(l)
-		_l.append(i)
+		if i not in _l : _l.append(i)
 		l.remove(i)
 	return _l
 
+def worker(_REGEXP, data, _template):
+	items = []
+	for item in re.findall(_REGEXP, data) :
+		if item not in items : items.append(item)
+	items = maximize(items)
+	for item in items :
+		#print item, _template % (item, item)
+		""" search same items """
+		same = []
+		for _item in items :
+			if _item != item and _item.startswith(item) :
+				same.append(_item)
+		same = maximize(same)
+		if len(same) :
+			for _item in same :
+				data = data.replace(_item, '<||%s||>' % items.index(_item))
+		data = data.replace(item, _template % (item, item))
+		if len(same) :
+			for _item in same :
+				data = data.replace('<||%s||>' % items.index(_item), _item)
+	return data
+
 def changeLink(data):
-	items = []
-	for item in re.findall(URL_REGEXP, data) :
-		if item not in items : items.append(item)
-	items = maximize(items)
-	for item in items :
-		i = items.index(item)
-		if i and items[i-1].startswith(item) :
-			_chunks = data.split(items[i-1])
-			chunks = []
-			for chunk in _chunks :
-				chunks.append(chunk.replace(item, '<a href="%s">%s</a>' % (item, item)))
-			data = string.join(chunks, items[i-1])
-		else :
-			data = data.replace(item, '<a href="%s">%s</a>' % (item, item))
-	items = []
-	for item in re.findall(MAILTO_REGEXP, data) :
-		if item not in items : items.append(item)
-	items = maximize(items)
-	for item in items :
-		i = items.index(item)
-		if i and items[i-1].startswith(item) :
-			_chunks = data.split(items[i-1])
-			chunks = []
-			for chunk in _chunks :
-				chunks.append(chunk.replace(item, '<a href="mailto:%s">%s</a>' % (item, item)))
-			data = string.join(chunks, items[i-1])
-		else :
-			data = data.replace(item, '<a href="mailto:%s">%s</a>' % (item, item))
+	data = worker(URL_REGEXP, data, '<a href="%s">%s</a>')
+	data = worker(MAILTO_REGEXP, data, '<a href="mailto: %s">%s</a>')
 	data = data.replace('\r\n', '<br>')
 	data = data.replace('\n', '<br>')
 	data = data.replace('\t', '&#09;')
@@ -315,6 +311,8 @@ class Box(QTabWidget):
 			wdg.setAcceptRichText(True)
 			wdg.setOpenExternalLinks(True)
 			wdg.setOpenLinks(True)
+			data = data.replace('<', '&lt; ')
+			data = data.replace('>', ' &gt;')
 			wdg.setHtml(changeLink(data))
 		elif d['type'] == 'header' :
 			wdg = QLabel()
