@@ -145,7 +145,7 @@ class ThreadCheckMail(QThread):
 					break
 				i += 1
 
-			# waiting mailcheckihg processes
+			# waiting mailcheckig processes
 			key_ = True
 			while key_ and WAIT :
 				time.sleep(0.1)
@@ -766,7 +766,7 @@ class plasmaMailChecker(plasmascript.Applet):
 						text_1 = self.countSPref + str(self.checkResult[i][1]) + ' | ' + \
 								 str(self.checkResult[i][6]) + self.countSSuff
 						text_2 = self.countTTSPref + '<pre>' + self.tr._translate('New : ') + \
-								 str(self.checkResult[i][2]) + '</pre><pre>UnRead : ' + \
+								 str(self.checkResult[i][2]) + '</pre><pre>' + self.tr._translate('UnRead : ') + \
 								 str(self.checkResult[i][6]) + '</pre>' + self.countTTSSuff
 				elif int(self.checkResult[i][2]) < 1 and not IDLE :
 					self.label[i].setStyleSheet(self.accountColourStyle)
@@ -778,7 +778,7 @@ class plasmaMailChecker(plasmascript.Applet):
 						text_1 = self.countPref + str(self.checkResult[i][1]) + ' | ' + \
 								 str(self.checkResult[i][6]) + self.countSuff
 						text_2 = self.countTTPref + '<pre>' + self.tr._translate('New : ') + \
-								 str(self.checkResult[i][2]) + '</pre><pre>UnRead : ' + \
+								 str(self.checkResult[i][2]) + '</pre><pre>' + self.tr._translate('UnRead : ') + \
 								 str(self.checkResult[i][6]) + '</pre>' + self.countTTSuff
 
 				if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) \
@@ -853,7 +853,7 @@ class plasmaMailChecker(plasmascript.Applet):
 								m = l + k
 								#print [numbers[l:m]], (l, m)
 								self.eventNotification('<b><u>' + \
-										self.tr._translate('New Message(s) :') + \
+										self.tr._translate('New Mail :') + \
 										'</u></b>' + STR_, \
 										{self.accountList[i] : string.join(numbers[l:m], ' ')}, \
 										self.accountCommand[ self.accountList[i] ])
@@ -866,7 +866,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					l = groups * self.mailsInGroup
 					#print [numbers[l:]]
 					self.eventNotification('<b><u>' + \
-										self.tr._translate('New Message(s) :') + \
+										self.tr._translate('New Mail :') + \
 										'</u></b>' + STR_, \
 										{self.accountList[i] : string.join(numbers[l:], ' ')}, \
 										self.accountCommand[ self.accountList[i] ])
@@ -1147,7 +1147,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					print dateStamp(), err
 				finally : pass
 			if itm is not None :
-				self.eventNotification( itm.name + ' is not active.' )
+				self.eventNotification( itm.name + self.tr._translate(' is not active.' ))
 				self.idleMailingList.remove(itm)
 			#print self.idleMailingList, '<--'
 			return None
@@ -1179,7 +1179,7 @@ class plasmaMailChecker(plasmascript.Applet):
 						text_1 = self.countSPref + str(d['msg'][0]) + ' | ' + \
 								str(d['msg'][2]) + self.countSSuff
 						text_2 = self.countTTSPref + '<pre>' + self.tr._translate('New : ') + \
-								str(d['msg'][1]) + '</pre><pre>UnRead : ' + \
+								str(d['msg'][1]) + '</pre><pre>' + self.tr._translate('UnRead : ') + \
 								str(d['msg'][2]) + '</pre>' + self.countTTSSuff
 
 					if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) :
@@ -1229,7 +1229,7 @@ class plasmaMailChecker(plasmascript.Applet):
 							l = groups * k
 							m = l + k
 							self.eventNotification('<b><u>' + \
-									self.tr._translate('New Message(s) :') + \
+									self.tr._translate('New Mail :') + \
 									'</u></b>' + STR_, \
 									{d['acc'] : string.join(numbers[l:m], ' ')}, \
 									self.accountCommand[ d['acc'] ])
@@ -1239,7 +1239,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					j += 1
 				if STR_ != '' :
 					l = groups * self.mailsInGroup
-					msg = '<b><u>' + self.tr._translate('New Message(s) :') + '</u></b>' + STR_
+					msg = '<b><u>' + self.tr._translate('New Mail :') + '</u></b>' + STR_
 					self.eventNotification( msg, \
 											{d['acc'] : string.join(numbers[l:], ' ')}, \
 											self.accountCommand[ d['acc'] ])

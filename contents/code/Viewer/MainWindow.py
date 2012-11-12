@@ -37,17 +37,17 @@ class MainWindow(QMainWindow):
 		self.setWindowTitle(QString().fromUtf8(data['mailBox']))
 		self.setWindowIcon(QIcon().fromTheme("mail"))
 
-		self.exit_ = QAction(QIcon().fromTheme("exit"), self.tr._translate('&Exit'), self)
+		self.exit_ = QAction(QIcon().fromTheme("exit"), '&'+self.tr._translate('Exit'), self)
 		self.exit_.setShortcut('Ctrl+Q')
 		self.connect(self.exit_, SIGNAL('triggered()'), self._close)
 
-		self.image_ = QAction(QIcon().fromTheme("image"), self.tr._translate('&Image AutoLoad'), self)
+		self.image_ = QAction(QIcon().fromTheme("image"), self.tr._translate('Image AutoLoad'), self)
 		self.image_.setCheckable(True)
 		self.image_.setChecked(self.autoLoadImage)
 		self.image_.setShortcut('Ctrl+I')
 		self.connect(self.image_, SIGNAL('triggered()'), self._image)
 
-		self.priv_ = QAction(QIcon().fromTheme("private"), self.tr._translate('&Private Browsing'), self)
+		self.priv_ = QAction(QIcon().fromTheme("private"), self.tr._translate('Private Browsing'), self)
 		self.priv_.setCheckable(True)
 		self.priv_.setChecked(self.privateEnable)
 		self.priv_.setShortcut('Ctrl+P')
@@ -55,10 +55,10 @@ class MainWindow(QMainWindow):
 
 		menubar = self.menuBar()
 
-		file_ = menubar.addMenu(self.tr._translate('&File'))
+		file_ = menubar.addMenu('&'+self.tr._translate('File'))
 		file_.addAction(self.exit_)
 
-		sett_ = menubar.addMenu(self.tr._translate('&Settings'))
+		sett_ = menubar.addMenu('&'+self.tr._translate('Settings'))
 		sett_.addAction(self.image_)
 		sett_.addAction(self.priv_)
 

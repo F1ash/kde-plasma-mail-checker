@@ -58,7 +58,7 @@ def mailToString(str_):
 	items = []
 	for item in re.findall(MAILTO_REGEXP, str_) :
 		if item not in items : items.append(item)
-	if len(items) : str_ = '<a href="mailto:%s">%s</a>' % (items[0], str_)
+	if len(items) : str_ = '<a href="mailto: %s">%s</a>' % (items[0], str_)
 	return str_
 
 def displayMailText(obj, msg, idx, parent_type = None, nesting_level = 0, \
@@ -134,9 +134,9 @@ def getMail(obj, m, protocol):
 		Date = dateFormat('Date: ' + Date)
 		obj.Parent.mailAttr.emit({\
 			'number'	: idx, \
-			'date'		: 'Date: ' + Date, \
-			'from'		: 'From: ' + From, \
-			'subj'		: 'Subj: ' + Subj})
+			'date'		: obj.Parent.tr._translate('Date:') + ' ' + Date, \
+			'from'		: obj.Parent.tr._translate('From:') + ' ' + From, \
+			'subj'		: obj.Parent.tr._translate('Subj:') + ' ' + Subj})
 		displayMailText(obj, msg, idx)
 
 def recImap4Mail(obj):
@@ -259,7 +259,7 @@ class Box(QTabWidget):
 				self.mails.append(Mail(idx, self))
 
 				self.addTab(self.mails[i], QIcon().fromTheme("mail"), QString(self.tr._translate('Mail') + ' ' + idx))
-				self.setTabToolTip(i, self.tr._translate('Mail #') + idx)
+				self.setTabToolTip(i, self.tr._translate('Mail') + ' #' + idx)
 				i += 1
 			self.Parent.statusBar.showMessage(self.tr._translate('Getting mail...'))
 			self.mailAttr.connect(self.setMailAttr)
@@ -325,7 +325,8 @@ class Box(QTabWidget):
 			with open(fileName, 'wb') as f : f.write(data)
 			wdg = QLabel()
 			wdg.setOpenExternalLinks(True)
-			wdg.setText('<a href="%s">%s</a>' % (fileName, 'Inserted: %s' % d['type']))
+			ins = self.tr._translate('Inserted:')
+			wdg.setText(QString('<a href="%1">%2 %3</a>').arg(fileName).arg(ins).arg(d['type']))
 			wdg.linkHovered.connect(self.linkDisplay)
 			wdg.setAlignment(Qt.AlignLeft)
 		wdg.setToolTip(ll)

@@ -22,13 +22,14 @@
 
 from PyQt4.QtCore import *
 from PyKDE4.kdecore import *
-import locale, os.path
+from Functions import lang as Lang
+import os.path
 
 class Translator(QTranslator):
 	def __init__(self, context = '', parent=None):
 		QTranslator.__init__(self, parent)
 
-		lang = locale.getdefaultlocale()[0][:2]
+		lang = Lang[0][:2]
 		_Path = self.user_or_sys(lang + '.qm')
 		#print 'Tr:' ,  lang, _Path
 		self.load(QString(lang), QString(_Path), QString('qm'))

@@ -22,7 +22,7 @@
 
 from imapUTF7 import imapUTF7Encode
 from PyQt4.QtCore import QString, QSettings, QMutex
-import poplib, imaplib, time, datetime, locale, socket, string
+import poplib, imaplib, time, socket, string
 
 global ErrorMsg
 ErrorMsg = ''
