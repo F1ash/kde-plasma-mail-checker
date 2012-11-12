@@ -162,3 +162,4 @@ v.1.8.48 :
 added displaying the multi-inserted "message/rfc822" in mailviewer;
 some improvements & fixes;
 added a active urls & email in QTextBrowser;
+improved ru-localization;
