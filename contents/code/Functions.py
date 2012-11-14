@@ -22,6 +22,7 @@
 
 from PyQt4.QtCore import QString, QSettings, QMutex
 import os, string, time, os.path, random, email.header, datetime, locale
+import re, urllib2
 
 # idle thread states
 SIGNERRO = -2
@@ -46,6 +47,26 @@ lang = locale.getdefaultlocale()
 char_set = string.ascii_letters + string.digits
 
 _0_ = ' <||> '
+
+pattern = "[1-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?"
+ip_re = re.compile(pattern)
+CHECK_SERVICES = ('http://www.viewmyipaddress.com/', 'http://api.wipmania.com/', 'http://checkip.dyndns.org')
+
+def getExternalIP():
+	ip = ''
+	for addr in CHECK_SERVICES :
+		try :
+			f = urllib2.urlopen(urllib2.Request(addr))
+			response = f.read()
+			f.close()
+			ip_ = ip_re.findall(response)
+			if ip_ == [] : continue
+			ip = ip_[0]
+			break
+		except urllib2.URLError, err:
+			print err
+		finally : pass
+	return ip
 
 def loadSocksModule(loadModule = None):
 	proxyLoad = False

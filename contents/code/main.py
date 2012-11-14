@@ -75,6 +75,11 @@ class WaitIdle(QThread):
 	def run(self):
 		while not self.key and len(self.Parent.idleMailingList) :
 			self.msleep(500)
+			if getExternalIP() == '' :
+				print dateStamp(), 'Internet not available'
+				for item in self.Parent.idleMailingList :
+					item.__del__()
+				break
 		self.Parent.idleingStopped.emit()
 
 	def __del__(self):

@@ -23,7 +23,7 @@
 from PyQt4.QtCore import QThread, QSettings, QTimer
 from imapUTF7 import imapUTF7Encode
 from MailFunc import readAccountData, dateStamp, getMailAttributes, getCurrentElemTime, clearBlank, imapAuth
-from Functions import SIGNERRO, SIGNSTOP, SIGNINIT, SIGNDATA, LOCK
+from Functions import SIGNERRO, SIGNSTOP, SIGNINIT, SIGNDATA
 import imaplib, string
 from random import randint
 
@@ -233,11 +233,9 @@ class IdleMailing(QThread):
 		self._shutdown()
 
 	def stop(self):
-		LOCK.lock()
 		self.key = False
 		#print self.key, '<-- key off'
 		self.mail.done()
-		LOCK.unlock()
 
 	def _shutdown(self):
 		if self.answer != [] and self.answer[0] == 'OK' :
@@ -250,9 +248,14 @@ class IdleMailing(QThread):
 		finally : pass
 		print dateStamp(), self.name.toLocal8Bit().data(), 'logout'
 		print dateStamp(), self.name.toLocal8Bit().data(), 'thread stopped'
+		self.emitStoppedSignal()
+
+	def emitStoppedSignal(self):
 		# send signal about shutdown to main thread
-		self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNSTOP, 'msg': ''})
 		self.runned = False
+		self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNSTOP, 'msg': ''})
 
 	def __del__(self):
 		self.stop()
+		if hasattr(self, 'm') : del self.m
+		self.emitStoppedSignal()
