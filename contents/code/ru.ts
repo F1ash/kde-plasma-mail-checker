@@ -454,72 +454,72 @@ ToolTip :</source>
 <context>
     <name>mailViewer</name>
     <message>
-        <location filename="MainWindow.py" line="20"/>
+        <location filename="Viewer/MainWindow.py" line="20"/>
         <source>Exit</source>
         <translation>Выход</translation>
     </message>
     <message>
-        <location filename="MainWindow.py" line="20"/>
+        <location filename="Viewer/MainWindow.py" line="20"/>
         <source>Image AutoLoad</source>
         <translation>Показывать изображения</translation>
     </message>
     <message>
-        <location filename="MainWindow.py" line="20"/>
+        <location filename="Viewer/MainWindow.py" line="20"/>
         <source>Private Browsing</source>
         <translation>Приватный промотр</translation>
     </message>
     <message>
-        <location filename="MainWindow.py" line="20"/>
+        <location filename="Viewer/MainWindow.py" line="20"/>
         <source>File</source>
         <translation>Файл</translation>
     </message>
     <message>
-        <location filename="MainWindow.py" line="20"/>
+        <location filename="Viewer/MainWindow.py" line="20"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
     <message>
-        <location filename="Box.py" line="20"/>
+        <location filename="Viewer/Box.py" line="20"/>
         <source>Job completed.</source>
         <translation>Задание завершено.</translation>
     </message>
     <message>
-        <location filename="Box.py" line="20"/>
+        <location filename="Viewer/Box.py" line="20"/>
         <source>Job completed with error.</source>
         <translation>Задание завершено с ошибкой.</translation>
     </message>
     <message>
-        <location filename="Box.py" line="20"/>
+        <location filename="Viewer/Box.py" line="20"/>
         <source>Mail</source>
         <translation>Письмо</translation>
     </message>
     <message>
-        <location filename="Box.py" line="20"/>
+        <location filename="Viewer/Box.py" line="20"/>
         <source>Getting mail...</source>
         <translation>Получение писем...</translation>
     </message>
     <message>
-        <location filename="Box.py" line="20"/>
+        <location filename="Viewer/Box.py" line="20"/>
         <source>Empty Job.</source>
         <translation>Пустое задание.</translation>
     </message>
     <message>
-        <location filename="Box.py" line="20"/>
+        <location filename="Viewer/Box.py" line="20"/>
         <source>Inserted:</source>
         <translation>Вложение:</translation>
     </message>
     <message>
-        <location filename="Mail.py" line="20"/>
+        <location filename="Viewer/Mail.py" line="20"/>
         <source>From:</source>
         <translation>От кого:</translation>
     </message>
     <message>
-        <location filename="Mail.py" line="20"/>
+        <location filename="Viewer/Mail.py" line="20"/>
         <source>Subj:</source>
         <translation>Тема:</translation>
     </message>
     <message>
-        <location filename="Mail.py" line="20"/>
+        <location filename="Viewer/Mail.py" line="20"/>
         <source>Date:</source>
         <translation>Дата:</translation>
     </message>

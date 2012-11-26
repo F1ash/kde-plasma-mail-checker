@@ -32,7 +32,7 @@ import os.path, os, shutil, string, re
 
 SIZE=32
 URL_REGEXP = \
-r'[abefhlnmpstvw]*://(?:[a-zA-Z]|[0-9]|[$-_@.&+?=:#~]|[!*\(\)]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+r'[abefghilnmpstvw]*://(?:[a-zA-Z]|[0-9]|[$-_@.&+?=:#~]|[!*\(\)]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
 MAILTO_REGEXP = r'[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]'
 
 def textChain(text, contCharSet = ''):
