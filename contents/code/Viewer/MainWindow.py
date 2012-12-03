@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
 		self.setWindowTitle(QString().fromUtf8(data['mailBox']))
 		self.setWindowIcon(QIcon().fromTheme("mail"))
 
-		self.exit_ = QAction(QIcon().fromTheme("exit"), '&'+self.tr._translate('Exit'), self)
+		self.exit_ = QAction(QIcon().fromTheme("application-exit"), '&'+self.tr._translate('Exit'), self)
 		self.exit_.setShortcut('Ctrl+Q')
 		self.connect(self.exit_, SIGNAL('triggered()'), self._close)
 
