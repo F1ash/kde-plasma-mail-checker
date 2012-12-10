@@ -120,7 +120,7 @@ def htmlWrapper((From_, Subj_, Date_) = ('', '', ''),
 	From = pref1 + From_ + suff1
 	Subj = pref2 + Subj_ + suff2
 	Date = pref3 + Date_ + suff3
-	return 'From: ' + From + '\n' + 'Subj: ' + Subj + '\n' + 'Date: ' + Date
+	return 'From: ' + From + '<br></br>' + 'Subj: ' + Subj + '<br></br>' + 'Date: ' + Date + '<br></br>'
 
 def utcDelta(str_):
 	hours_ = int(str_[:3])

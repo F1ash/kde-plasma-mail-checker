@@ -823,7 +823,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				i += 1
 			if self.maxShowedMail < countOfAllNewMail :
 				overLoad = True
-				self.eventNotification('<b>' + self.tr._translate('There are more then') + '\n' + \
+				self.eventNotification('<b>' + self.tr._translate('There are more then') + '<br></br>' + \
 										'&#09;' + str(self.maxShowedMail) + \
 										' (' + str(countOfAllNewMail) + ') ' + \
 										self.tr._translate('messages.') + '</b>', \
@@ -848,9 +848,9 @@ class plasmaMailChecker(plasmascript.Applet):
 								j += 1
 								continue
 							''' grouping mail '''
-							STR_ += '\n' + self.tr._translate('In ') + \
+							STR_ += '<br>' + self.tr._translate('In ') + \
 									self.fieldBoxPref + self.accountList[i] + \
-									self.fieldBoxSuff + ':\n' + _str_raw + '\n'
+									self.fieldBoxSuff + ':</br><br>' + _str_raw
 							k += 1
 							if k == self.mailsInGroup :
 								''' mail group notification '''
@@ -1207,7 +1207,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			overLoad = False
 			if self.maxShowedMail < countOfAllNewMail :
 				overLoad = True
-				self.eventNotification('<b>' + self.tr._translate('There are more then') + '\n' + \
+				self.eventNotification('<b>' + self.tr._translate('There are more then') + '<br></br>' + \
 										'&#09;' + str(self.maxShowedMail) + \
 										' (' + str(countOfAllNewMail) + ') ' + \
 										self.tr._translate('messages.') + '</b>', \
@@ -1225,9 +1225,9 @@ class plasmaMailChecker(plasmascript.Applet):
 						if _str_raw is None :
 							j += 1
 							continue
-						STR_ += '\n' + self.tr._translate('In ') + \
-								self.fieldBoxPref + d['acc'] + self.fieldBoxSuff + ':\n' + \
-								_str_raw + '\n'
+						STR_ += '<br>' + self.tr._translate('In ') + \
+								self.fieldBoxPref + d['acc'] + self.fieldBoxSuff + ':</br><br>' + \
+								_str_raw
 						k += 1
 						if k == self.mailsInGroup :
 							''' mail group notification '''
