@@ -240,7 +240,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.webIconPath = self.user_or_sys('contents/icons/mailChecker_web.png')
 		self.usualIconPath = self.user_or_sys('contents/icons/mailChecker.png')
 
-		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+		if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 			self.titleLayout = QGraphicsLinearLayout()
 			self.titleLayout.setOrientation(Qt.Horizontal)
 
@@ -612,19 +612,21 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def disableIconClick(self):
 		if self.connectIconsFlag :
-			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
-				self.connectIconsFlag = not ( self.disconnect(self.icon, \
-					SIGNAL('clicked()'), self._enterPassword) )
+			if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
+				if self.initStat :
+					self.connectIconsFlag = not ( self.disconnect(self.icon, \
+						SIGNAL('clicked()'), self._enterPassword) )
 			else :
-				self.connectIconsFlag = not ( self.disconnect(self.panelIcon, \
-					SIGNAL('clicked()'), self._enterPassword) )
+				if self.initStat :
+					self.connectIconsFlag = not ( self.disconnect(self.panelIcon, \
+						SIGNAL('clicked()'), self._enterPassword) )
 
 	def _refreshData(self):
 		print dateStamp() , '_refresh'
 		if self.initStat :
 			path_ = self.webIconPath
 
-			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+			if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 				self.labelStat.setText("<font color=green><b>" + self.tr._translate('..running..') + "</b></font>")
 				self.icon.setIcon(path_)
 				self.icon.setToolTip(self.headerPref + self.tr._translate('Mail\nChecking') +  self.headerSuff)
@@ -637,7 +639,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.disableIconClick()
 		else:
 			path_ = self.stopIconPath
-			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+			if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 				self.labelStat.setText("<font color=red><b>" + self.tr._translate('..stopped..') + "</b></font>")
 				self.icon.setIcon(path_)
 			else :
@@ -717,7 +719,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		if self.initStat :
 			noCheck = False
 			path_ = self.usualIconPath
-			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+			if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 				self.labelStat.setText("<font color=green><b>" + self.tr._translate('..running..') + "</b></font>")
 				self.icon.setIcon(path_)
 				self.icon.setToolTip(self.headerPref + self.tr._translate('Click for Start\Stop') + \
@@ -731,7 +733,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		else :
 			noCheck = True
 			path_ = self.stopIconPath
-			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+			if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 				self.labelStat.setText("<font color=red><b>" + self.tr._translate('..stopped..') + "</b></font>")
 				self.icon.setIcon(path_)
 				self.icon.setToolTip(self.headerPref + self.tr._translate('Click for Start\Stop') + \
@@ -764,7 +766,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					newMailExist = True
 					self.label[i].setStyleSheet(self.accountSColourStyle)
 					self.countList[i].setStyleSheet(self.countSColourStyle)
-					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+					if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 						accountName_ = self.accSPref + accountName + self.accSSuff
 						accountTT = self.accTTSPref + self.tr._translate('Account') + \
 													self.accTTSSuff + ' ' + accountName
@@ -776,7 +778,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				elif int(self.checkResult[i][2]) < 1 and not IDLE :
 					self.label[i].setStyleSheet(self.accountColourStyle)
 					self.countList[i].setStyleSheet(self.countColourStyle)
-					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+					if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 						accountName_ = self.accPref + accountName + self.accSuff
 						accountTT = self.accTTPref + self.tr._translate('Account') + \
 													self.accTTSuff + ' ' + accountName
@@ -786,7 +788,7 @@ class plasmaMailChecker(plasmascript.Applet):
 								 str(self.checkResult[i][2]) + '</pre><pre>' + self.tr._translate('UnRead : ') + \
 								 str(self.checkResult[i][6]) + '</pre>' + self.countTTSuff
 
-				if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) \
+				if (self.formFactor() in (Plasma.Planar, Plasma.MediaCenter)) \
 												and self.initStat and not IDLE :
 					self.label[i].setText(accountName_)
 					self.label[i].setToolTip(accountTT)
@@ -877,7 +879,7 @@ class plasmaMailChecker(plasmascript.Applet):
 										self.accountCommand[ self.accountList[i] ])
 				i += 1
 
-		if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
+		if not ( self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) ) :
 			if self.listNewMail == '' :
 				self.listNewMail = self.tr._translate("No new mail")
 			Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
@@ -895,7 +897,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.eventNotification( QString().fromUtf8(ErrorMsg) )
 
 		if not self.connectIconsFlag :
-			if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+			if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 				self.connectIconsFlag = self.connect(self.icon, SIGNAL('clicked()'), self._enterPassword)
 			else :
 				self.connectIconsFlag = self.connect(self.panelIcon, SIGNAL('clicked()'), self._enterPassword)
@@ -968,7 +970,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.initPrefixAndSuffix()
 		if 'dialog' in dir(self) : del self.dialog
 		# refresh plasmoid Header
-		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+		if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 			self.TitleDialog.setStyleSheet(self.headerColourStyle)
 			self.initTitle()
 			self.TitleDialog.setText(self.headerPref + self.title + self.headerSuff)
@@ -1076,7 +1078,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.emit(SIGNAL('refresh'))
 
 	def mouseDoubleClickEvent(self, ev):
-		if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+		if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 			self.showConfigurationInterface()
 
 	def importAccPasswords(self):
@@ -1138,12 +1140,12 @@ class plasmaMailChecker(plasmascript.Applet):
 					if d['acc'] == accountName :
 						self.label[i].setStyleSheet(self.accountColourStyle)
 						self.countList[i].setStyleSheet(self.countColourStyle)
-						if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+						if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 							accountName_ = self.accPref + accountName + self.accSuff
 							accountTT = self.accTTPref + self.tr._translate('Account') + \
 										self.accTTSuff + ' ' + accountName + '<br>(IDLE stopped)'
 
-						if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) :
+						if (self.formFactor() in (Plasma.Planar, Plasma.MediaCenter)) :
 							self.label[i].setText(accountName_)
 							self.label[i].setToolTip(accountTT)
 						break
@@ -1177,7 +1179,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					newMailExist = True
 					self.label[i].setStyleSheet(self.accountSColourStyle)
 					self.countList[i].setStyleSheet(self.countSColourStyle)
-					if self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] :
+					if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 						accountName_ = self.accSPref + accountName + self.accSSuff
 						accountTT = self.accTTSPref + self.tr._translate('Account') + \
 									self.accTTSSuff + ' ' + accountName + '<br>(IDLE)'
@@ -1187,7 +1189,7 @@ class plasmaMailChecker(plasmascript.Applet):
 								str(d['msg'][1]) + '</pre><pre>' + self.tr._translate('UnRead : ') + \
 								str(d['msg'][2]) + '</pre>' + self.countTTSSuff
 
-					if (self.formFactor() in [Plasma.Planar, Plasma.MediaCenter]) :
+					if (self.formFactor() in (Plasma.Planar, Plasma.MediaCenter)) :
 						self.label[i].setText(accountName_)
 						self.label[i].setToolTip(accountTT)
 						self.countList[i].setText(text_1)
@@ -1197,7 +1199,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				print dateStamp(), err
 			finally : pass
 		if d['state'] == SIGNDATA :
-			if not ( self.formFactor() in [Plasma.Planar, Plasma.MediaCenter] ) :
+			if not ( self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) ) :
 				Plasma.ToolTipManager.self().setContent( self.panelIcon, Plasma.ToolTipContent( \
 								self.panelIcon.toolTip(), \
 								self.headerPref + self.listNewMail + self.headerSuff, \
