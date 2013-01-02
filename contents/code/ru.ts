@@ -523,5 +523,13 @@ ToolTip :</source>
         <source>Date:</source>
         <translation>Дата:</translation>
     </message>
+    <message>
+        <location filename="Viewer/Mail.py" line="20"/>
+        <source>Quick Answer</source>
+        <translation>Быстрый ответ</translation>
+    </message>
+</context>
+<context>
+    <name>mailSender</name>
 </context>
 </TS>

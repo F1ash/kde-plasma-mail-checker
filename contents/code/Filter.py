@@ -67,10 +67,12 @@ class Filters(QWidget):
 		self.fromListBox.setSortingEnabled(True)
 		self.fromListBox.setToolTip(self.tr._translate("Filter`s strings"))
 		self.fromListBox.addItems(self.listFROM)
+		self.fromListBox.currentTextChanged.connect(self.from_FiltersChanged)
 		self.subjListBox = QListWidget()
 		self.subjListBox.setSortingEnabled(True)
 		self.subjListBox.setToolTip(self.tr._translate("Filter`s strings"))
 		self.subjListBox.addItems(self.listSUBJ)
+		self.subjListBox.currentTextChanged.connect(self.subj_FiltersChanged)
 
 		self.layout.addWidget(self.fromEditor, 1, 1)
 		self.layout.addWidget(self.subjEditor, 1, 2)
@@ -84,17 +86,26 @@ class Filters(QWidget):
 		self.setLayout(self.layout)
 		self.buttonFROM.setCurrentState()
 		self.buttonSUBJ.setCurrentState()
+		self.StateChanged = [False, False]
+
+	def from_FiltersChanged(self):
+		self.StateChanged[0] = True
+
+	def subj_FiltersChanged(self):
+		self.StateChanged[1] = True
 
 	def addItem(self, id_):
 		if id_ :
 			text = self.subjEditor.text()
-			text_ = unicode(QString().fromUtf8(text)).split()
-			if len(text_) : self.subjListBox.addItem(text)
+			if not text.isEmpty() :
+				self.subjListBox.addItem(text)
+				self.StateChanged[id_] = True
 			self.subjEditor.clear()
 		else :
 			text = self.fromEditor.text()
-			text_ = unicode(QString().fromUtf8(text)).split()
-			if len(text_) : self.fromListBox.addItem(text)
+			if not text.isEmpty() :
+				self.fromListBox.addItem(text)
+				self.StateChanged[id_] = True
 			self.fromEditor.clear()
 
 	def delItem(self, id_):
@@ -104,6 +115,7 @@ class Filters(QWidget):
 		else :
 			item_ = self.fromListBox.currentRow()
 			self.fromListBox.takeItem(item_)
+		self.StateChanged[id_] = True
 
 	def saveFilter(self, id_):
 		if id_ :
@@ -124,6 +136,7 @@ class Filters(QWidget):
 				i += 1
 			saveListToFile(filter_, self.filterFROM)
 			FROM_filter = dataToList(self.filterFROM)
+		self.StateChanged[id_] = False
 
 	def activateSide(self, id_, state = False):
 		if id_ :

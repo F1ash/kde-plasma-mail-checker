@@ -34,31 +34,33 @@ class MainWindow(QMainWindow):
 		self.autoLoadImage = False
 		self.privateEnable = False
 
-		self.setWindowTitle(QString().fromUtf8(data['mailBox']))
+		self.setWindowTitle(self.tr._translate('Mail Viewer'))
 		self.setWindowIcon(QIcon().fromTheme("mail"))
 
 		self.exit_ = QAction(QIcon().fromTheme("application-exit"), '&'+self.tr._translate('Exit'), self)
 		self.exit_.setShortcut('Ctrl+Q')
 		self.connect(self.exit_, SIGNAL('triggered()'), self._close)
 
-		self.image_ = QAction(QIcon().fromTheme("image"), self.tr._translate('Image AutoLoad'), self)
+		self.image_ = QAction(self.tr._translate('Image AutoLoad'), self)
+		self.image_.setShortcut('Ctrl+I')
 		self.image_.setCheckable(True)
 		self.image_.setChecked(self.autoLoadImage)
-		self.image_.setShortcut('Ctrl+I')
+		#self.image_.setIcon(QIcon().fromTheme("arrow-down-double"))
 		self.connect(self.image_, SIGNAL('triggered()'), self._image)
 
-		self.priv_ = QAction(QIcon().fromTheme("private"), self.tr._translate('Private Browsing'), self)
+		self.priv_ = QAction(self.tr._translate('Private Browsing'), self)
+		self.priv_.setShortcut('Ctrl+P')
 		self.priv_.setCheckable(True)
 		self.priv_.setChecked(self.privateEnable)
-		self.priv_.setShortcut('Ctrl+P')
+		#self.priv_.setIcon(QIcon().fromTheme("user-group-delete"))
 		self.connect(self.priv_, SIGNAL('triggered()'), self._private)
 
-		menubar = self.menuBar()
+		self.menubar = self.menuBar()
 
-		file_ = menubar.addMenu('&'+self.tr._translate('File'))
+		file_ = self.menubar.addMenu('&'+self.tr._translate('File'))
 		file_.addAction(self.exit_)
 
-		sett_ = menubar.addMenu('&'+self.tr._translate('Settings'))
+		sett_ = self.menubar.addMenu('&'+self.tr._translate('Settings'))
 		sett_.addAction(self.image_)
 		sett_.addAction(self.priv_)
 

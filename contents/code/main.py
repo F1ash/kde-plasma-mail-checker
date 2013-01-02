@@ -34,6 +34,7 @@ try :
 	from Examples import Examples
 	from Translator import Translator
 	from IdleMailing import IdleMailing
+	from EditAccounts import EditAccounts
 	from PyQt4.QtCore import *
 	from PyQt4.QtGui import *
 	from PyKDE4.kdecore import *
@@ -949,15 +950,29 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.dialog.move(self.popupPosition(self.dialog.sizeHint()))
 		self.dialog.exec_()
 
+	def settingsChangeComplete(self):
+		state = True
+		if self.editAccounts.StateChanged :
+			QMessageBox.information(self.dialog, 'Accounts', 'Changes was not completed.')
+			return False
+		self.appletSettings.refreshSettings(self)
+		self.fontsNcolour.refreshSettings(self)
+		if self.filters.StateChanged[0] or self.filters.StateChanged[1] :
+			QMessageBox.information(self.dialog, 'Filters', 'Changes was not completed.')
+			return False
+		if self.proxy.StateChanged :
+			QMessageBox.information(self.dialog, 'Proxy', 'Changes was not completed.')
+			return False
+		Settings.setValue('UseProxy', 'True' if self.proxy.enableProxy.checkState()==Qt.Checked else 'False')
+		return state
+
 	def configAccepted(self):
 		self.disconnect(self, SIGNAL('refresh'), self.refreshData)
 		self.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
 		if self.wallet is None :
 			self.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
 			return None
-		self.appletSettings.refreshSettings(self)
-		self.fontsNcolour.refreshSettings(self)
-		Settings.setValue('UseProxy', 'True' if self.proxy.enableProxy.checkState()==Qt.Checked else 'False')
+		if not self.settingsChangeComplete() : return None
 		#print dateStamp() ,  self.formFactor(), '---'
 		self.disableIconClick()
 		x = ''
@@ -1250,390 +1265,6 @@ class plasmaMailChecker(plasmascript.Applet):
 					self.eventNotification( msg, \
 											{d['acc'] : string.join(numbers[l:], ' ')}, \
 											self.accountCommand[ d['acc'] ])
-
-class EditAccounts(QWidget):
-	def __init__(self, obj = None, parent = None):
-		QWidget.__init__(self, parent)
-
-		self.Status = 'FREE'
-		self.Parent = obj
-		self.prnt = parent
-		self.tr = Translator('EditAccounts')
-		self.connectFlag = False
-		global Settings
-
-		self.VBLayout = QVBoxLayout()
-
-		self.layout = QGridLayout()
-
-		self.accountListBox = KListWidget()
-		i = 0
-		self.accountList = []
-		while i < Settings.childGroups().count() :
-			#print dateStamp() ,  str(Settings.childGroups().__getitem__(i)), '-'
-			accountName = Settings.childGroups().__getitem__(i)
-			if accountName != 'Akonadi account' :
-				self.accountListBox.addItem(accountName)
-				self.accountList += [accountName]
-			i += 1
-		#print dateStamp() ,  self.accountList
-		self.accountListBox.itemClicked.connect(self.enable_Del_n_Edit)
-		self.layout.addWidget(self.accountListBox,0,0,2,3)
-
-		self.stringEditor = KLineEdit()
-		self.stringEditor.setToolTip(self.tr._translate("Deprecated char : '<b>;</b>'"))
-		self.stringEditor.setContextMenuEnabled(True)
-		self.layout.addWidget(self.stringEditor,3,0)
-
-		self.addAccountItem = QPushButton('&Add')
-		self.addAccountItem.setToolTip(self.tr._translate("Add new Account"))
-		self.addAccountItem.clicked.connect(self.addNewAccount)
-		self.layout.addWidget(self.addAccountItem,3,4)
-
-		self.editAccountItem = QPushButton('&Edit')
-		self.editAccountItem.setEnabled(False)
-		self.editAccountItem.setToolTip(self.tr._translate("Edit current Account"))
-		self.editAccountItem.clicked.connect(self.editCurrentAccount)
-		self.layout.addWidget(self.editAccountItem,1,4)
-
-		self.delAccountItem = QPushButton('&Del')
-		self.delAccountItem.setEnabled(False)
-		self.delAccountItem.setToolTip(self.tr._translate("Delete current Account"))
-		self.delAccountItem.clicked.connect(self.delCurrentAccount)
-		self.layout.addWidget(self.delAccountItem,0,4)
-
-		self.VBLayout.addLayout(self.layout)
-
-		self.HB1Layout = QGridLayout()
-
-		self.HB1Layout.addWidget(QLabel(self.tr._translate("Server : ")),0,0)
-		self.HB1Layout.addWidget(QLabel(self.tr._translate("Port : ")),0,1)
-		self.HB1Layout.addWidget(QLabel(self.tr._translate("Enable : ")),0,2)
-
-		self.serverLineEdit = KLineEdit()
-		self.serverLineEdit.setContextMenuEnabled(True)
-		self.serverLineEdit.setToolTip(self.tr._translate("Example : imap.gmail.com, pop.mail.ru"))
-		self.HB1Layout.addWidget(self.serverLineEdit,1,0)
-
-		self.portBox = KIntSpinBox(0, 65535, 1, 0, self)
-		self.HB1Layout.addWidget(self.portBox, 1, 1)
-
-		self.enabledBox = QCheckBox()
-		Enabled = AppletSettings().initValue('Enabled', '1')
-		self.enabledBox.setCheckState(Qt.Unchecked)
-		self.HB1Layout.addWidget(self.enabledBox,1,2, Qt.AlignHCenter)
-
-		self.VBLayout.addLayout(self.HB1Layout)
-
-		self.HB2Layout = QGridLayout()
-
-		self.HB2Layout.addWidget(QLabel(self.tr._translate("AuthMethod : ")),0,0)
-
-		self.connectMethodBox = KComboBox()
-		self.connectMethodBox.addItem('POP3',QVariant('pop'))
-		self.connectMethodBox.addItem('IMAP4',QVariant('imap'))
-		self.connectMethodBox.addItem('IMAP4\IDLE',QVariant('imap\idle'))
-		self.connect(self.connectMethodBox, SIGNAL("currentIndexChanged(const QString&)"), self.showCatalogChoice)
-		self.connect(self.connectMethodBox, SIGNAL("currentIndexChanged(const QString&)"), self.changePort)
-		self.HB2Layout.addWidget(self.connectMethodBox,1,0)
-
-		self.HB2Layout.addWidget(QLabel(self.tr._translate("Encrypt : ")),0,1)
-
-		self.cryptBox = KComboBox()
-		self.cryptBox.addItem('None',QVariant('None'))
-		self.cryptBox.addItem('SSL',QVariant('SSL'))
-		#self.cryptBox.addItem('TLS',QVariant('TLS'))
-		self.connect(self.cryptBox, SIGNAL("currentIndexChanged(const QString&)"), self.changePort)
-		self.HB2Layout.addWidget(self.cryptBox,1,1)
-
-		self.HB2Layout.addWidget(QLabel(self.tr._translate("Changes : ")),0,2)
-
-		self.saveChanges = QPushButton('&Save')
-		self.saveChanges.setEnabled(False)
-		self.saveChanges.clicked.connect(self.saveChangedAccount)
-		self.HB2Layout.addWidget(self.saveChanges,1,2)
-
-		self.clearChanges = QPushButton('&Clear')
-		self.clearChanges.clicked.connect(self.clearChangedAccount)
-		self.HB2Layout.addWidget(self.clearChanges,1,3)
-
-		self.accountCommandLabel = QLabel()
-		self.accountCommandLabel.setText(self.tr._translate('Account Command:'))
-		self.accountCommandLabel.setToolTip(self.tr._translate("Exec command activated in notification.\nSee for : EXAMPLES."))
-		self.HB2Layout.addWidget(self.accountCommandLabel, 2, 0)
-
-		self.accountCommand = QComboBox()
-		self.accountCommand.setToolTip(self.tr._translate("Exec command activated in notification.\nSee for : EXAMPLES."))
-		self.accountCommand.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
-		self.accountCommand.setEditable(True)
-		templates = self.Parent.user_or_sys('contents/code/templates')
-		if os.path.isfile(templates) :
-			with open(templates, 'rb') as f :
-				texts = f.read().split('\n')
-				texts.remove('')
-		else : texts = []
-		#print texts, os.getcwd(), templates
-		self.accountCommand.addItems(QStringList() << '' << texts)
-		self.HB2Layout.addWidget(self.accountCommand, 2, 1, 2, 4)
-
-		self.VBLayout.addLayout(self.HB2Layout)
-
-		self.HB3Layout = QGridLayout()
-
-		self.HB3Layout.addWidget(QLabel(self.tr._translate("Username : ")),0,0)
-
-		self.HB3Layout.addWidget(QLabel(self.tr._translate("Password : ")),0,1)
-
-		self.userNameLineEdit = KLineEdit()
-		self.userNameLineEdit.setContextMenuEnabled(True)
-		self.HB3Layout.addWidget(self.userNameLineEdit,1,0)
-
-		self.passwordLineEdit = KLineEdit()
-		self.passwordLineEdit.setContextMenuEnabled(True)
-		self.passwordLineEdit.setPasswordMode(True)
-		self.HB3Layout.addWidget(self.passwordLineEdit,1,1)
-
-		self.VBLayout.addLayout(self.HB3Layout)
-
-		self.setLayout(self.VBLayout)
-
-	def disable_Del_n_Edit(self):
-		self.accountListBox.itemClicked.connect(self.enable_Del_n_Edit)
-		self.editAccountItem.setEnabled(False)
-		self.delAccountItem.setEnabled(False)
-
-	def enable_Del_n_Edit(self):
-		self.accountListBox.itemClicked.disconnect(self.enable_Del_n_Edit)
-		self.editAccountItem.setEnabled(True)
-		self.delAccountItem.setEnabled(True)
-
-	def changePort(self, str_):
-		port = [POP3_PORT, POP3_SSL_PORT, IMAP4_PORT, IMAP4_SSL_PORT]
-		connectMethod = self.connectMethodBox.itemData(self.connectMethodBox.currentIndex()).toString()
-		cryptMethod = self.cryptBox.itemData(self.cryptBox.currentIndex()).toString()
-		if str(connectMethod) in ('imap', 'imap\idle') :
-			if POP3_PORT in port : port.remove(POP3_PORT)
-			if POP3_SSL_PORT in port : port.remove(POP3_SSL_PORT)
-		else :
-			if IMAP4_PORT in port : port.remove(IMAP4_PORT)
-			if IMAP4_SSL_PORT in port : port.remove(IMAP4_SSL_PORT)
-		if str(cryptMethod) == 'None' :
-			if IMAP4_SSL_PORT in port : port.remove(IMAP4_SSL_PORT)
-			if POP3_SSL_PORT in port : port.remove(POP3_SSL_PORT)
-		else :
-			if IMAP4_PORT in port : port.remove(IMAP4_PORT)
-			if POP3_PORT in port : port.remove(POP3_PORT)
-		self.portBox.setValue(port[0] if len(port) else 0)
-
-	def showCatalogChoice(self, str_):
-		#print dateStamp() , 'signal received'
-		if str_ in ('IMAP4', 'IMAP4\IDLE') :
-			if 'resultString' not in dir(self) :
-				self.resultString = 'INBOX'
-			catalog = EnterMailBox(self.resultString, self)
-			catalog.move(self.Parent.popupPosition(catalog.sizeHint()))
-			catalog.exec_()
-			#print dateStamp() , QString.fromUtf8(self.resultString)
-
-	def changePasswFlag(self):
-		self.passwordLineEdit.userTextChanged.disconnect(self.changePasswFlag)
-		self.passwordLineEdit.setPasswordMode(True)
-		self.passwordLineEdit.clear()
-		self.passwordChanged = True
-		self.connectFlag = False
-
-	def clearChangedAccount(self):
-		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
-		if self.Parent.wallet is None :
-			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
-			return None
-		self.Parent.wallet.setFolder('plasmaMailChecker')
-		if self.Status == 'BUSY' :
-			return None
-		self.clearFields()
-		self.Status = 'FREE'
-
-	def saveChangedAccount(self):
-		global Settings
-		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
-		if self.Parent.wallet is None :
-			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
-			return None
-		self.Parent.wallet.setFolder('plasmaMailChecker')
-		if self.Status == 'READY' :
-			accountName, authData = self.parsingValues()
-			if accountName == '' :
-				self.clearChangedAccount()
-				self.Parent.eventNotification(self.tr._translate("Warning :\nSet Account Name!"))
-				return None
-			self.Status = 'CLEAR'
-			self.delCurrentAccount(self.oldAccountName)
-			self.accountListBox.addItem(accountName)
-			if self.passwordChanged :
-				self.Parent.wallet.writePassword(accountName, authData[3])
-				authData[3] = ''
-			addAccount(accountName, authData)
-
-			self.accountList += [accountName]
-			i = 0
-			str_ = ''
-			while i < len(self.accountList) :
-				str_ += self.accountList[i] + ';'
-				i += 1
-			Settings.setValue('Accounts', str_)
-			self.clearFields()
-			self.saveChanges.setEnabled(False)
-			self.Status = 'FREE'
-
-	def clearFields(self):
-		self.stringEditor.clear()
-		self.userNameLineEdit.clear()
-		self.passwordLineEdit.clear()
-		if self.connectFlag :
-			self.passwordLineEdit.userTextChanged.disconnect(self.changePasswFlag)
-			self.connectFlag = False
-		self.passwordLineEdit.setPasswordMode(True)
-		self.serverLineEdit.clear()
-		self.portBox.setValue(0)
-		self.connectMethodBox.setCurrentIndex(0)
-		self.cryptBox.setCurrentIndex(0)
-		self.enabledBox.setCheckState(Qt.Unchecked)
-		if 'resultString' in dir(self) :
-			del self.resultString
-		self.accountCommand.clearEditText()
-		self.disable_Del_n_Edit()
-
-	def editCurrentAccount(self):
-		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
-		if self.Parent.wallet is None :
-			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
-			return None
-		self.Parent.wallet.setFolder('plasmaMailChecker')
-		self.Status = 'BUSY'
-		accountName = self.accountListBox.currentItem().text()
-		self.oldAccountName = accountName
-		parameterList = readAccountData(accountName)
-		self.stringEditor.setText(accountName)
-		self.serverLineEdit.setText(str(parameterList[0]))
-		if str(parameterList[7]) == '1' :
-			self.enabledBox.setCheckState(Qt.Checked)
-		i = 0
-		count_ = int(self.connectMethodBox.count())
-		self.resultString = parameterList[8]
-		while i < count_ :
-			str_ = self.connectMethodBox.itemData(i).toString()
-			#print dateStamp() ,  str_, '-', str(parameterList[5]), '-', i
-			if str_ == str(parameterList[5]) :
-				self.connectMethodBox.setCurrentIndex(i)
-			i += 1
-		i = 0
-		count_ = int(self.cryptBox.count())
-		while i < count_ :
-			str_ = self.cryptBox.itemData(i).toString()
-			#print dateStamp() ,  str_, '-', str(parameterList[4]), '-', i
-			if str_ == str(parameterList[4]) :
-				self.cryptBox.setCurrentIndex(i)
-			i += 1
-		#print dateStamp() ,  parameterList[1]
-		self.portBox.setValue(int(parameterList[1]))
-		self.accountCommand.setEditText(parameterList[9])
-		self.userNameLineEdit.setText(parameterList[2])
-		self.passwordChanged = False
-		self.passwordLineEdit.setPasswordMode(False)
-		if self.Parent.wallet.hasEntry(self.oldAccountName) :
-			self.passwordLineEdit.setText( '***EncriptedPassWord***' )
-		else:
-			self.passwordLineEdit.setText( '***EncriptedKey_not_created***' )
-		self.connectFlag = self.passwordLineEdit.userTextChanged.connect(self.changePasswFlag)
-		self.saveChanges.setEnabled(True)
-		self.Status = 'READY'
-
-	def addNewAccount(self):
-		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
-		if self.Parent.wallet is None :
-			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
-			self.Parent.configDenied()
-			return None
-		self.Parent.wallet.setFolder('plasmaMailChecker')
-		if self.Status != 'FREE' :
-			return None
-		self.passwordLineEdit.setPasswordMode(True)
-		str_ = self.stringEditor.userText()
-		if to_unicode(str_) != '' :
-			self.accountListBox.addItem(str_)
-			accountName, authData = self.parsingValues()
-			self.Parent.wallet.writePassword(accountName, authData[3])
-			authData[3] = ''
-			addAccount(accountName, authData)
-			self.clearFields()
-
-	def parsingValues(self):
-		global Settings
-		accountName = self.stringEditor.userText()
-		accountServer = self.serverLineEdit.userText()
-		connectMethod = self.connectMethodBox.itemData(self.connectMethodBox.currentIndex()).toString()
-		cryptMethod = self.cryptBox.itemData(self.cryptBox.currentIndex()).toString()
-		port_ = self.portBox.value()
-		command = self.accountCommand.currentText()
-		userName = self.userNameLineEdit.userText()
-		userPassword = self.passwordLineEdit.userText()
-		if self.enabledBox.isChecked() :
-			enable = '1'
-		else:
-			enable = '0'
-		if str(connectMethod) in ('imap', 'imap\idle') :
-			inbox = self.resultString
-		else :
-			inbox = None
-		# print dateStamp() ,  (accountName,accountServer,port_,connectMethod,cryptMethod, \
-		#												userName,userPassword, 'parsingVal')
-		return accountName,\
-				[ accountServer, port_, userName, userPassword, \
-				cryptMethod, connectMethod, '0', enable, inbox, command]
-
-	def delCurrentAccount(self, accountName = ''):
-		global Settings
-		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
-		if self.Parent.wallet is None :
-			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
-			return None
-		self.Parent.wallet.setFolder('plasmaMailChecker')
-		if self.Status == 'FREE' :
-			item_ = self.accountListBox.currentRow()
-			#accountGroup = self.accountListBox.currentItem()
-			if item_ == -1 :
-				return None
-			accountName = (self.accountListBox.takeItem(item_)).text()
-			# print dateStamp() ,  accountName.text(), str(accountName.text())
-		elif self.Status != 'CLEAR' :
-			return None
-		else:
-			i = 0
-			while i < self.accountListBox.count() :
-				if accountName == self.accountListBox.item(i).text() :
-					self.accountListBox.takeItem(i)
-					break
-				i += 1
-			pass
-
-		Settings.remove(accountName)
-		if self.Status != 'CLEAR' : self.Parent.wallet.removeEntry(accountName)
-		try:
-			self.accountList.remove(accountName)
-		except ValueError, x :
-			print dateStamp() ,  x, '  delAcc'
-			pass
-		finally:
-			pass
-		i = 0
-		str_ = ''
-		while i < len(self.accountList) :
-			str_ += self.accountList[i] + ';'
-			i += 1
-		Settings.setValue('Accounts', str_)
-
-	def eventClose(self, event):
-		self.prnt.done(0)
 
 class AppletSettings(QWidget):
 	def __init__(self, obj = None, parent= None):
@@ -2549,33 +2180,6 @@ class Font_n_Colour(QWidget):
 
 	def eventClose(self, event):
 		self.prnt.done(0)
-
-class EnterMailBox(KDialog):
-	def __init__(self, text_, parent = None):
-		KDialog.__init__(self, parent)
-		self.prnt = parent
-		self.text = text_
-
-		self.setWindowTitle('Choice of MailBox')
-		self.setButtons( KDialog.ButtonCode(KDialog.Ok | KDialog.Cancel) )
-		self.connect(self, SIGNAL("okClicked()"), self.ok)
-		self.connect(self, SIGNAL("cancelClicked()"), self.cancel)
-
-		self.browseText = KLineEdit()
-		self.browseText.setToolTip(u'Defailt MailBox : Inbox\nFor example, GMail specified mailbox :\n[Gmail]/All\nor\n[Gmail]/Вся почта')
-		self.browseText.setText(self.text)
-		self.setMainWidget(self.browseText)
-
-	def ok(self):
-		self.prnt.resultString = self.browseText.userText()
-		self.done(0)
-
-	def cancel(self):
-		self.prnt.resultString = self.text
-		self.done(0)
-
-	def closeEvent(self, event):
-		event.ignore()
 
 class AkonadiResources(QWidget):
 	def __init__(self, obj = None, parent = None):

@@ -127,16 +127,20 @@ def getMail(obj, m, protocol):
 		finally : pass
 		msg = message_from_string(_Mail)
 		#print msg.items()
-		Date = msg.get('Date')
-		From = mailToString(textChain(msg.get('From')))
-		Subj = textChain(msg.get('Subject'))
+		Date	= msg.get('Date')
+		_From	= textChain(msg.get('From'))
+		From	= mailToString(_From)
+		To		= msg.get('To')
+		Subj	= textChain(msg.get('Subject'))
+		To_From	= ('' if To is None else To, '' if _From is None else _From)
 		if Date is None : Date = ''
 		Date = dateFormat('Date: ' + Date)
 		obj.Parent.mailAttr.emit({\
 			'number'	: idx, \
 			'date'		: obj.Parent.tr._translate('Date:') + ' ' + Date, \
 			'from'		: obj.Parent.tr._translate('From:') + ' ' + From, \
-			'subj'		: obj.Parent.tr._translate('Subj:') + ' ' + Subj})
+			'subj'		: obj.Parent.tr._translate('Subj:') + ' ' + Subj, \
+			'to\from'	: To_From})
 		displayMailText(obj, msg, idx)
 
 def recImap4Mail(obj):
@@ -277,6 +281,7 @@ class Box(QTabWidget):
 		self.mails[i].fromField.setText(d['from'])
 		self.mails[i].subjField.setText(d['subj'])
 		self.mails[i].dateField.setText(d['date'])
+		self.mails[i].to_from = d['to\from']
 
 	def setMailData(self, d):
 		ll = d['data'][0]

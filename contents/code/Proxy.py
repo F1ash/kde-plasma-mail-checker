@@ -58,12 +58,14 @@ class ProxySettings(QWidget):
 		self.proxyTypeBox.setToolTip(self.tr._translate("Proxy type"))
 		data = Settings.value('ProxyType', 'SOCKS5')
 		self.proxyTypeBox.setCurrentIndex(self.proxyTypeBox.findData(data))
+		self.proxyTypeBox.currentIndexChanged.connect(self.stateChangedEvent)
 		self.layout.addWidget(self.proxyTypeBox, 1, 0)
 
 		self.Hlayout = QHBoxLayout()
 		self.addrEditor = QLineEdit()
 		self.addrEditor.setText(Settings.value('ProxyAddr', '').toString())
 		self.addrEditor.setToolTip(self.tr._translate("Proxy address"))
+		self.addrEditor.textChanged.connect(self.stateChangedEvent)
 		self.Hlayout.addWidget(self.addrEditor, 0)
 
 		self.portBox = QSpinBox()
@@ -73,6 +75,7 @@ class ProxySettings(QWidget):
 		self.portBox.setValue(int(str(value.toString())))
 		self.portBox.setSingleStep(1)
 		self.portBox.setToolTip(self.tr._translate('Proxy Port'))
+		self.portBox.valueChanged.connect(self.stateChangedEvent)
 		self.Hlayout.addWidget(self.portBox, 0,  Qt.AlignRight)
 
 		self.layout.addItem(self.Hlayout, 1, 1)
@@ -84,8 +87,10 @@ class ProxySettings(QWidget):
 
 		self.userEditor = QLineEdit()
 		self.userEditor.setText(Settings.value('ProxyUSER', '').toString())
+		self.userEditor.textChanged.connect(self.stateChangedEvent)
 		self.passwEditor = QLineEdit()
 		self.passwEditor.setText(Settings.value('ProxyPASS', '').toString())
+		self.passwEditor.textChanged.connect(self.stateChangedEvent)
 		self.layout.addWidget(self.userEditor, 2, 1)
 		self.layout.addWidget(self.passwEditor, 3, 1)
 
@@ -95,7 +100,11 @@ class ProxySettings(QWidget):
 		self.layout.addWidget(self.proxyModuleLabel, 0, 1,  Qt.AlignRight)
 
 		self.setLayout(self.layout)
+		self.StateChanged = False
 		self.activateProxy()
+
+	def stateChangedEvent(self):
+		self.StateChanged = True
 
 	def saveData(self):
 		Settings.setValue('ProxyType', self.proxyTypeBox.currentText())
@@ -103,6 +112,7 @@ class ProxySettings(QWidget):
 		Settings.setValue('ProxyPort', self.portBox.value())
 		Settings.setValue('ProxyUSER', self.userEditor.text())
 		Settings.setValue('ProxyPASS', self.passwEditor.text())
+		self.StateChanged = False
 
 	def activateProxy(self):
 		state = True if self.enableProxy.checkState()==Qt.Checked else False

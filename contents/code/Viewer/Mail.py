@@ -21,6 +21,7 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from Translator import Translator
+from Sender.mailSender import MailSender
 
 class Mail(QWidget):
 	def __init__(self, idx = None, parent = None):
@@ -28,25 +29,68 @@ class Mail(QWidget):
 		self.idx = idx
 		self.Parent = parent
 		self.tr = Translator('mailViewer')
+		self.to_from = None
 		self.fromField = QLabel(self.tr._translate('From:'))
 		self.fromField.setOpenExternalLinks(True)
 		self.fromField.linkHovered.connect(self.linkDisplay)
 		self.subjField = QLabel(self.tr._translate('Subj:'))
 		self.dateField = QLabel(self.tr._translate('Date:'))
+		
+		self.sendRe = QPushButton(QIcon.fromTheme('mail-replied'), '')
+		self.sendRe.setToolTip(self.tr._translate('Quick Answer'))
+		self.sendRe.setFixedWidth(self.Parent.iconSize().width())
+		self.sendRe.setMinimumHeight(self.Parent.iconSize().height())
+		self.sendRe.setContentsMargins(0, 0, 0, 0)
+		self.sendRe.clicked.connect(self.sendReMail)
+		self.sendFw = QPushButton(QIcon.fromTheme('mail-reply-sender'), '')
+		self.sendFw.setToolTip(self.tr._translate('Quick Forward'))
+		self.sendFw.setFixedWidth(self.Parent.iconSize().width())
+		self.sendFw.setMinimumHeight(self.Parent.iconSize().height())
+		self.sendFw.setContentsMargins(0, 0, 0, 0)
+		self.sendFw.clicked.connect(self.sendFwMail)
+		
 		self.mailField = QSplitter()
 		self.mailField.setChildrenCollapsible(True)
 		self.mailField.setOrientation(Qt.Vertical)
 		self.mailField.setStretchFactor(1, 1)
 		self.mailField.setHandleWidth(5)
 
+		self.panel = QHBoxLayout()
+		self.mailInfo = QVBoxLayout()
+		self.mailInfo.addWidget(self.fromField)
+		self.mailInfo.addWidget(self.subjField)
+		self.mailInfo.addWidget(self.dateField)
+		self.buttons = QVBoxLayout()
+		self.buttons.addWidget(self.sendRe)
+		self.buttons.addWidget(self.sendFw)
+		self.panel.addItem(self.mailInfo)
+		self.panel.addItem(self.buttons)
+
 		self.layout = QVBoxLayout()
-		self.layout.addWidget(self.fromField)
-		self.layout.addWidget(self.subjField)
-		self.layout.addWidget(self.dateField)
+		self.layout.addItem(self.panel)
 		self.layout.addWidget(self.mailField)
+		self.layout.setContentsMargins(0, 0, 0, 0)
+		self.layout.setSpacing(0)
 		self.setLayout(self.layout)
 
 	def linkDisplay(self, s):
 		self.Parent.Parent.statusBar.showMessage(s)
+
+	def sendReMail(self):
+		self.sendMail('Re: ')
+	def sendFwMail(self):
+		self.sendMail('Fw: ')
+	def sendMail(self, prefix):
+		print 'send ', self.idx, prefix
+		#print self.to.toLocal8Bit().data()
+		#print self.subjField.text().toLocal8Bit().data()
+		splt = self.mailField.widget(0)
+		wdg = splt.widget(splt.count() - 1)
+		if hasattr(wdg, 'toPlainText') : s = wdg.toPlainText()
+		elif hasattr(wdg, 'title') :  s = wdg.title()
+		else : s = '<UNKNOWN_ERROR>'
+		to_ = self.fromField.text()
+		sendMail = MailSender(self.to_from[0], self.to_from[1], prefix, self.subjField.text(), s, self)
+		sendMail.exec_()
 
 	def __del__(self): self.close()
