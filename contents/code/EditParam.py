@@ -31,6 +31,7 @@ class EditParam(QWidget):
 		self.Parent = parent
 		self.tr = parent.tr
 		self.Settings = parent.Settings
+		self.checkAccess = parent.checkAccess
 
 		self.save_ = QPushButton()
 		self.save_.setToolTip(self.tr._translate("Save"))
@@ -78,8 +79,8 @@ class EditParam(QWidget):
 		self.Parent.edited.emit()
 
 	def saveAccountData(self):
-		self.receiveParams.saveData()
-		self.sendParams.saveData()
+		if hasattr(self, 'receiveParams') : self.receiveParams.saveData()
+		if hasattr(self, 'sendParams')    : self.sendParams.saveData()
 		# data saved
 		self.clearParamArea()
 		self.Parent.edited.emit()

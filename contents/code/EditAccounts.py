@@ -34,7 +34,8 @@ class EditAccounts(QWidget):
 		self.Parent = obj
 		self.prnt = parent
 		self.tr = Translator('EditAccounts')
-		self.Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
+		self.Settings = self.Parent.Settings
+		self.checkAccess = self.Parent.checkAccess
 		self.accounts  = EditList(obj, self)
 		self.parameters = EditParam(self)
 		self.parameters.changeSelfActivity(False)

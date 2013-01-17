@@ -20,7 +20,7 @@
 #  
 
 from MailFunc import *
-from Functions import _0_
+from Functions import dlm
 import sys, os, os.path
 from PyQt4 import QtGui
 from Viewer.MainWindow import MainWindow
@@ -35,7 +35,7 @@ if __name__ == '__main__':
 		while l.endswith('\n') : l.remove('\n')
 		''' (accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd) '''
 		accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd = \
-			l.split(_0_)
+			l.split(dlm)
 	else :
 		accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd = \
 			['' for i in xrange(8)]

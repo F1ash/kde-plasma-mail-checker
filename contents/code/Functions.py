@@ -46,7 +46,7 @@ dltLocal = datetime.timedelta(hours = dltHours, minutes = dltMinutes)
 lang = locale.getdefaultlocale()
 char_set = string.ascii_letters + string.digits
 
-_0_ = ' <||> '
+dlm = ' <||> '
 
 pattern = "[1-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?"
 ip_re = re.compile(pattern)

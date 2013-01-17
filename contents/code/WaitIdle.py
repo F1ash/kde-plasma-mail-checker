@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
-#  AkonadiMod.py
+#  WaitIdle.py
 #  
-#  Copyright 2012 Flash <kaperang07@gmail.com>
+#  Copyright 2013 Flash <kaperang07@gmail.com>
 #  
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,15 +17,28 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #  
-#
+#  
 
-try :
-	AkonadiModuleExist = True
-	from PyKDE4.akonadi import Akonadi
-except Exception, err:
-	AkonadiModuleExist = False
-	print err
-finally : pass
+from PyQt4.QtCore import QThread
+from Functions import getExternalIP
 
-if AkonadiModuleExist :
-	from AkonadiObjects import *
+class WaitIdle(QThread):
+	def __init__(self, parent = None):
+		QThread.__init__(self, parent)
+
+		self.Parent = parent
+		self.key = False
+
+	def run(self):
+		while not self.key and len(self.Parent.idleMailingList) :
+			self.msleep(500)
+			if getExternalIP() == '' :
+				print dateStamp(), 'Internet not available'
+				for item in self.Parent.idleMailingList :
+					item.__del__()
+				break
+		self.Parent.idleingStopped.emit()
+
+	def __del__(self):
+		self.key = True
+		self.quit()

@@ -21,7 +21,6 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from PyKDE4.kdeui import KWallet
 
 class EditList(QWidget):
 	def __init__(self, obj = None, parent = None):
@@ -31,6 +30,7 @@ class EditList(QWidget):
 		self.prnt = parent
 		self.tr = parent.tr
 		self.Settings = parent.Settings
+		self.checkAccess = self.Parent.checkAccess
 		self.accountList = QStringList()
 		self.renamedItem = None
 
@@ -174,14 +174,6 @@ class EditList(QWidget):
 		self.addAccountItem.setEnabled(state)
 		self.editAccountItem.setEnabled(state)
 		self.delAccountItem.setEnabled(state)
-
-	def checkAccess(self):
-		self.Parent.wallet = KWallet.Wallet.openWallet(KWallet.Wallet.LocalWallet(), 0)
-		if self.Parent.wallet is None :
-			self.Parent.eventNotification(self.tr._translate("Warning :\nAccess denied!"))
-			return False
-		self.Parent.wallet.setFolder('plasmaMailChecker')
-		return True
 
 	def __del__(self):
 		self.close()

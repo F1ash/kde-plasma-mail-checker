@@ -43,7 +43,6 @@ class ReceiveParams(QWidget):
 		self.HB1Layout.addWidget(QLabel(self.tr._translate("Enable : ")), 0, 2)
 
 		self.serverLineEdit = QLineEdit()
-		#self.serverLineEdit.setContextMenuEnabled(True)
 		self.serverLineEdit.setToolTip(self.tr._translate("Example : imap.gmail.com, pop.mail.ru"))
 		self.HB1Layout.addWidget(self.serverLineEdit, 1, 0)
 
@@ -100,7 +99,6 @@ class ReceiveParams(QWidget):
 		self.HB3Layout.addWidget(QLabel(self.tr._translate("Password : ")), 0, 1)
 
 		self.userNameLineEdit = QLineEdit()
-		#self.userNameLineEdit.setContextMenuEnabled(True)
 		self.HB3Layout.addWidget(self.userNameLineEdit, 1, 0)
 
 		self.passwordLineEdit = QLineEdit()
@@ -115,22 +113,22 @@ class ReceiveParams(QWidget):
 		self.passwordChanged = False
 
 	def changePort(self, str_):
-		port = [POP3_PORT, POP3_SSL_PORT, IMAP4_PORT, IMAP4_SSL_PORT]
+		ports = [POP3_PORT, POP3_SSL_PORT, IMAP4_PORT, IMAP4_SSL_PORT]
 		connectMethod = self.connectMethodBox.itemData(self.connectMethodBox.currentIndex()).toString()
 		cryptMethod = self.cryptBox.itemData(self.cryptBox.currentIndex()).toString()
 		if str(connectMethod) in ('imap', 'imap\idle') :
-			if POP3_PORT in port : port.remove(POP3_PORT)
-			if POP3_SSL_PORT in port : port.remove(POP3_SSL_PORT)
+			if POP3_PORT in ports : ports.remove(POP3_PORT)
+			if POP3_SSL_PORT in ports : ports.remove(POP3_SSL_PORT)
 		else :
-			if IMAP4_PORT in port : port.remove(IMAP4_PORT)
-			if IMAP4_SSL_PORT in port : port.remove(IMAP4_SSL_PORT)
+			if IMAP4_PORT in ports : ports.remove(IMAP4_PORT)
+			if IMAP4_SSL_PORT in ports : ports.remove(IMAP4_SSL_PORT)
 		if str(cryptMethod) == 'None' :
-			if IMAP4_SSL_PORT in port : port.remove(IMAP4_SSL_PORT)
-			if POP3_SSL_PORT in port : port.remove(POP3_SSL_PORT)
+			if IMAP4_SSL_PORT in ports : ports.remove(IMAP4_SSL_PORT)
+			if POP3_SSL_PORT in ports : ports.remove(POP3_SSL_PORT)
 		else :
-			if IMAP4_PORT in port : port.remove(IMAP4_PORT)
-			if POP3_PORT in port : port.remove(POP3_PORT)
-		self.portBox.setValue(port[0] if len(port) else 0)
+			if IMAP4_PORT in ports : ports.remove(IMAP4_PORT)
+			if POP3_PORT in ports : ports.remove(POP3_PORT)
+		self.portBox.setValue(ports[0] if len(ports) else 0)
 
 	def showCatalogChoice(self, str_):
 		if str_ in ('IMAP4', 'IMAP4\IDLE') : state = True
