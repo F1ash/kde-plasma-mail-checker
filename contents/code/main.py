@@ -801,13 +801,13 @@ class plasmaMailChecker(plasmascript.Applet):
 					self.filters.saveFilter(0)
 				if self.filters.fromEditor.isEnabled() :
 					self.filters.saveFilter(1)
-		if self.AkonadiResources.StateChanged :
+		if self.akonadiResources.StateChanged :
 			answer = QMessageBox.question (self.dialog, \
 					 self.tr._translate("Akonadi Mail Resources"), \
 					 self.tr._translate('Changes was not completed.'), \
 					 self.tr._translate('Save'), \
 					 self.tr._translate('Cancel'))
-			if not answer : self.AkonadiResources.saveData()
+			if not answer : self.akonadiResources.saveData()
 		if self.proxy.StateChanged :
 			answer = QMessageBox.question (self.dialog, \
 					 self.tr._translate('Proxy'), \

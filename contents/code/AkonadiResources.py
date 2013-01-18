@@ -293,10 +293,7 @@ class AkonadiResources(QWidget):
 		self.init()
 
 	def init(self):
-
-		self.connectFlag = False
 		self.layout = QGridLayout()
-
 		self.VBLayout = QVBoxLayout()
 
 		self.akonadiServer = QPushButton('&Restart')
