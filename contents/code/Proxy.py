@@ -22,7 +22,6 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from Functions import *
 from Translator import Translator
 
 class ProxySettings(QWidget):
@@ -32,13 +31,15 @@ class ProxySettings(QWidget):
 		self.Parent = obj
 		self.prnt = parent
 		self.tr = Translator('Proxy')
+		self.Settings = obj.Settings
+		self.loadSocksModule = obj.someFunctions.loadSocksModule
 
 		self.layout = QGridLayout()
 		self.layout.setSpacing(0)
 
 		self.enableProxy = QCheckBox()
 		self.enableProxy.setToolTip(self.tr._translate("Enable\Disable the Proxy"))
-		self.Enabled = True if Settings.value('UseProxy', 'False')=='True' else False
+		self.Enabled = True if self.Settings.value('UseProxy', 'False')=='True' else False
 		if self.Enabled : self.enableProxy.setCheckState(Qt.Checked)
 		else : self.enableProxy.setCheckState(Qt.Unchecked)
 		self.enableProxy.stateChanged.connect(self.activateProxy)
@@ -56,14 +57,14 @@ class ProxySettings(QWidget):
 		self.proxyTypeBox.addItem('SOCKS4', QVariant('SOCKS4'))
 		self.proxyTypeBox.addItem('SOCKS5', QVariant('SOCKS5'))
 		self.proxyTypeBox.setToolTip(self.tr._translate("Proxy type"))
-		data = Settings.value('ProxyType', 'SOCKS5')
+		data = self.Settings.value('ProxyType', 'SOCKS5')
 		self.proxyTypeBox.setCurrentIndex(self.proxyTypeBox.findData(data))
 		self.proxyTypeBox.currentIndexChanged.connect(self.stateChangedEvent)
 		self.layout.addWidget(self.proxyTypeBox, 1, 0)
 
 		self.Hlayout = QHBoxLayout()
 		self.addrEditor = QLineEdit()
-		self.addrEditor.setText(Settings.value('ProxyAddr', '').toString())
+		self.addrEditor.setText(self.Settings.value('ProxyAddr', '').toString())
 		self.addrEditor.setToolTip(self.tr._translate("Proxy address"))
 		self.addrEditor.textChanged.connect(self.stateChangedEvent)
 		self.Hlayout.addWidget(self.addrEditor, 0)
@@ -71,7 +72,7 @@ class ProxySettings(QWidget):
 		self.portBox = QSpinBox()
 		self.portBox.setMinimum(0)
 		self.portBox.setMaximum(65535)
-		value = Settings.value('ProxyPort', '3128' )
+		value = self.Settings.value('ProxyPort', '3128' )
 		self.portBox.setValue(int(str(value.toString())))
 		self.portBox.setSingleStep(1)
 		self.portBox.setToolTip(self.tr._translate('Proxy Port'))
@@ -86,15 +87,15 @@ class ProxySettings(QWidget):
 		self.layout.addWidget(self.passwLabel, 3, 0,  Qt.AlignLeft)
 
 		self.userEditor = QLineEdit()
-		self.userEditor.setText(Settings.value('ProxyUSER', '').toString())
+		self.userEditor.setText(self.Settings.value('ProxyUSER', '').toString())
 		self.userEditor.textChanged.connect(self.stateChangedEvent)
 		self.passwEditor = QLineEdit()
-		self.passwEditor.setText(Settings.value('ProxyPASS', '').toString())
+		self.passwEditor.setText(self.Settings.value('ProxyPASS', '').toString())
 		self.passwEditor.textChanged.connect(self.stateChangedEvent)
 		self.layout.addWidget(self.userEditor, 2, 1)
 		self.layout.addWidget(self.passwEditor, 3, 1)
 
-		if loadSocksModule() : available = self.tr._translate("SocksiPy module loaded")
+		if self.loadSocksModule() : available = self.tr._translate("SocksiPy module loaded")
 		else : available = self.tr._translate("SocksiPy module not loaded")
 		self.proxyModuleLabel = QLabel(available)
 		self.layout.addWidget(self.proxyModuleLabel, 0, 1,  Qt.AlignRight)
@@ -107,17 +108,17 @@ class ProxySettings(QWidget):
 		self.StateChanged = True
 
 	def saveData(self):
-		Settings.setValue('ProxyType', self.proxyTypeBox.currentText())
-		Settings.setValue('ProxyAddr', self.addrEditor.text())
-		Settings.setValue('ProxyPort', self.portBox.value())
-		Settings.setValue('ProxyUSER', self.userEditor.text())
-		Settings.setValue('ProxyPASS', self.passwEditor.text())
+		self.Settings.setValue('ProxyType', self.proxyTypeBox.currentText())
+		self.Settings.setValue('ProxyAddr', self.addrEditor.text())
+		self.Settings.setValue('ProxyPort', self.portBox.value())
+		self.Settings.setValue('ProxyUSER', self.userEditor.text())
+		self.Settings.setValue('ProxyPASS', self.passwEditor.text())
 		self.StateChanged = False
 
 	def activateProxy(self):
 		state = True if self.enableProxy.checkState()==Qt.Checked else False
-		if state : PROXY_Module = loadSocksModule(True)
-		else : PROXY_Module = loadSocksModule(False)
+		if state : PROXY_Module = self.loadSocksModule(True)
+		else : PROXY_Module = self.loadSocksModule(False)
 		if PROXY_Module : available = self.tr._translate("SocksiPy module loaded")
 		else : available = self.tr._translate("SocksiPy module not loaded")
 		self.proxyModuleLabel.setText(available)

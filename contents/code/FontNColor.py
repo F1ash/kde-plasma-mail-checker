@@ -397,6 +397,12 @@ class Font_n_Colour(QWidget):
 		return str(selectColour), _yes, self.getRGBaStyle((selectColour, _yes))
 
 	def headerFont(self):
+		self.headerSizeVar, \
+			self.headerColourStyle, \
+			self.headerBoldVar, \
+			self.headerItalVar, \
+			self.headerFontLabel, \
+			self.headerFontVar = \
 		self.templateMethodForFont( \
 			self.headerSizeVar, \
 			self.headerColourStyle, \
@@ -407,6 +413,12 @@ class Font_n_Colour(QWidget):
 			'Header :')
 
 	def headerColour(self):
+			self.headerColourVar, \
+			self.headerColourStyle, \
+			self.headerBoldVar, \
+			self.headerItalVar, \
+			self.headerFontLabel, \
+			self.headerFontVar = \
 		self.templateMethodForColor( \
 			self.headerColourVar, \
 			self.headerColourStyle, \
@@ -417,6 +429,12 @@ class Font_n_Colour(QWidget):
 			'Header :')
 
 	def fieldBoxFont(self):
+		self.fieldBoxSizeVar, \
+			self.fieldBoxColourStyle, \
+			self.fieldBoxBoldVar, \
+			self.fieldBoxItalVar, \
+			self.fieldBoxFontLabel, \
+			self.fieldBoxFontVar = \
 		self.templateMethodForFont( \
 			self.fieldBoxSizeVar, \
 			self.fieldBoxColourStyle, \
@@ -427,6 +445,12 @@ class Font_n_Colour(QWidget):
 			'field Box :')
 
 	def fieldBoxColour(self):
+		self.fieldBoxColourVar, \
+			self.fieldBoxColourStyle, \
+			self.fieldBoxBoldVar, \
+			self.fieldBoxItalVar, \
+			self.fieldBoxFontLabel, \
+			self.fieldBoxFontVar = \
 		self.templateMethodForColor( \
 			self.fieldBoxColourVar, \
 			self.fieldBoxColourStyle, \
@@ -437,6 +461,12 @@ class Font_n_Colour(QWidget):
 			'field Box :')
 
 	def fieldFromFont(self):
+		self.fieldFromSizeVar, \
+			self.fieldFromColourStyle, \
+			self.fieldFromBoldVar, \
+			self.fieldFromItalVar, \
+			self.fieldFromFontLabel, \
+			self.fieldFromFontVar = \
 		self.templateMethodForFont( \
 			self.fieldFromSizeVar, \
 			self.fieldFromColourStyle, \
@@ -447,6 +477,12 @@ class Font_n_Colour(QWidget):
 			'field From :')
 
 	def fieldFromColour(self):
+		self.fieldFromColourVar, \
+			self.fieldFromColourStyle, \
+			self.fieldFromBoldVar, \
+			self.fieldFromItalVar, \
+			self.fieldFromFontLabel, \
+			self.fieldFromFontVar = \
 		self.templateMethodForColor( \
 			self.fieldFromColourVar, \
 			self.fieldFromColourStyle, \
@@ -457,6 +493,12 @@ class Font_n_Colour(QWidget):
 			'field From :')
 
 	def fieldSubjFont(self):
+		self.fieldSubjSizeVar, \
+			self.fieldSubjColourStyle, \
+			self.fieldSubjBoldVar, \
+			self.fieldSubjItalVar, \
+			self.fieldSubjFontLabel, \
+			self.fieldSubjFontVar = \
 		self.templateMethodForFont( \
 			self.fieldSubjSizeVar, \
 			self.fieldSubjColourStyle, \
@@ -467,6 +509,12 @@ class Font_n_Colour(QWidget):
 			'field Subj :')
 
 	def fieldSubjColour(self):
+		self.fieldSubjColourVar, \
+			self.fieldSubjColourStyle, \
+			self.fieldSubjBoldVar, \
+			self.fieldSubjItalVar, \
+			self.fieldSubjFontLabel, \
+			self.fieldSubjFontVar = \
 		self.templateMethodForColor( \
 			self.fieldSubjColourVar, \
 			self.fieldSubjColourStyle, \
@@ -477,6 +525,12 @@ class Font_n_Colour(QWidget):
 			'field Subj :')
 
 	def fieldDateFont(self):
+		self.fieldDateSizeVar, \
+			self.fieldDateColourStyle, \
+			self.fieldDateBoldVar, \
+			self.fieldDateItalVar, \
+			self.fieldDateFontLabel, \
+			self.fieldDateFontVar = \
 		self.templateMethodForFont( \
 			self.fieldDateSizeVar, \
 			self.fieldDateColourStyle, \
@@ -487,6 +541,12 @@ class Font_n_Colour(QWidget):
 			'field Date :')
 
 	def fieldDateColour(self):
+		self.fieldDateColourVar, \
+			self.fieldDateColourStyle, \
+			self.fieldDateBoldVar, \
+			self.fieldDateItalVar, \
+			self.fieldDateFontLabel, \
+			self.fieldDateFontVar = \
 		self.templateMethodForColor( \
 			self.fieldDateColourVar, \
 			self.fieldDateColourStyle, \
@@ -497,6 +557,12 @@ class Font_n_Colour(QWidget):
 			'field Date :')
 
 	def accountFont(self):
+		self.accountSizeVar, \
+			self.accountColourStyle, \
+			self.accountBoldVar, \
+			self.accountItalVar, \
+			self.accountFontLabel, \
+			self.accountFontVar = \
 		self.templateMethodForFont( \
 			self.accountSizeVar, \
 			self.accountColourStyle, \
@@ -507,6 +573,12 @@ class Font_n_Colour(QWidget):
 			'Account :')
 
 	def accountColour(self):
+		self.accountColourVar, \
+			self.accountColourStyle, \
+			self.accountBoldVar, \
+			self.accountItalVar, \
+			self.accountFontLabel, \
+			self.accountFontVar = \
 		self.templateMethodForColor( \
 			self.accountColourVar, \
 			self.accountColourStyle, \
@@ -517,6 +589,12 @@ class Font_n_Colour(QWidget):
 			'Account :')
 
 	def accountSFont(self):
+		self.accountSSizeVar, \
+			self.accountSColourStyle, \
+			self.accountSBoldVar, \
+			self.accountSItalVar, \
+			self.accountSFontLabel, \
+			self.accountSFontVar = \
 		self.templateMethodForFont( \
 			self.accountSSizeVar, \
 			self.accountSColourStyle, \
@@ -527,6 +605,12 @@ class Font_n_Colour(QWidget):
 			'Account :')
 
 	def accountSColour(self):
+		self.accountSColourVar, \
+			self.accountSColourStyle, \
+			self.accountSBoldVar, \
+			self.accountSItalVar, \
+			self.accountSFontLabel, \
+			self.accountSFontVar = \
 		self.templateMethodForColor( \
 			self.accountSColourVar, \
 			self.accountSColourStyle, \
@@ -537,6 +621,12 @@ class Font_n_Colour(QWidget):
 			'Account :')
 
 	def accountToolTipFont(self):
+		self.accountToolTipSizeVar, \
+			self.accountToolTipColourStyle, \
+			self.accountToolTipBoldVar, \
+			self.accountToolTipItalVar, \
+			self.accountToolTipFontLabel, \
+			self.accountToolTipFontVar = \
 		self.templateMethodForFont( \
 			self.accountToolTipSizeVar, \
 			self.accountToolTipColourStyle, \
@@ -547,6 +637,12 @@ class Font_n_Colour(QWidget):
 			'Account\nToolTip :')
 
 	def accountToolTipColour(self):
+		self.accountToolTipColourVar, \
+			self.accountToolTipColourStyle, \
+			self.accountToolTipBoldVar, \
+			self.accountToolTipItalVar, \
+			self.accountToolTipFontLabel, \
+			self.accountToolTipFontVar = \
 		self.templateMethodForColor( \
 			self.accountToolTipColourVar, \
 			self.accountToolTipColourStyle, \
@@ -557,6 +653,12 @@ class Font_n_Colour(QWidget):
 			'Account\nToolTip :')
 
 	def accountToolTipSFont(self):
+		self.accountToolTipSSizeVar, \
+			self.accountToolTipSColourStyle, \
+			self.accountToolTipSBoldVar, \
+			self.accountToolTipSItalVar, \
+			self.accountToolTipSFontLabel, \
+			self.accountToolTipSFontVar = \
 		self.templateMethodForFont( \
 			self.accountToolTipSSizeVar, \
 			self.accountToolTipSColourStyle, \
@@ -567,6 +669,12 @@ class Font_n_Colour(QWidget):
 			'Account\nToolTip :')
 
 	def accountToolTipSColour(self):
+		self.accountToolTipSColourVar, \
+			self.accountToolTipSColourStyle, \
+			self.accountToolTipSBoldVar, \
+			self.accountToolTipSItalVar, \
+			self.accountToolTipSFontLabel, \
+			self.accountToolTipSFontVar = \
 		self.templateMethodForColor( \
 			self.accountToolTipSColourVar, \
 			self.accountToolTipSColourStyle, \
@@ -577,6 +685,12 @@ class Font_n_Colour(QWidget):
 			'Account\nToolTip :')
 
 	def countFont(self):
+		self.countSizeVar, \
+			self.countColourStyle, \
+			self.countBoldVar, \
+			self.countItalVar, \
+			self.countFontLabel, \
+			self.countFontVar = \
 		self.templateMethodForFont( \
 			self.countSizeVar, \
 			self.countColourStyle, \
@@ -587,6 +701,12 @@ class Font_n_Colour(QWidget):
 			'count :')
 
 	def countColour(self):
+		self.countColourVar, \
+			self.countColourStyle, \
+			self.countBoldVar, \
+			self.countItalVar, \
+			self.countFontLabel, \
+			self.countFontVar = \
 		self.templateMethodForColor( \
 			self.countColourVar, \
 			self.countColourStyle, \
@@ -597,6 +717,12 @@ class Font_n_Colour(QWidget):
 			'count :')
 
 	def countSFont(self):
+		self.countSSizeVar, \
+			self.countSColourStyle, \
+			self.countSBoldVar, \
+			self.countSItalVar, \
+			self.countSFontLabel, \
+			self.countSFontVar = \
 		self.templateMethodForFont( \
 			self.countSSizeVar, \
 			self.countSColourStyle, \
@@ -607,6 +733,12 @@ class Font_n_Colour(QWidget):
 			'count :')
 
 	def countSColour(self):
+		self.countSColourVar, \
+			self.countSColourStyle, \
+			self.countSBoldVar, \
+			self.countSItalVar, \
+			self.countSFontLabel, \
+			self.countSFontVar = \
 		self.templateMethodForColor( \
 			self.countSColourVar, \
 			self.countSColourStyle, \
@@ -617,6 +749,12 @@ class Font_n_Colour(QWidget):
 			'count :')
 
 	def countToolTipFont(self):
+		self.countToolTipSizeVar, \
+			self.countToolTipColourStyle, \
+			self.countToolTipBoldVar, \
+			self.countToolTipItalVar, \
+			self.countToolTipFontLabel, \
+			self.countToolTipFontVar = \
 		self.templateMethodForFont( \
 			self.countToolTipSizeVar, \
 			self.countToolTipColourStyle, \
@@ -627,6 +765,12 @@ class Font_n_Colour(QWidget):
 			'count\nToolTip :')
 
 	def countToolTipColour(self):
+		self.countToolTipColourVar, \
+			self.countToolTipColourStyle, \
+			self.countToolTipBoldVar, \
+			self.countToolTipItalVar, \
+			self.countToolTipFontLabel, \
+			self.countToolTipFontVar = \
 		self.templateMethodForColor( \
 			self.countToolTipColourVar, \
 			self.countToolTipColourStyle, \
@@ -637,6 +781,12 @@ class Font_n_Colour(QWidget):
 			'count\nToolTip :')
 
 	def countToolTipSFont(self):
+		self.countToolTipSSizeVar, \
+			self.countToolTipSColourStyle, \
+			self.countToolTipSBoldVar, \
+			self.countToolTipSItalVar, \
+			self.countToolTipSFontLabel, \
+			self.countToolTipSFontVar = \
 		self.templateMethodForFont( \
 			self.countToolTipSSizeVar, \
 			self.countToolTipSColourStyle, \
@@ -647,6 +797,12 @@ class Font_n_Colour(QWidget):
 			'count\nToolTip :')
 
 	def countToolTipSColour(self):
+		self.countToolTipSColourVar, \
+			self.countToolTipSColourStyle, \
+			self.countToolTipSBoldVar, \
+			self.countToolTipSItalVar, \
+			self.countToolTipSFontLabel, \
+			self.countToolTipSFontVar = \
 		self.templateMethodForColor( \
 			self.countToolTipSColourVar, \
 			self.countToolTipSColourStyle, \
@@ -667,6 +823,7 @@ class Font_n_Colour(QWidget):
 			FontLabel.setText('<font face="' + FontVar + '">' + \
 							  prefix + self.tr._translate(_template) + \
 							  suffix + '</font>')
+		return SizeVar, ColourStyle, BoldVar, ItalVar, FontLabel, FontVar
 
 	def templateMethodForColor(self, ColourVar, ColourStyle, BoldVar, \
 									 ItalVar, FontLabel, FontVar, _template):
@@ -680,6 +837,7 @@ class Font_n_Colour(QWidget):
 			FontLabel.setText('<font face="' + FontVar + '">' + \
 							  prefix + self.tr._translate(_template) + \
 							  suffix + '</font>')
+		return ColourVar, ColourStyle, BoldVar, ItalVar, FontLabel, FontVar
 
 	def refreshSettings(self):
 		if not self.checkAccess() : return None

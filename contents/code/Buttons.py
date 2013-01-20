@@ -22,7 +22,6 @@
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from Functions import Settings
 
 class ButtonPanel(QWidget):
 	def __init__(self, id_, parent = None):
@@ -31,7 +30,7 @@ class ButtonPanel(QWidget):
 		self.prnt = parent
 		self.tr = self.prnt.tr
 		self.id_ = id_
-		self.Settings = Settings
+		self.Settings = parent.Parent.Settings
 		self.layout = QVBoxLayout()
 
 		self.enabledBox = QCheckBox()

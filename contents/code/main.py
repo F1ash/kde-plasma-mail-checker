@@ -70,6 +70,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.tr = Translator()
 		self.Settings = QSettings(self.appletName,self.appletName)
 		self.GeneralLOCK = QMutex()
+		self.someFunctions = Required(self)
 		self.initPrefixAndSuffix()
 
 	def init(self):
@@ -400,7 +401,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.mailsInGroup = int(self.initValue('MailsInGroup', '5'))
 
 		self.initStat = True
-		initPOP3Cache()
+		self.someFunctions.initPOP3Cache()
 
 		self.Timer.start(int(timeOut) * 1000)
 		print dateStamp() ,  'processInit'
@@ -675,7 +676,8 @@ class plasmaMailChecker(plasmascript.Applet):
 					groups = 0
 					for _str in str_.split('\r\n\r\n') :
 						if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
-							_str_raw = htmlWrapper(mailAttrToSTR(_str, encoding[j]), self.mailAttrColor)
+							mailAttrStr = self.someFunctions.mailAttrToSTR(_str, encoding[j])
+							_str_raw = htmlWrapper(mailAttrStr, self.mailAttrColor)
 							## None is means deprecated mail header
 							if _str_raw is None :
 								j += 1
@@ -907,7 +909,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			print dateStamp() , x, '  eventClose_1'
 		finally : pass
 		try :
-			savePOP3Cache()
+			self.someFunctions.savePOP3Cache()
 		except IOError, x :
 			print dateStamp() ,x, '  eventClose_2'
 		finally : pass
@@ -936,7 +938,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		i.start()
 
 	def idleingStoppedEvent(self):
-		savePOP3Cache()
+		self.someFunctions.savePOP3Cache()
 		self.monitor_isnt_exist()
 		self.initStat = False
 		self.emit(SIGNAL('refresh'))
@@ -1090,7 +1092,8 @@ class plasmaMailChecker(plasmascript.Applet):
 				numbers = d['msg'][4].split()
 				for _str in string.split(d['msg'][3], '\r\n\r\n') :
 					if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
-						_str_raw = htmlWrapper(mailAttrToSTR(_str), self.mailAttrColor)
+						mailAttrStr = self.someFunctions.mailAttrToSTR(_str)
+						_str_raw = htmlWrapper(mailAttrStr, self.mailAttrColor)
 						## None is means deprecated mail header
 						if _str_raw is None :
 							j += 1

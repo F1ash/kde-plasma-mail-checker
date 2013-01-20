@@ -21,7 +21,7 @@
 #  
 
 from PyQt4.QtCore import *
-from Functions import dateStamp, htmlWrapper, mailAttrToSTR
+from Functions import dateStamp, htmlWrapper
 from MailFunc import losedBlank, codeDetect
 from PyKDE4.akonadi import Akonadi
 import string
@@ -65,6 +65,7 @@ class AkonadiMonitor(QObject):
 		self.Parent = parent
 		self.timeout = int(str(timeout)) * 1000
 		self.Settings = self.Parent.Settings
+		self.mailAttrToSTR = self.Parent.someFunctions.mailAttrToSTR
 
 		self.monitor = Akonadi.Monitor()
 		self.monitor.fetchCollection(True)
@@ -144,7 +145,7 @@ class AkonadiMonitor(QObject):
 		"""
 		for _str in string.split(str_, '\r\n\r\n') :
 			if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
-				STR_ += htmlWrapper(mailAttrToSTR(_str, headerCode), self.Parent.mailAttrColor) + '\n'
+				STR_ += htmlWrapper(self.mailAttrToSTR(_str, headerCode), self.Parent.mailAttrColor) + '\n'
 		var = self.pointers_to_new_Items.pop(nameKey, {})
 		var[ id_ ] = STR_
 		self.pointers_to_new_Items[ nameKey ] = var

@@ -191,7 +191,7 @@ def checkNewMailPOP3(accountData = ['', '']):
 				countAll = int(m.stat()[0])
 				for uidl_ in m.uidl()[1] :
 					currentMailId, currentElemUid = uidl_.split()
-					mailUidls += [currentElemUid + '\n']
+					mailUidls.append(currentElemUid + '\n')
 					if defineUIDL(accountData[0], currentElemUid) :
 						newMailIds.append(currentMailId)
 						From = ''

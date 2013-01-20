@@ -20,7 +20,7 @@
 #  
 #  
 
-from PyQt4.QtCore import QString, QSettings, QMutex
+from PyQt4.QtCore import QString, QMutex
 import os, string, time, os.path, random, email.header, datetime, locale
 import re, urllib2
 
@@ -35,9 +35,6 @@ POP3_PORT = 110
 POP3_SSL_PORT = 995
 IMAP4_PORT = 143
 IMAP4_SSL_PORT = 993
-
-LOCK = QMutex()
-Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 
 dltHours = time.localtime().tm_hour - time.gmtime().tm_hour
 dltMinutes = time.localtime().tm_min - time.gmtime().tm_min
@@ -68,18 +65,6 @@ def getExternalIP():
 		finally : pass
 	return ip
 
-def loadSocksModule(loadModule = None):
-	proxyLoad = False
-	if ( loadModule is None and Settings.value('UseProxy', 'False')=='True' ) or loadModule :
-		## http://sourceforge.net/projects/socksipy/
-		## or install the Fedora liked python-SocksiPy package
-		try :
-			import socks
-			proxyLoad = True
-		except : pass #proxyLoad = False
-		finally : pass
-	return proxyLoad
-
 def dataToList(path_ = ''):
 	if os.path.isfile(path_) :
 		with open(path_, 'rb') as f :
@@ -104,10 +89,6 @@ def Filter(text, deprecated):
 			res = False
 			break
 	return res
-
-def Allowed(FROM = '', SUBJ = ''):
-	return ( Filter(FROM, FROM_filter) if Settings.value('FROMFilter', 'False')=='True' else True ) \
-			and ( Filter(SUBJ, SUBJ_filter) if Settings.value('SUBJFilter', 'False')=='True' else True )
 
 def htmlWrapper((From_, Subj_, Date_) = ('', '', ''),
 				((pref1, suff1), (pref2, suff2), (pref3, suff3)) \
@@ -143,32 +124,6 @@ def dateFormat(str_):
 		locale.setlocale(locale.LC_ALL, lang)
 	#print dateSTR
 	return QString().fromUtf8(dateSTR)
-
-def mailAttrToSTR(str_, headerCode = ''):
-	From = ''
-	Subj = ''
-	Date = ''
-	STR_= str_
-	#print STR_, '\n'
-	for different in ['\r\nFrom', '\r\nSubject: ', ''] :
-		if different != '' :
-			raw_str = string.split(STR_, different)[0]
-		else :
-			raw_str = STR_
-		#print dateStamp(), raw_str, 'raw_str'
-		_str = raw_str.replace('\r\n', '')
-		if _str[:5] == 'From:' :
-			From = decodeMailSTR(_str[6:], headerCode) + ' '
-			#print dateStamp(), From, 'From'
-		elif _str[:5] == 'Subje' :
-			Subj = decodeMailSTR(_str[9:], headerCode) + ' '
-			#print dateStamp(), Subj, 'Subj'
-		elif _str[:5] == 'Date:' :
-			Date = _str
-			#print dateStamp(), Date, 'Date'
-		STR_ = STR_.replace( raw_str + '\r\n', '' )
-	if Allowed(From, Subj) : return From, Subj, dateFormat(Date)
-	else : return None, None, None
 
 def decodeMailSTR(str_, headerCode = ''):
 	obj = ''
@@ -252,88 +207,112 @@ def to_unicode(txt, encoding = 'utf-8'):
 			txt = unicode(txt, encoding, errors = 'replace')
 	return txt
 
-def addAccount(account, data_ = ['']):
-	LOCK.lock()
-	global Settings
-	accounts_ = Settings.value('Accounts').toString()
-	Settings.setValue('Accounts', accounts_ + ';' + account)
-	Settings.beginGroup(account)
-	Settings.setValue('server', str(data_[0]))
-	Settings.setValue('port', str(data_[1]))
-	Settings.setValue('login', data_[2])
-	Settings.setValue('authentificationMethod', str(data_[4]))
-	Settings.setValue('connectMethod', str(data_[5]))
-	if str(data_[6]) != '0' :
-		Settings.setValue('lastElemValue', str(data_[6]))
-	Settings.setValue('Enabled', str(data_[7]))
-	if str(data_[5]) == 'imap' :
-		Settings.setValue('Inbox', data_[8])
-	Settings.setValue('CommandLine', data_[9])
-	Settings.endGroup()
-	Settings.sync()
-	LOCK.unlock()
-	pass
+class Required():
+	def __init__(self, parent = None):
+		self.parent = parent
+		self.Settings = parent.Settings
+		self.LOCK = QMutex()
 
-def readAccountData(account = ''):
-	LOCK.lock()
-	global Settings
-	Settings.beginGroup(account)
-	serv_ = Settings.value('server').toString()
-	port_ = Settings.value('port').toString()
-	if port_ == '' : port_ =  '0'
-	login_ = Settings.value('login').toString()
-	authMethod_ = Settings.value('authentificationMethod').toString()
-	connMethod_ = Settings.value('connectMethod').toString()
-	last_ = Settings.value('lastElemValue').toString()
-	enable = Settings.value('Enabled').toString()
-	if str(connMethod_) == 'imap' :
-		inbox = Settings.value('Inbox').toString()
-	else :
-		inbox = ''
-	if Settings.contains('CommandLine') :
-		command = Settings.value('CommandLine').toString()
-	else :
-		command = ''
-	Settings.endGroup()
-	LOCK.unlock()
-	return [str(serv_), str(port_), login_, '', \
-			str(authMethod_), str(connMethod_), str(last_), str(enable), inbox, command]
+	def loadSocksModule(self, loadModule = None):
+		proxyLoad = False
+		if ( loadModule is None and self.Settings.value('UseProxy', 'False')=='True' ) or loadModule :
+			## http://sourceforge.net/projects/socksipy/
+			## or install the Fedora liked python-SocksiPy package
+			try :
+				import socks
+				proxyLoad = True
+			except : pass #proxyLoad = False
+			finally : pass
+		return proxyLoad
 
-def initPOP3Cache():
-	LOCK.lock()
-	global Settings
-	dir_cache = os.path.expanduser('~/.cache')
-	if  not os.path.isdir(dir_cache) :
-		os.mkdir(dir_cache)
-	dir_ = os.path.expanduser('~/.cache/plasmaMailChecker')
-	if  not os.path.isdir(dir_) :
-		os.mkdir(dir_)
-	for accountName in string.split( Settings.value('Accounts').toString(), ';' ):
-		Settings.beginGroup(accountName)
-		if Settings.value('connectMethod').toString() == 'pop' :
-			if not os.path.isfile(dir_ + '/' + QString(accountName).toUtf8().data() + '.cache') :
-				f = open(dir_ + '/' + QString(accountName).toUtf8().data() + '.cache', 'w')
+	def Allowed(self, FROM = '', SUBJ = ''):
+		A = Filter(FROM, FROM_filter) if self.Settings.value('FROMFilter', 'False')=='True' else True
+		B = Filter(SUBJ, SUBJ_filter) if self.Settings.value('SUBJFilter', 'False')=='True' else True
+		return A and B
+
+	def readAccountData(self, account = ''):
+		self.LOCK.lock()
+		self.Settings.beginGroup(account)
+		serv_ = self.Settings.value('server').toString()
+		port_ = self.Settings.value('port').toString()
+		if port_ == '' : port_ =  '0'
+		login_ = self.Settings.value('login').toString()
+		authMethod_ = self.Settings.value('authentificationMethod').toString()
+		connMethod_ = self.Settings.value('connectMethod').toString()
+		last_ = self.Settings.value('lastElemValue').toString()
+		enable = self.Settings.value('Enabled').toString()
+		if str(connMethod_) == 'imap' :
+			inbox = self.Settings.value('Inbox').toString()
+		else :
+			inbox = ''
+		if self.Settings.contains('CommandLine') :
+			command = self.Settings.value('CommandLine').toString()
+		else :
+			command = ''
+		self.Settings.endGroup()
+		self.LOCK.unlock()
+		return [str(serv_), str(port_), login_, '', \
+				str(authMethod_), str(connMethod_), str(last_), str(enable), inbox, command]
+
+	def initPOP3Cache(self):
+		self.LOCK.lock()
+		dir_cache = os.path.expanduser('~/.cache')
+		if  not os.path.isdir(dir_cache) :
+			os.mkdir(dir_cache)
+		dir_ = os.path.expanduser('~/.cache/plasmaMailChecker')
+		if  not os.path.isdir(dir_) :
+			os.mkdir(dir_)
+		for accountName in string.split( self.Settings.value('Accounts').toString(), ';' ):
+			self.Settings.beginGroup(accountName)
+			if self.Settings.value('connectMethod').toString() == 'pop' :
+				if not os.path.isfile(dir_ + '/' + QString(accountName).toUtf8().data() + '.cache') :
+					f = open(dir_ + '/' + QString(accountName).toUtf8().data() + '.cache', 'w')
+					f.close()
+				f = open(dir_ +  '/' + QString(accountName).toUtf8().data() + '.cache', 'r')
+				c = open('/dev/shm/' + QString(accountName).toUtf8().data() + '.cache', 'w')
+				c.writelines(f.readlines())
 				f.close()
-			f = open(dir_ +  '/' + QString(accountName).toUtf8().data() + '.cache', 'r')
-			c = open('/dev/shm/' + QString(accountName).toUtf8().data() + '.cache', 'w')
-			c.writelines(f.readlines())
-			f.close()
-			c.close()
-		Settings.endGroup()
-	LOCK.unlock()
-
-def savePOP3Cache():
-	LOCK.lock()
-	global Settings
-	dir_ = os.path.expanduser('~/.cache/plasmaMailChecker')
-	for accountName in string.split( Settings.value('Accounts').toString(), ';' ):
-		Settings.beginGroup(accountName)
-		if Settings.value('connectMethod').toString() == 'pop' :
-			f = open(dir_ + '/' + QString(accountName).toUtf8().data() + '.cache', 'w')
-			if os.path.isfile('/dev/shm/' + QString(accountName).toUtf8().data() + '.cache') :
-				c = open('/dev/shm/' + QString(accountName).toUtf8().data() + '.cache', 'r')
-				f.writelines(c.readlines())
 				c.close()
-			f.close()
-		Settings.endGroup()
-	LOCK.unlock()
+			self.Settings.endGroup()
+		self.LOCK.unlock()
+
+	def savePOP3Cache(self):
+		self.LOCK.lock()
+		dir_ = os.path.expanduser('~/.cache/plasmaMailChecker')
+		for accountName in string.split( self.Settings.value('Accounts').toString(), ';' ):
+			self.Settings.beginGroup(accountName)
+			if self.Settings.value('connectMethod').toString() == 'pop' :
+				f = open(dir_ + '/' + QString(accountName).toUtf8().data() + '.cache', 'w')
+				if os.path.isfile('/dev/shm/' + QString(accountName).toUtf8().data() + '.cache') :
+					c = open('/dev/shm/' + QString(accountName).toUtf8().data() + '.cache', 'r')
+					f.writelines(c.readlines())
+					c.close()
+				f.close()
+			self.Settings.endGroup()
+		self.LOCK.unlock()
+
+	def mailAttrToSTR(self, str_, headerCode = ''):
+		From = ''
+		Subj = ''
+		Date = ''
+		STR_= str_
+		#print STR_, '\n'
+		for different in ['\r\nFrom', '\r\nSubject: ', ''] :
+			if different != '' :
+				raw_str = string.split(STR_, different)[0]
+			else :
+				raw_str = STR_
+			#print dateStamp(), raw_str, 'raw_str'
+			_str = raw_str.replace('\r\n', '')
+			if _str[:5] == 'From:' :
+				From = decodeMailSTR(_str[6:], headerCode) + ' '
+				#print dateStamp(), From, 'From'
+			elif _str[:5] == 'Subje' :
+				Subj = decodeMailSTR(_str[9:], headerCode) + ' '
+				#print dateStamp(), Subj, 'Subj'
+			elif _str[:5] == 'Date:' :
+				Date = _str
+				#print dateStamp(), Date, 'Date'
+			STR_ = STR_.replace( raw_str + '\r\n', '' )
+		if self.Allowed(From, Subj) : return From, Subj, dateFormat(Date)
+		else : return None, None, None

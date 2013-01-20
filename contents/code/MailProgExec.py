@@ -20,7 +20,7 @@
 #  
 #  
 
-from Functions import dateStamp, randomString, Settings, dlm
+from Functions import dateStamp, randomString, dlm
 from PyQt4.QtCore import *
 import string
 
@@ -30,6 +30,7 @@ class MailProgExec(QThread):
 		self.param = param
 		self.command = command
 		self.parent = parent
+		self.Settings = self.parent.Settings
 
 	def commandBuild(self):
 		if isinstance(self.param.keys()[0], int) :
@@ -40,18 +41,18 @@ class MailProgExec(QThread):
 			""" prepeare file with parameters """
 			accName = __str
 			accIds = str(self.param.values()[0])
-			Settings.beginGroup(accName)
-			serv_ = Settings.value('server').toString().toLocal8Bit().data()
-			port_ = Settings.value('port').toString().toLocal8Bit().data()
+			self.Settings.beginGroup(accName)
+			serv_ = self.Settings.value('server').toString().toLocal8Bit().data()
+			port_ = self.Settings.value('port').toString().toLocal8Bit().data()
 			if port_ == '' : port_ =  '0'
-			login_ = Settings.value('login').toString().toLocal8Bit().data()
-			authMethod_ = Settings.value('authentificationMethod').toString().toLocal8Bit().data()
-			connMethod_ = Settings.value('connectMethod').toString().toLocal8Bit().data()
+			login_ = self.Settings.value('login').toString().toLocal8Bit().data()
+			authMethod_ = self.Settings.value('authentificationMethod').toString().toLocal8Bit().data()
+			connMethod_ = self.Settings.value('connectMethod').toString().toLocal8Bit().data()
 			if str(connMethod_) == 'imap' :
-				inbox = Settings.value('Inbox').toString().toLocal8Bit().data()
+				inbox = self.Settings.value('Inbox').toString().toLocal8Bit().data()
 			else :
 				inbox = ''
-			Settings.endGroup()
+			self.Settings.endGroup()
 			accPswd = self.parent.wallet.readPassword(accName)[1]
 			if not isinstance(accPswd, basestring) :
 				accPswd = accPswd.toLocal8Bit().data()

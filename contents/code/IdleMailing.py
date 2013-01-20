@@ -20,14 +20,12 @@
 #  
 #  
 
-from PyQt4.QtCore import QThread, QSettings, QTimer
+from PyQt4.QtCore import QThread, QTimer
 from imapUTF7 import imapUTF7Encode
-from MailFunc import readAccountData, dateStamp, getMailAttributes, getCurrentElemTime, clearBlank, imapAuth
+from MailFunc import dateStamp, getMailAttributes, getCurrentElemTime, clearBlank, imapAuth
 from Functions import SIGNERRO, SIGNSTOP, SIGNINIT, SIGNDATA
 import imaplib, string
 from random import randint
-
-Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
 
 #####
 # see for: https://raw.github.com/athoune/imapidle/master/src/imapidle.py
@@ -63,7 +61,9 @@ class IdleMailing(QThread):
 		self.passw = data[1]
 		self.runned = False
 		self.timer = QTimer()
-		self.countProbe = int(Settings.value('CountProbe').toString())
+		self.Settings = self.prnt.Settings
+		self.countProbe = int(self.Settings.value('CountProbe').toString())
+		self.readAccountData = parent.someFunctions.readAccountData
 
 	def runIdle(self):
 		self.restarting = False
@@ -98,10 +98,10 @@ class IdleMailing(QThread):
 											 clearBlank(Subj) + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ----==------', unSeen, countAll
 						self.lastElemTime = currentElemTime
-						Settings.beginGroup(self.name)
-						Settings.setValue('lastElemValue', self.lastElemTime)
-						Settings.endGroup()
-						Settings.sync()
+						self.Settings.beginGroup(self.name)
+						self.Settings.setValue('lastElemValue', self.lastElemTime)
+						self.Settings.endGroup()
+						self.Settings.sync()
 						# send data to main thread for change mail data & notify
 						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
 														'msg': [countAll, 1, unSeen, NewMailAttributes, \
@@ -160,7 +160,7 @@ class IdleMailing(QThread):
 		self.key = True
 		self.answer = []
 		self.timer.timeout.connect(self.restartIdle)
-		self.authentificationData = readAccountData(self.name)
+		self.authentificationData = self.readAccountData(self.name)
 		self.lastElemTime = self.authentificationData[6]
 		newMailIds = []
 
@@ -213,9 +213,9 @@ class IdleMailing(QThread):
 						if self.key :
 							self.lastElemTime = getCurrentElemTime(self.mail, countAll)
 							# print dateStamp(), self.lastElemTime
-							Settings.beginGroup(self.name)
-							Settings.setValue('lastElemValue', self.lastElemTime)
-							Settings.endGroup()
+							self.Settings.beginGroup(self.name)
+							self.Settings.setValue('lastElemValue', self.lastElemTime)
+							self.Settings.endGroup()
 							if newMailExist :
 								# send data to main thread for change mail data & notify
 								self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
