@@ -36,6 +36,7 @@ class ReceiveParams(QWidget):
 		self.setToolTip(self.tr._translate("Receive mail"))
 
 		self.VBLayout = QVBoxLayout()
+		self.VBLayout.setContentsMargins(0, 0, 0, 0)
 		self.HB1Layout = QGridLayout()
 
 		self.HB1Layout.addWidget(QLabel(self.tr._translate("Server : ")), 0, 0)

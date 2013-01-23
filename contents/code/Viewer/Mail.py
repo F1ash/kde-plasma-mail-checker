@@ -35,20 +35,20 @@ class Mail(QWidget):
 		self.fromField.linkHovered.connect(self.linkDisplay)
 		self.subjField = QLabel(self.tr._translate('Subj:'))
 		self.dateField = QLabel(self.tr._translate('Date:'))
-		
-		self.sendRe = QPushButton(QIcon.fromTheme('mail-replied'), '')
+
+		self.sendRe = QPushButton(QIcon.fromTheme('mail-reply-custom'), '')
 		self.sendRe.setToolTip(self.tr._translate('Quick Answer'))
 		self.sendRe.setFixedWidth(self.Parent.iconSize().width())
 		self.sendRe.setMinimumHeight(self.Parent.iconSize().height())
 		self.sendRe.setContentsMargins(0, 0, 0, 0)
 		self.sendRe.clicked.connect(self.sendReMail)
-		self.sendFw = QPushButton(QIcon.fromTheme('mail-reply-sender'), '')
+		self.sendFw = QPushButton(QIcon.fromTheme('mail-forward'), '')
 		self.sendFw.setToolTip(self.tr._translate('Quick Forward'))
 		self.sendFw.setFixedWidth(self.Parent.iconSize().width())
 		self.sendFw.setMinimumHeight(self.Parent.iconSize().height())
 		self.sendFw.setContentsMargins(0, 0, 0, 0)
 		self.sendFw.clicked.connect(self.sendFwMail)
-		
+
 		self.mailField = QSplitter()
 		self.mailField.setChildrenCollapsible(True)
 		self.mailField.setOrientation(Qt.Vertical)

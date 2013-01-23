@@ -607,8 +607,9 @@ class plasmaMailChecker(plasmascript.Applet):
 										 str(self.checkResult[i][2]) + ' | ' + \
 										 str(self.checkResult[i][6]) + '</pre>'
 					newMailExist = True
-					self.label[i].setStyleSheet(self.accountSColourStyle)
-					self.countList[i].setStyleSheet(self.countSColourStyle)
+					if hasattr(self, 'label') :
+						self.label[i].setStyleSheet(self.accountSColourStyle)
+						self.countList[i].setStyleSheet(self.countSColourStyle)
 					if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 						accountName_ = self.accSPref + accountName + self.accSSuff
 						accountTT = self.accTTSPref + self.tr._translate('Account') + \
@@ -619,8 +620,9 @@ class plasmaMailChecker(plasmascript.Applet):
 								 str(self.checkResult[i][2]) + '</pre><pre>' + self.tr._translate('UnRead : ') + \
 								 str(self.checkResult[i][6]) + '</pre>' + self.countTTSSuff
 				elif int(self.checkResult[i][2]) < 1 and not IDLE :
-					self.label[i].setStyleSheet(self.accountColourStyle)
-					self.countList[i].setStyleSheet(self.countColourStyle)
+					if hasattr(self, 'label') :
+						self.label[i].setStyleSheet(self.accountColourStyle)
+						self.countList[i].setStyleSheet(self.countColourStyle)
 					if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 						accountName_ = self.accPref + accountName + self.accSuff
 						accountTT = self.accTTPref + self.tr._translate('Account') + \
@@ -1008,8 +1010,9 @@ class plasmaMailChecker(plasmascript.Applet):
 			for accountName in self.accountList :
 				try :
 					if d['acc'] == accountName :
-						self.label[i].setStyleSheet(self.accountColourStyle)
-						self.countList[i].setStyleSheet(self.countColourStyle)
+						if hasattr(self, 'label') :
+							self.label[i].setStyleSheet(self.accountColourStyle)
+							self.countList[i].setStyleSheet(self.countColourStyle)
 						if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 							accountName_ = self.accPref + accountName + self.accSuff
 							accountTT = self.accTTPref + self.tr._translate('Account') + \
@@ -1047,8 +1050,9 @@ class plasmaMailChecker(plasmascript.Applet):
 											str(d['msg'][1]) + ' | ' + \
 											str(d['msg'][2]) + '</pre>'
 					newMailExist = True
-					self.label[i].setStyleSheet(self.accountSColourStyle)
-					self.countList[i].setStyleSheet(self.countSColourStyle)
+					if hasattr(self, 'label') :
+						self.label[i].setStyleSheet(self.accountSColourStyle)
+						self.countList[i].setStyleSheet(self.countSColourStyle)
 					if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
 						accountName_ = self.accSPref + accountName + self.accSSuff
 						accountTT = self.accTTSPref + self.tr._translate('Account') + \

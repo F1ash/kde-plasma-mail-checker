@@ -25,7 +25,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtWebKit import QWebView, QWebPage, QWebSettings
 from Translator import Translator
 from Mail import Mail
-from MailFunc import imapAuth, popAuth
+from MailFunc import imapAuth, popAuth, Settings
 from Functions import dateFormat, decodeMailSTR, randomString, dateStamp
 from email import message_from_string
 import os.path, os, shutil, string, re
@@ -253,6 +253,7 @@ class Box(QTabWidget):
 		self.webViewWDGs = []
 		self.iconDatabasePath = os.path.join('/tmp', randomString(24))
 		os.mkdir(self.iconDatabasePath)
+		self.Settings = Settings
 
 		self.setMovable(True)
 		self.setIconSize(QSize(SIZE, SIZE))

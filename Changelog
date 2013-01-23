@@ -164,3 +164,10 @@ some improvements & fixes;
 added a active urls & email in QTextBrowser;
 improved ru-localization;
 fixed freez at idleStopping when Internet unavailable;
+
+v.1.10.50 :
+improved Settings interface;
+added Quick Answer&Forward mail;
+added the checking of complete the Settings changes;
+some improvements & fixes;
+Makefile corrected for new version;

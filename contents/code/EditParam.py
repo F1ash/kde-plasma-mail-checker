@@ -53,6 +53,12 @@ class EditParam(QWidget):
 
 	def changeSelfActivity(self, state = True):
 		self.setEnabled(state)
+		if state :
+			self.save_.setStyleSheet('QPushButton { background: rgba(33,239,68,128);} ')
+			self.cancel_.setStyleSheet('QPushButton { background: rgba(232,51,25,128);} ')
+		else :
+			self.save_.setStyleSheet('QPushButton { background: rgba(33,239,68,32);} ')
+			self.cancel_.setStyleSheet('QPushButton { background: rgba(232,51,25,32);} ')
 
 	def initWidgets(self, item):
 		self.split = QSplitter()
