@@ -158,7 +158,14 @@ class MailSender(QDialog):
 			accName = self.Parent.Parent.getMail.data['mailBox']
 			self.Parent.Parent.Settings.sync()
 			self.Parent.Parent.Settings.beginGroup(accName)
-			usr = self.Parent.Parent.Settings.value('sendLogin').toString().toLocal8Bit().data()
+			another = False
+			if self.Parent.Parent.Settings.value('anotherAuthData', '0').toString() == '1' :
+				another = True
+			#print 'Use special authentificate data for send mail: %s' % str(another)
+			if another :
+				usr = self.Parent.Parent.Settings.value('sendLogin').toString().toLocal8Bit().data()
+			else :
+				usr = self.Parent.Parent.Settings.value('login').toString().toLocal8Bit().data()
 			_host = self.Parent.Parent.Settings.value('sendServer').toString()
 			_port, dig = self.Parent.Parent.Settings.value('sendPort').toString().toInt()
 			authMthd = self.Parent.Parent.Settings.value('sendAuthMethod').toString().toLocal8Bit().data()
@@ -170,7 +177,11 @@ class MailSender(QDialog):
 			''' ∆∆∆            SSL&TLS don`t use both            ∆∆∆ '''
 			host = 'localhost' if _host.isEmpty() else _host.toLocal8Bit().data()
 			port = _port if dig else 25
-			passwd = self.Parent.Parent.getMail.data['password']
+			if another :
+				passwd = self.Parent.Parent.getMail.data['sendPass']
+			else :
+				passwd = self.Parent.Parent.getMail.data['password']
+			#print another, usr, passwd
 			answer = QMessageBox.question(self, self.tr._translate('Mail Sender'), \
 					'Send to: %s\nUse: %s:%s\nMethod: %s' % \
 					(msg.To, host, port, authMthd), \

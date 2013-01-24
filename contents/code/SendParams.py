@@ -33,6 +33,7 @@ class SendParams(QWidget):
 		self.tr = parent.tr
 		self.Settings = parent.Settings
 		self.item = item
+		self.appletName = self.Parent.Parent.Parent.appletName
 		self.setToolTip(self.tr._translate("Send mail"))
 
 		self.VBLayout = QVBoxLayout()
@@ -53,22 +54,27 @@ class SendParams(QWidget):
 		self.HB1Layout.addWidget(self.portBox, 1, 1)
 
 		self.cryptBox = QComboBox()
-		self.cryptBox.addItem('None',QVariant('None'))
-		self.cryptBox.addItem('SSL',QVariant('SSL'))
-		self.cryptBox.addItem('TLS',QVariant('TLS'))
+		self.cryptBox.addItem('None', QVariant('None'))
+		self.cryptBox.addItem('SSL', QVariant('SSL'))
+		self.cryptBox.addItem('TLS', QVariant('TLS'))
 		self.connect(self.cryptBox, SIGNAL("currentIndexChanged(const QString&)"), self.changePort)
 		self.HB1Layout.addWidget(self.cryptBox, 1, 2)
 
 		self.HB2Layout = QGridLayout()
 
-		self.HB2Layout.addWidget(QLabel(self.tr._translate("Username : ")), 0, 0)
-
-		self.HB2Layout.addWidget(QLabel(self.tr._translate("Password : ")), 0, 1)
+		self.enabledBox = QCheckBox()
+		remark = 'Use another data for authentification at send mail'
+		self.enabledBox.setToolTip(self.tr._translate(remark))
+		self.enabledBox.stateChanged.connect(self.changeAuthFieldState)
+		self.HB2Layout.addWidget(self.enabledBox, 0, 0, Qt.AlignRight)
+		self.HB2Layout.addWidget(QLabel(self.tr._translate(remark)[:16]), 0, 1, Qt.AlignLeft)
 
 		self.userNameLineEdit = QLineEdit()
+		self.userNameLineEdit.setToolTip(self.tr._translate("Username"))
 		self.HB2Layout.addWidget(self.userNameLineEdit, 1, 0)
 
 		self.passwordLineEdit = QLineEdit()
+		self.passwordLineEdit.setToolTip(self.tr._translate("Password"))
 		self.passwordLineEdit.setEchoMode(QLineEdit.Normal)
 		self.HB2Layout.addWidget(self.passwordLineEdit, 1, 1)
 
@@ -81,10 +87,13 @@ class SendParams(QWidget):
 	def initData(self):
 		self.Settings.beginGroup(self.item.text())
 
-		self.serverLineEdit.setText(self.Settings.value('sendServer').toString())
+		if self.Settings.value('anotherAuthData', '0').toString() == '1' :
+			self.enabledBox.setCheckState(Qt.Checked)
+		else :
+			self.enabledBox.setCheckState(Qt.Unchecked)
+		self.changeAuthFieldState()
 
-		#i = self.connectMethodBox.findData(self.Settings.value('connectMethod', ''), flags = Qt.MatchFixedString)
-		#if i>=0 : self.connectMethodBox.setCurrentIndex(i)
+		self.serverLineEdit.setText(self.Settings.value('sendServer').toString())
 
 		i = self.cryptBox.findData(self.Settings.value('sendAuthMethod', ''), flags = Qt.MatchFixedString)
 		if i>=0 : self.cryptBox.setCurrentIndex(i)
@@ -93,7 +102,8 @@ class SendParams(QWidget):
 
 		self.userNameLineEdit.setText(self.Settings.value('sendLogin', '').toString())
 
-		if self.Parent.Parent.Parent.wallet.hasEntry(self.item.text()) :
+		if self.Parent.Parent.Parent.wallet.hasEntry(self.item.text()) and \
+			self.Parent.Parent.Parent.wallet.hasFolder(self.appletName+'_SEND') :
 			self.passwordLineEdit.setText( '***EncriptedPassWord***' )
 		else:
 			self.passwordLineEdit.setText( '***EncriptedKey_not_created***' )
@@ -113,22 +123,33 @@ class SendParams(QWidget):
 		elif str(cryptMethod) == 'SSL' : self.portBox.setValue(SEND_SSL_PORT)
 		elif str(cryptMethod) == 'TLS' : self.portBox.setValue(SEND_TLS_PORT)
 
+	def changeAuthFieldState(self):
+		state = self.enabledBox.checkState()
+		self.userNameLineEdit.setEnabled(state)
+		self.passwordLineEdit.setEnabled(state)
+
 	def saveData(self):
 		self.Settings.beginGroup(self.item.text())
 
-		self.Settings.setValue('sendServer', self.serverLineEdit.text())
+		if self.enabledBox.checkState() : value = '1'
+		else : value = '0'
+		self.Settings.setValue('anotherAuthData', value)
 
-		#self.Settings.setValue('connectMethod', self.connectMethodBox.itemData(self.connectMethodBox.currentIndex()).toString())
+		self.Settings.setValue('sendServer', self.serverLineEdit.text())
 
 		self.Settings.setValue('sendAuthMethod', self.cryptBox.itemData(self.cryptBox.currentIndex()))
 
 		self.Settings.setValue('sendPort', self.portBox.value())
 
-		self.Settings.setValue('sendLogin', self.userNameLineEdit.text())
+		if self.enabledBox.checkState() :
+			self.Settings.setValue('sendLogin', self.userNameLineEdit.text())
 
-		if self.passwordChanged :
-			self.Parent.Parent.Parent.wallet.writePassword(self.item.text(), self.passwordLineEdit.text())
-			self.passwordLineEdit.setText( '***EncriptedPassWord***' )
+			if self.passwordChanged :
+				if not self.Parent.Parent.Parent.wallet.hasFolder(self.appletName+'_SEND') :
+					self.Parent.Parent.Parent.wallet.createFolder(self.appletName+'_SEND')
+				self.Parent.Parent.Parent.wallet.setFolder(self.appletName+'_SEND')
+				self.Parent.Parent.Parent.wallet.writePassword(self.item.text(), self.passwordLineEdit.text())
+				self.passwordLineEdit.setText( '***EncriptedPassWord***' )
 
 		self.Settings.endGroup()
 

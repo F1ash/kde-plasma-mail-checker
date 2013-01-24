@@ -52,20 +52,31 @@ class MailProgExec(QThread):
 				inbox = self.Settings.value('Inbox').toString().toLocal8Bit().data()
 			else :
 				inbox = ''
+			anotherAuthData = False
+			if self.Settings.value('anotherAuthData', '0').toString() == '1' :
+				anotherAuthData = True
 			self.Settings.endGroup()
+			self.parent.wallet.setFolder(self.parent.appletName)
 			accPswd = self.parent.wallet.readPassword(accName)[1]
+			sendPass = ''
+			if anotherAuthData and self.parent.wallet.hasFolder(self.parent.appletName+'_SEND') :
+				self.parent.wallet.setFolder(self.parent.appletName+'_SEND')
+				sendPass = self.parent.wallet.readPassword(accName)[1]
 			if not isinstance(accPswd, basestring) :
 				accPswd = accPswd.toLocal8Bit().data()
+			if not isinstance(sendPass, basestring) :
+				sendPass = sendPass.toLocal8Bit().data()
 			## accName decode after accPswd for getting correct account password
 			if not isinstance(accName, basestring) :
 				accName = accName.toLocal8Bit().data()
+			#print (anotherAuthData, accName, accPswd, sendPass)
 			pathToViewer = self.parent.user_or_sys('contents/code/mailViewer.py')
 			#print dateStamp() , (accName, serv_, port_, login_, authMethod_, \
 			#					connMethod_, inbox, accPswd, accIds)
 			str_ = str(randomString(24))
 			with open('/dev/shm/' + str_, 'wb') as f:
 				f.write(string.join((accName, serv_, port_, login_, authMethod_, \
-								connMethod_, inbox, accPswd), dlm))
+								connMethod_, inbox, accPswd, sendPass), dlm))
 			''' prepare command for integrated viewer '''
 			self.COMMAND = string.join(('/usr/bin/python', pathToViewer, str_, accIds), ' ')
 			#print accName, accIds, command, self.COMMAND

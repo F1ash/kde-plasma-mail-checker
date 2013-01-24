@@ -33,12 +33,12 @@ if __name__ == '__main__':
 		with open('/dev/shm/' + fileName, 'wb') as f: f.write(''.join(['' for i in xrange(len(l))]))
 		os.remove('/dev/shm/' + fileName)
 		while l.endswith('\n') : l.remove('\n')
-		''' (accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd) '''
-		accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd = \
+		''' (accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd, sendPass) '''
+		accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd, sendPass = \
 			l.split(dlm)
 	else :
-		accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd = \
-			['' for i in xrange(8)]
+		accName, serv_, port_, login_, authMethod_, connMethod_, inbox, accPaswd, sendPass = \
+			['' for i in xrange(9)]
 
 	app = QtGui.QApplication(sys.argv)
 	data = {'mailBox'	: accName, \
@@ -49,6 +49,7 @@ if __name__ == '__main__':
 			'connMthd'	: connMethod_, \
 			'inbox'		: inbox, \
 			'password'	: accPaswd, \
+			'sendPass'	: sendPass, \
 			'ids'		: accIds}
 	main = MainWindow(data)
 	main.show()
