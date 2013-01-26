@@ -44,6 +44,7 @@ install: build
 	$(INSTALL) $(CODE)/ru.qm $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/ru.qm
 	$(INSTALL) $(CODE)/SendParams.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/SendParams.py
 	$(INSTALL) $(CODE)/templates $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/templates
+	$(INSTALL) $(CODE)/TextFunc.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/TextFunc.py
 	$(INSTALL) $(CODE)/Translator.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/Translator.py
 	$(INSTALL) $(CODE)/WaitIdle.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/WaitIdle.py
 

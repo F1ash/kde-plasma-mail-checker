@@ -23,28 +23,15 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from PyQt4.QtWebKit import QWebView, QWebPage, QWebSettings
+from TextFunc import *
 from Translator import Translator
 from Mail import Mail
 from MailFunc import imapAuth, popAuth, Settings
 from Functions import dateFormat, decodeMailSTR, randomString, dateStamp
 from email import message_from_string
-import os.path, os, shutil, string, re
+import os.path, os, shutil
 
 SIZE=32
-URL_REGEXP = \
-r'[abefghilnmpstvw]*://(?:[a-zA-Z]|[0-9]|[$-_@.&+?=:#~]|[!*\(\)]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
-MAILTO_REGEXP = r'[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]'
-
-def textChain(text, contCharSet = ''):
-	if len(text.split('\r\n')) : d = '\r\n'
-	elif len(text.split('\n')) : d = '\n'
-	else : d = ''
-	chains = []
-	for chain in text.split(d) :
-		_chain = decodeMailSTR(chain, contCharSet).replace('&quot;', '"')
-		if type(_chain) not in (str, unicode) : _chain = chain
-		chains.append(_chain)
-	return string.join(chains, d)
 
 def emitInfo(obj, idx, cont_type, ll, data, fileName, nesting_level, boundary):
 	obj.Parent.mailData.emit({\
@@ -53,13 +40,6 @@ def emitInfo(obj, idx, cont_type, ll, data, fileName, nesting_level, boundary):
 		'data'		: (ll, data, fileName), \
 		'level'		: nesting_level , \
 		'boundary'	: str(boundary)})
-
-def mailToString(str_):
-	items = []
-	for item in re.findall(MAILTO_REGEXP, str_) :
-		if item not in items : items.append(item)
-	if len(items) : str_ = '<a href="mailto: %s">%s</a>' % (items[0], str_)
-	return str_
 
 def displayMailText(obj, msg, idx, parent_type = None, nesting_level = 0, \
 					boundary = None):
@@ -127,20 +107,22 @@ def getMail(obj, m, protocol):
 		finally : pass
 		msg = message_from_string(_Mail)
 		#print msg.items()
-		Date	= msg.get('Date')
-		_From	= textChain(msg.get('From'))
-		From	= mailToString(_From)
-		To		= msg.get('To')
-		Subj	= textChain(msg.get('Subject'))
-		To_From	= ('' if To is None else To, '' if _From is None else _From)
+		Date		= msg.get('Date')
+		_From		= msg.get('From')
+		From		= mailToString(textChain(_From))
+		_Subj		= msg.get('Subject')
+		Subj		= textChain(_Subj)
+		_From_Subj	= (_From, _Subj)
+		ReplyTo		= msg.get('Reply-To')
 		if Date is None : Date = ''
 		Date = dateFormat('Date: ' + Date)
 		obj.Parent.mailAttr.emit({\
 			'number'	: idx, \
-			'date'		: obj.Parent.tr._translate('Date:') + ' ' + Date, \
 			'from'		: obj.Parent.tr._translate('From:') + ' ' + From, \
 			'subj'		: obj.Parent.tr._translate('Subj:') + ' ' + Subj, \
-			'to\from'	: To_From})
+			'date'		: obj.Parent.tr._translate('Date:') + ' ' + Date, \
+			'ReplyTo'	: ReplyTo, \
+			'_F_S'		: _From_Subj})
 		displayMailText(obj, msg, idx)
 
 def recImap4Mail(obj):
@@ -179,44 +161,6 @@ def changeImagePath(data, boundary):
 		data = data.replace('src="cid:', 'src=" %s' % b)
 	if data.count('src= " cid:') :
 		data = data.replace('src= " cid:', 'src=" %s' % b)
-	return data
-
-def maximize(l):
-	_l = []
-	while len(l) :
-		i = max(l)
-		if i not in _l : _l.append(i)
-		l.remove(i)
-	return _l
-
-def worker(_REGEXP, data, _template):
-	items = []
-	for item in re.findall(_REGEXP, data) :
-		if item not in items : items.append(item)
-	items = maximize(items)
-	for item in items :
-		#print item, _template % (item, item)
-		""" search same items """
-		same = []
-		for _item in items :
-			if _item != item and _item.startswith(item) :
-				same.append(_item)
-		same = maximize(same)
-		if len(same) :
-			for _item in same :
-				data = data.replace(_item, '<||%s||>' % items.index(_item))
-		data = data.replace(item, _template % (item, item))
-		if len(same) :
-			for _item in same :
-				data = data.replace('<||%s||>' % items.index(_item), _item)
-	return data
-
-def changeLink(data):
-	data = worker(URL_REGEXP, data, '<a href="%s">%s</a>')
-	data = worker(MAILTO_REGEXP, data, '<a href="mailto: %s">%s</a>')
-	data = data.replace('\r\n', '<br>')
-	data = data.replace('\n', '<br>')
-	data = data.replace('\t', '&#09;')
 	return data
 
 class GetMail(QThread):
@@ -282,7 +226,8 @@ class Box(QTabWidget):
 		self.mails[i].fromField.setText(d['from'])
 		self.mails[i].subjField.setText(d['subj'])
 		self.mails[i].dateField.setText(d['date'])
-		self.mails[i].to_from = d['to\from']
+		self.mails[i].reply_to = d['ReplyTo']
+		self.mails[i]._from_subj = d['_F_S']
 
 	def setMailData(self, d):
 		ll = d['data'][0]

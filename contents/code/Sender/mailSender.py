@@ -32,7 +32,43 @@ try :
 except Exception : pass
 finally : pass
 
+BLOCK = '<blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">'
+BLOCK_END = '</blockquote><br>'
 MAILTO_REGEXP = r'[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]'
+
+def _difference(chunks):
+	mark = True
+	for chunk in chunks :
+		if chunk[:1] in ('', ' ', '\n', '\t', '\r') : mark = mark and True
+		else : mark = mark and False
+	dlm = ' >' if mark else '>'
+	pos = len(dlm)
+	summ = QStringList()
+	_block = QStringList()
+	mark = False
+	for chunk in chunks :
+		_mark = True if chunk.startsWith(dlm) else False
+		if _mark > mark :
+			summ.append(chunk[pos:].prepend(BLOCK))
+			mark = True
+		elif _mark < mark :
+			for item in _difference(_block) : summ.append(item)
+			_chunk = summ.takeLast()
+			_chunk.append(BLOCK_END)
+			summ.append(_chunk)
+			summ.append(chunk)
+			_block = QStringList()
+			mark = False
+		elif mark == _mark == True :
+			_block.append(chunk[pos:])
+		elif mark == _mark == False :
+			summ.append(chunk)
+	return summ
+
+def makeHtml(text):
+	chunks =  text.split('\n')
+	data = _difference(chunks)
+	return data.join('<br>')
 
 class SendThread(QThread):
 	def __init__(self, sender, msg, parent = None):
@@ -68,23 +104,32 @@ class DelButton(QPushButton):
 class MailSender(QDialog):
 	delAttach = pyqtSignal(int)
 	msgSent   = pyqtSignal(dict)
-	def __init__(self, from_, to_, prefix, subj_, text, parent = None):
+	def __init__(self, to_, prefix, subj_, text, parent = None):
 		QDialog.__init__(self, parent)
 		self.Parent = parent
 		self.tr = Translator('mailSender')
+		self.text = text
 		self.setWindowTitle(self.tr._translate('Mail Sender'))
 		self.attachList = {}
+		self.Re_Fw = prefix=='Re: '
 
-		self.toField = QLabel(self.tr._translate('To:'))
+		self.fromField = QLabel(self.tr._translate('From:'))
+		self.toField   = QLabel(self.tr._translate('To:'  ))
 		self.copyField = QLabel(self.tr._translate('Copy:'))
 		self.subjField = QLabel(self.tr._translate('Subj:'))
 
+		self.fromLine = QLineEdit()
+		accName = self.Parent.Parent.getMail.data['mailBox']
+		self.Parent.Parent.Settings.beginGroup(accName)
+		from_ = self.Parent.Parent.Settings.value('mailAddr').toString()
+		self.Parent.Parent.Settings.endGroup()
+		self.fromLine.setText(from_)
 		self.toLine = QLineEdit()
-		self.toLine.setText(to_ if prefix=='Re: ' else '')
+		self.toLine.setText(to_ if self.Re_Fw else '')
 		self.copyLine = QLineEdit()
 		self.copyLine.setText('')
 		self.subjLine = QLineEdit()
-		self.subjLine.setText(prefix + subj_.remove('Subj: '))
+		self.subjLine.setText(prefix + subj_)
 
 		self.send = QPushButton(QIcon.fromTheme('mail-reply-sender'), '')
 		self.send.setToolTip(self.tr._translate('Send mail'))
@@ -92,29 +137,40 @@ class MailSender(QDialog):
 		self.send.setMinimumHeight(self.Parent.Parent.iconSize().height())
 		self.send.clicked.connect(self.sendMail)
 
-		self.save = QPushButton(QIcon().fromTheme('document-save'), '')  #'&Save')
+		self.save = QPushButton(QIcon().fromTheme('document-save'), '')
 		self.save.setToolTip(self.tr._translate('Save message as file'))
 		self.save.clicked.connect(self.saveAsFile)
 
-		self.attach = QPushButton(QIcon().fromTheme('list-add'), '')   #&Add')
+		self.attach = QPushButton(QIcon().fromTheme('list-add'), '')
 		self.attach.setToolTip(self.tr._translate('Add attachment'))
 		self.attach.clicked.connect(self.addAttachment)
 
 		self.mailField = QTextEdit()
-		self.mailField.setText(text)
+		self.mailField.setAcceptRichText(True)
+		self.mailField.setUndoRedoEnabled(True)
+		self.mailField.setAutoFormatting(QTextEdit.AutoAll)
+		self.mailField.setReadOnly(not self.Re_Fw)
+		if self.Re_Fw :
+			chunks = text.split('\n')
+			data = chunks.join('\n> ').append('\n').prepend('> ')
+		else :
+			data = self.text
+		self.mailField.setText(data)
 
 		self.layout = QGridLayout()
 		self.layout.setContentsMargins(0, 0, 0, 0)
-		self.layout.addWidget(self.toField, 0, 0)
-		self.layout.addWidget(self.copyField, 1, 0)
-		self.layout.addWidget(self.subjField, 2, 0)
-		self.layout.addWidget(self.toLine, 0, 1)
-		self.layout.addWidget(self.copyLine, 1, 1)
-		self.layout.addWidget(self.subjLine, 2, 1)
+		self.layout.addWidget(self.fromField, 0, 0)
+		self.layout.addWidget(self.toField, 1, 0)
+		self.layout.addWidget(self.copyField, 2, 0)
+		self.layout.addWidget(self.subjField, 3, 0)
+		self.layout.addWidget(self.fromLine, 0, 1)
+		self.layout.addWidget(self.toLine, 1, 1)
+		self.layout.addWidget(self.copyLine, 2, 1)
+		self.layout.addWidget(self.subjLine, 3, 1)
 		self.layout.addWidget(self.send, 0, 2)
 		self.layout.addWidget(self.save, 1, 2)
 		self.layout.addWidget(self.attach, 2, 2)
-		self.layout.addWidget(self.mailField, 3, 0, 4, 3)
+		self.layout.addWidget(self.mailField, 4, 0, 5, 3)
 		self.setLayout(self.layout)
 
 		self.setModal(False)
@@ -131,12 +187,14 @@ class MailSender(QDialog):
 			'''
 			_To = self.toLine.text().toLocal8Bit().data()
 			To = findall(MAILTO_REGEXP, _To)[0]
-			From = self.Parent.Parent.getMail.data['login']
+			_From = self.fromLine.text().toLocal8Bit().data()
+			From = findall(MAILTO_REGEXP, _From)[0]
 			CC = self.copyLine.text().toLocal8Bit().data()
 			BCC = None
 			Subj = self.subjLine.text().toLocal8Bit().data()
 			Body = self.mailField.toPlainText().toLocal8Bit().data()
-			Html = self.mailField.toHtml().toLocal8Bit().data()
+			_Html = makeHtml(self.mailField.toPlainText())
+			Html = _Html.toLocal8Bit().data()
 			Date = None
 			attachments = []
 			for key in self.attachList :

@@ -29,7 +29,8 @@ class Mail(QWidget):
 		self.idx = idx
 		self.Parent = parent
 		self.tr = Translator('mailViewer')
-		self.to_from = None
+		self.reply_to = None
+		self._from_subj = None
 		self.fromField = QLabel(self.tr._translate('From:'))
 		self.fromField.setOpenExternalLinks(True)
 		self.fromField.linkHovered.connect(self.linkDisplay)
@@ -81,16 +82,13 @@ class Mail(QWidget):
 	def sendFwMail(self):
 		self.sendMail('Fw: ')
 	def sendMail(self, prefix):
-		print 'send ', self.idx, prefix
-		#print self.to.toLocal8Bit().data()
-		#print self.subjField.text().toLocal8Bit().data()
 		splt = self.mailField.widget(0)
 		wdg = splt.widget(splt.count() - 1)
-		if hasattr(wdg, 'toPlainText') : s = wdg.toPlainText()
-		elif hasattr(wdg, 'title') :  s = wdg.title()
-		else : s = '<UNKNOWN_ERROR>'
-		to_ = self.fromField.text()
-		sendMail = MailSender(self.to_from[0], self.to_from[1], prefix, self.subjField.text(), s, self)
-		sendMail.exec_()
+		if hasattr(wdg, 'toPlainText') : text = wdg.toPlainText()
+		elif hasattr(wdg, 'title') : text = wdg.title()
+		else : text = QString('<UNKNOWN_ERROR>')
+		to_ = self._from_subj[0] if self.reply_to is None else self.reply_to
+		self.sender = MailSender(to_, prefix, self._from_subj[1], text, self)
+		self.sender.exec_()
 
 	def __del__(self): self.close()

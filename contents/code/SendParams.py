@@ -40,25 +40,30 @@ class SendParams(QWidget):
 		self.VBLayout.setContentsMargins(0, 0, 0, 0)
 		self.HB1Layout = QGridLayout()
 
-		self.HB1Layout.addWidget(QLabel(self.tr._translate("Server : ")), 0, 0)
-		self.HB1Layout.addWidget(QLabel(self.tr._translate("Port : ")), 0, 1)
+		self.HB1Layout.addWidget(QLabel(self.tr._translate(": Mail")), 0, 1)
+		self.mailLineEdit = QLineEdit()
+		self.mailLineEdit.setToolTip(self.tr._translate("Mail Address"))
+		self.HB1Layout.addWidget(self.mailLineEdit, 0, 0)
+
+		self.HB1Layout.addWidget(QLabel(self.tr._translate("Server : ")), 1, 0)
+		self.HB1Layout.addWidget(QLabel(self.tr._translate("Port : ")), 1, 1)
 
 		self.serverLineEdit = QLineEdit()
 		self.serverLineEdit.setToolTip(self.tr._translate("Example : smtp.gmail.com, smtp.mail.ru or other"))
-		self.HB1Layout.addWidget(self.serverLineEdit, 1, 0)
+		self.HB1Layout.addWidget(self.serverLineEdit, 2, 0)
 
 		self.portBox = QSpinBox()
 		self.portBox.setMinimum(0)
 		self.portBox.setMaximum(65535)
 		self.portBox.setSingleStep(1)
-		self.HB1Layout.addWidget(self.portBox, 1, 1)
+		self.HB1Layout.addWidget(self.portBox, 2, 1)
 
 		self.cryptBox = QComboBox()
 		self.cryptBox.addItem('None', QVariant('None'))
 		self.cryptBox.addItem('SSL', QVariant('SSL'))
 		self.cryptBox.addItem('TLS', QVariant('TLS'))
 		self.connect(self.cryptBox, SIGNAL("currentIndexChanged(const QString&)"), self.changePort)
-		self.HB1Layout.addWidget(self.cryptBox, 1, 2)
+		self.HB1Layout.addWidget(self.cryptBox, 2, 2)
 
 		self.HB2Layout = QGridLayout()
 
@@ -86,6 +91,8 @@ class SendParams(QWidget):
 
 	def initData(self):
 		self.Settings.beginGroup(self.item.text())
+
+		self.mailLineEdit.setText(self.Settings.value('mailAddr').toString())
 
 		if self.Settings.value('anotherAuthData', '0').toString() == '1' :
 			self.enabledBox.setCheckState(Qt.Checked)
@@ -130,6 +137,8 @@ class SendParams(QWidget):
 
 	def saveData(self):
 		self.Settings.beginGroup(self.item.text())
+
+		self.Settings.setValue('mailAddr', self.mailLineEdit.text())
 
 		if self.enabledBox.checkState() : value = '1'
 		else : value = '0'
