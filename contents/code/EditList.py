@@ -165,7 +165,7 @@ class EditList(QWidget):
 			else :
 				text = item.text()
 				self.prnt.edit.emit(item)
-			QMessageBox.information(self, "EDITED", text)
+			#QMessageBox.information(self, "EDITED", text)
 
 	def changeSelfActivity(self, state = True):
 		self.setEnabled(state)

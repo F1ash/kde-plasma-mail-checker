@@ -25,6 +25,9 @@ from ReceiveParams import ReceiveParams
 from SendParams import SendParams
 
 class EditParam(QWidget):
+	blinked = pyqtSignal()
+	saveStyle = pyqtSignal(tuple)
+	cancelStyle = pyqtSignal(tuple)
 	def __init__(self, parent = None):
 		QWidget.__init__(self, parent)
 
@@ -50,15 +53,61 @@ class EditParam(QWidget):
 		self.layout = QVBoxLayout()
 		self.layout.addLayout(self.buttons)
 		self.setLayout(self.layout)
+		self.saveStyle.connect(self.setSaveStyle)
+		self.cancelStyle.connect(self.setCancelStyle)
+		self.blinked.connect(self.emitEditedSignal)
+
+	def blink(self, i = 0, left = True, right = True):
+		self.da = float(33-189)/200
+		self.db = float(239-255)/200
+		self.dc = float(68-21)/200
+		self.dd = float(i-255)/200
+		self.de = float(232-255)/200
+		self.df = float(51-168)/200
+		self.dg = float(25-5)/200
+		self.dh = float(i-255)/200
+		self.k = 0
+		self.both = (left, right)
+		self.newParams()
+
+	def newParams(self):
+		if self.k<200 :
+			if self.both[0] :
+				seq1 = (189 + int(self.k*self.da), \
+						255 + int(self.k*self.db), \
+						21 + int(self.k*self.dc), \
+						255 + int(self.k*self.dd))
+			if self.both[1] :
+				seq2 = (255 + int(self.k*self.de), \
+						168 + int(self.k*self.df), \
+						5 + int(self.k*self.dg), \
+						255 + int(self.k*self.dh))
+
+			if self.both[0] : self.saveStyle.emit(seq1)
+			if self.both[1] : self.cancelStyle.emit(seq2)
+			self.k += 1
+			QTimer.singleShot(1, self.newParams)
+		else :
+			self.blinked.emit()
+
+	def emitEditedSignal(self):
+		if not( self.both[0] and self.both[1] ) :
+			self.clearParamArea()
+			self.Parent.edited.emit()
 
 	def changeSelfActivity(self, state = True):
 		self.setEnabled(state)
 		if state :
-			self.save_.setStyleSheet('QPushButton { background: rgba(33,239,68,128);} ')
-			self.cancel_.setStyleSheet('QPushButton { background: rgba(232,51,25,128);} ')
+			brightness = 128
 		else :
-			self.save_.setStyleSheet('QPushButton { background: rgba(33,239,68,32);} ')
-			self.cancel_.setStyleSheet('QPushButton { background: rgba(232,51,25,32);} ')
+			brightness = 32
+		self.blink(brightness)
+
+	def setSaveStyle(self, param):
+		self.save_.setStyleSheet('QPushButton { background: rgba(%s, %s, %s, %s); }' % param)
+
+	def setCancelStyle(self, param):
+		self.cancel_.setStyleSheet('QPushButton { background: rgba(%s, %s, %s, %s); }' % param)
 
 	def initWidgets(self, item):
 		self.split = QSplitter()
@@ -81,15 +130,17 @@ class EditParam(QWidget):
 		self.split = None
 
 	def cancel(self):
-		self.clearParamArea()
-		self.Parent.edited.emit()
+		self.blink(32, False, True)
+		# after blink auto clear and emit edited-signal
+		# in emitEditedSignal()
 
 	def saveAccountData(self):
 		if hasattr(self, 'receiveParams') : self.receiveParams.saveData()
 		if hasattr(self, 'sendParams')    : self.sendParams.saveData()
 		# data saved
-		self.clearParamArea()
-		self.Parent.edited.emit()
+		self.blink(32, True, False)
+		# after blink auto clear and emit edited-signal
+		# in emitEditedSignal()
 
 	def __del__(self):
 		self.close()
