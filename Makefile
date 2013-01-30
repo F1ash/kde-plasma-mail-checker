@@ -25,6 +25,7 @@ install: build
 	$(INSTALL) $(CODE)/AppletSettings.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/AppletSettings.py
 	$(INSTALL) $(CODE)/Buttons.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/Buttons.py
 	$(INSTALL) $(CODE)/CheckMailThread.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/CheckMailThread.py
+	$(INSTALL) $(CODE)/ColorSets.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/ColorSets.py
 	$(INSTALL) $(CODE)/EditAccounts.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/EditAccounts.py
 	$(INSTALL) $(CODE)/EditList.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/EditList.py
 	$(INSTALL) $(CODE)/EditParam.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/EditParam.py
