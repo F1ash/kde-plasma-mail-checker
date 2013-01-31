@@ -23,7 +23,7 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from ReceiveParams import ReceiveParams
 from SendParams import SendParams
-from ColorSets import ColorSets, ColorButton
+from ColorSets import ColorSets, ColorButton, COLOR
 
 class EditParam(QWidget):
 	blinked = pyqtSignal()
@@ -67,13 +67,13 @@ class EditParam(QWidget):
 		self.initColor()
 
 	def initColor(self):
-		self.startColorSave = self.Settings.value(self.saveColor.name+'StartColor', 0).toUInt()[0]
-		self.endColorSave = self.Settings.value(self.saveColor.name+'EndColor', 0).toUInt()[0]
-		self.startColorCancel = self.Settings.value(self.cancelColor.name+'StartColor', 0).toUInt()[0]
-		self.endColorCancel = self.Settings.value(self.cancelColor.name+'EndColor', 0).toUInt()[0]
+		self.startColorSave = self.Settings.value(self.saveColor.name+'StartColor', COLOR[21]).toUInt()[0]
+		self.endColorSave = self.Settings.value(self.saveColor.name+'EndColor', COLOR[20]).toUInt()[0]
+		self.startColorCancel = self.Settings.value(self.cancelColor.name+'StartColor', COLOR[11]).toUInt()[0]
+		self.endColorCancel = self.Settings.value(self.cancelColor.name+'EndColor', COLOR[10]).toUInt()[0]
 
 	def setButtonColor(self, button):
-		print 'Colors of ', button.name, button.styleSheet()
+		#print 'Colors of ', button.name, button.styleSheet()
 		setColor = ColorSets(button.name, self)
 		setColor.exec_()
 		self.initColor()

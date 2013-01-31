@@ -22,6 +22,8 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
+COLOR = {11:3774864640, 10:2180972544, 21:3741315843, 20:2483092480}
+
 class ColorButton(QPushButton):
 	colorSettings = pyqtSignal(object)
 	def __init__(self, name, parent = None):
@@ -39,8 +41,10 @@ class ColorSets(QDialog):
 		self.Parent = parent
 		self.name = name
 		self.Settings = parent.Settings
-		self.startColorValue = self.Settings.value(name+'StartColor', 0).toUInt()[0]
-		self.endColorValue = self.Settings.value(name+'EndColor', 0).toUInt()[0]
+		startDefault = COLOR[11] if name == 'Cancel' else COLOR[21]
+		endDefault = COLOR[10] if name == 'Cancel' else COLOR[20]
+		self.startColorValue = self.Settings.value(name+'StartColor', startDefault).toUInt()[0]
+		self.endColorValue = self.Settings.value(name+'EndColor', endDefault).toUInt()[0]
 		#print [self.startColorValue, self.endColorValue, name, self.Settings.value(name+'StartColor', 0)]
 		self.layout = QGridLayout()
 

@@ -35,6 +35,7 @@ class SendParams(QWidget):
 		self.item = item
 		self.appletName = self.Parent.Parent.Parent.appletName
 		self.setToolTip(self.tr._translate("Send mail"))
+		self.setMinimumWidth(48)
 
 		self.VBLayout = QVBoxLayout()
 		self.VBLayout.setContentsMargins(0, 0, 0, 0)

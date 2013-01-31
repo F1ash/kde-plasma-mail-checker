@@ -125,9 +125,11 @@ class EditList(QWidget):
 					accList = self.Settings.value('Accounts').toString()
 					accList.replace(self.renamedItem, item.text())
 					self.Settings.setValue('Accounts', accList)
-					QMessageBox.information(self, "RENAMED", self.renamedItem)
+					QMessageBox.information(self, "RENAME", self.renamedItem)
 					print self.renamedItem.toLocal8Bit().data()
-				else : QMessageBox.information(self, "RENAMED", 'Rename is fail.')
+				else :
+					QMessageBox.information(self, "RENAME", \
+						self.tr._translate('Rename is fail.'))
 				self.renamedItem = None
 				i = 0
 				while i < count :
@@ -142,9 +144,9 @@ class EditList(QWidget):
 		if not self.checkAccess() : return None
 		item = self.accountListBox.currentItem()
 		if item is None :
-			text = 'Select account'
+			text = self.tr._translate('Account not selected.')
 		else :
-			text = item.text()
+			text = item.text() + self.tr._translate(" deleted.")
 			# uncomment below for remove available
 			self.Settings.remove(item.text())
 			row = self.accountListBox.row(item)
@@ -155,17 +157,17 @@ class EditList(QWidget):
 			accList_.removeAll(text)
 			accList = accList_.join(';')
 			self.Settings.setValue('Accounts', accList)
-		QMessageBox.information(self, "DELETED", text)
+		QMessageBox.information(self, "DELETE", text)
 
 	def editItem(self):
 		if self.checkAccess() :
 			item = self.accountListBox.currentItem()
 			if item is None :
-				text = 'Select account'
+				text = self.tr._translate('Account not selected.')
+				QMessageBox.information(self, "EDIT", text)
 			else :
-				text = item.text()
+				#text = item.text()
 				self.prnt.edit.emit(item)
-			#QMessageBox.information(self, "EDITED", text)
 
 	def changeSelfActivity(self, state = True):
 		self.setEnabled(state)
