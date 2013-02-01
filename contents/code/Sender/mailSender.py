@@ -23,6 +23,7 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from Translator import Translator
+from TextFunc import MAILTO_REGEXP
 from re import findall
 global ModuleExist
 ModuleExist = False
@@ -34,7 +35,6 @@ finally : pass
 
 BLOCK = '<blockquote class="gmail_quote" style="margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">'
 BLOCK_END = '</blockquote><br>'
-MAILTO_REGEXP = r'[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]'
 
 def _difference(chunks):
 	mark = True
