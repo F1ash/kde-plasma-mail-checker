@@ -174,7 +174,7 @@ class EditParam(QWidget):
 		self.layout = QGridLayout()
 
 		self.collectionIDLabel = QLabel()
-		self.collectionIDLabel.setText('Collection :')
+		self.collectionIDLabel.setText(self.tr._translate('Collection :'))
 		self.layout.addWidget(self.collectionIDLabel, 0, 0)
 
 		self.collectionID = QLabel()
@@ -189,7 +189,7 @@ class EditParam(QWidget):
 		self.layout.addWidget(self.accountCommand, 2, 1, 2, 4)
 
 		self.collectionChoice = QLabel()
-		self.collectionChoice.setText('Search:')
+		self.collectionChoice.setText(self.tr._translate('Search:'))
 		self.layout.addWidget(self.collectionChoice, 1, 0)
 
 		self.searchColl = QPushButton('...')
