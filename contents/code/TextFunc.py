@@ -24,9 +24,10 @@ import string
 from re import findall
 from Functions import decodeMailSTR
 
+SINTAX_SIGN = ('.',',',':',';','<','>','?','\\','[',']','(',')','\'','^','@','%','+','-','=','*','$','#','~','`', '"')
 URL_REGEXP = r'[abefghilnmpstvw]*://+[\S]*'
 #r'[abefghilnmpstvw]*://(?:[a-zA-Z]|[0-9]|[$-_@.&+?=:#~]|[!*\(\)]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
-MAILTO_REGEXP = r'[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*.[a-zA-Z]'
+MAILTO_REGEXP = r'[a-zA-Z0-9+_\-\.]+@[0-9a-zA-Z][.-0-9a-zA-Z]*[a-zA-Z]'
 
 def textChain(text, contCharSet = ''):
 	if len(text.split('\r\n')) : d = '\r\n'
@@ -54,10 +55,19 @@ def maximize(l):
 		l.remove(i)
 	return _l
 
+def cleanUrlItem(t):
+	while t[-1:] in SINTAX_SIGN :
+		_t = t[:-1]
+		t = _t
+	return t
+
 def worker(_REGEXP, data, _template):
 	items = []
 	for item in findall(_REGEXP, data) :
-		if item not in items : items.append(item)
+		if item not in items :
+			if _REGEXP == URL_REGEXP :
+				item = cleanUrlItem(item)
+			items.append(item)
 	items = maximize(items)
 	for item in items :
 		#print item, _template % (item, item)
