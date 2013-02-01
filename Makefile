@@ -29,6 +29,7 @@ install: build
 	$(INSTALL) $(CODE)/EditAccounts.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/EditAccounts.py
 	$(INSTALL) $(CODE)/EditList.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/EditList.py
 	$(INSTALL) $(CODE)/EditParam.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/EditParam.py
+	$(INSTALL) $(CODE)/EditParamOBJ.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/EditParamOBJ.py
 	$(INSTALL) $(CODE)/Examples.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/Examples.py
 	$(INSTALL) $(CODE)/Filter.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/Filter.py
 	$(INSTALL) $(CODE)/FontNColor.py $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/FontNColor.py

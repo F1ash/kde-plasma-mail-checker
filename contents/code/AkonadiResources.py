@@ -23,6 +23,8 @@ from Functions import dateStamp, dlm
 from PyQt4.QtGui import *
 from AkonadiMod import *
 from Translator import Translator
+from ColorSets import ColorButton
+from EditParamOBJ import EditParamOBJ
 
 class EditList(QWidget):
 	def __init__(self, obj = None, parent = None):
@@ -110,9 +112,9 @@ class EditList(QWidget):
 					self.Settings.setValue(item.text(), value)
 					# uncomment below for remove available
 					self.Settings.remove(self.renamedItem)
-					QMessageBox.information(self, "RENAMED", self.renamedItem)
+					QMessageBox.information(self, "RENAME", self.renamedItem)
 					print self.renamedItem.toLocal8Bit().data()
-				else : QMessageBox.information(self, "RENAMED", 'Rename is fail.')
+				else : QMessageBox.information(self, "RENAME", 'Rename is fail.')
 				self.Settings.endGroup()
 				self.renamedItem = None
 				i = 0
@@ -128,26 +130,26 @@ class EditList(QWidget):
 		if not self.checkAccess() : return None
 		item = self.accountListBox.currentItem()
 		if item is None :
-			text = 'Select account'
+			text = self.tr._translate('Account not selected.')
 		else :
-			text = item.text()
+			text = item.text() + self.tr._translate(" deleted.")
 			# uncomment below for remove available
 			self.Settings.beginGroup('Akonadi account')
 			self.Settings.remove(item.text())
 			self.Settings.endGroup()
 			row = self.accountListBox.row(item)
 			self.accountListBox.takeItem(row)
-		QMessageBox.information(self, "DELETED", text)
+		QMessageBox.information(self, "DELETE", text)
 
 	def editItem(self):
 		if self.checkAccess() :
 			item = self.accountListBox.currentItem()
 			if item is None :
-				text = 'Select account'
+				text = self.tr._translate('Account not selected.')
+				QMessageBox.information(self, "EDIT", text)
 			else :
-				text = item.text()
+				#text = item.text()
 				self.prnt.edit.emit(item)
-			QMessageBox.information(self, "EDITED", text)
 
 	def changeSelfActivity(self, state = True):
 		self.setEnabled(state)
@@ -161,6 +163,7 @@ class EditList(QWidget):
 		self.close()
 
 class EditParam(QWidget):
+	blinked = pyqtSignal()
 	def __init__(self, parent = None):
 		QWidget.__init__(self, parent)
 
@@ -212,6 +215,14 @@ class EditParam(QWidget):
 		self.save_.setFixedHeight(10)
 		self.save_.clicked.connect(self.saveAccountData)
 
+		self.saveColor = ColorButton('Save')
+		self.saveColor.setToolTip(self.tr._translate("Save Color Set"))
+		self.saveColor.setFixedSize(24, 10)
+
+		self.cancelColor = ColorButton('Cancel')
+		self.cancelColor.setToolTip(self.tr._translate("Cancel Color Set"))
+		self.cancelColor.setFixedSize(24, 10)
+
 		self.cancel_ = QPushButton()
 		self.cancel_.setToolTip(self.tr._translate("Cancel"))
 		self.cancel_.setFixedHeight(10)
@@ -219,18 +230,24 @@ class EditParam(QWidget):
 
 		self.buttons = QHBoxLayout()
 		self.buttons.addWidget(self.save_)
+		self.buttons.addWidget(self.saveColor)
+		self.buttons.addWidget(self.cancelColor)
 		self.buttons.addWidget(self.cancel_)
 		self.layout.addLayout(self.buttons, 4, 0, 4, 5)
 		self.setLayout(self.layout)
 
-	def changeSelfActivity(self, state = True):
-		self.setEnabled(state)
-		if state :
-			self.save_.setStyleSheet('QPushButton { background: rgba(33,239,68,128);} ')
-			self.cancel_.setStyleSheet('QPushButton { background: rgba(232,51,25,128);} ')
-		else :
-			self.save_.setStyleSheet('QPushButton { background: rgba(33,239,68,32);} ')
-			self.cancel_.setStyleSheet('QPushButton { background: rgba(232,51,25,32);} ')
+		# init OBJ-methods
+		OBJ = EditParamOBJ(self)
+		self.initColor = OBJ.initColor
+		self.setButtonColor = OBJ.setButtonColor
+		self.blink = OBJ.blink
+		self.emitEditedSignal = OBJ.emitEditedSignal
+		self.changeSelfActivity = OBJ.changeSelfActivity
+
+		# connect SLOTs after OBJ-init
+		self.saveColor.colorSettings.connect(self.setButtonColor)
+		self.cancelColor.colorSettings.connect(self.setButtonColor)
+		self.initColor()
 
 	def initWidgets(self, item):
 		self.Settings.beginGroup('Akonadi account')
@@ -255,8 +272,9 @@ class EditParam(QWidget):
 		self.accountCommand.clear()
 
 	def cancel(self):
-		self.clearParamArea()
-		self.Parent.edited.emit()
+		self.blink(False, True)
+		# after blink auto clear and emit edited-signal
+		# in emitEditedSignal()
 
 	def saveAccountData(self):
 		collId = self.collectionID.text()
@@ -274,8 +292,9 @@ class EditParam(QWidget):
 		data = self.Settings.setValue(item.text(), data)
 		self.Settings.endGroup()
 		# data saved
-		self.clearParamArea()
-		self.Parent.edited.emit()
+		self.blink(True, False)
+		# after blink auto clear and emit edited-signal
+		# in emitEditedSignal()
 
 	def __del__(self):
 		self.close()
