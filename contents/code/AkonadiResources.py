@@ -253,16 +253,22 @@ class EditParam(QWidget):
 		self.Settings.beginGroup('Akonadi account')
 		data = self.Settings.value(item.text()).toString()
 		self.Settings.endGroup()
-		parameterList = string.split(data, dlm)
+		parameterList = data.split(dlm)
 		self.collectionID.setText(parameterList[0])
 		if parameterList.count() > 1 and str(parameterList[1]) == '1' :
 			self.enabledBox.setCheckState(Qt.Checked)
 		if parameterList.count() > 2 :
 			self.collectionResource.setText(parameterList[2])
+		else :
+			self.collectionResource.setText('-- "" --')
 		if parameterList.count() > 3 :
 			self.nameColl = parameterList[3]
+		else :
+			self.nameColl = '-- "" --'
 		if parameterList.count() > 4 :
 			self.accountCommand.setText( parameterList[4] )
+		else :
+			self.accountCommand.setText('')
 
 	def clearParamArea(self):
 		self.collectionID.setText('-- "" --')
