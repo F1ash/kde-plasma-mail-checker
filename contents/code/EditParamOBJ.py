@@ -28,6 +28,7 @@ class EditParamOBJ(QObject):
 	def __init__(self, parent):
 		QObject.__init__(self, parent)
 		self.Parent = parent
+		self.Parent.setMinimumWidth(48)
 		self.Settings = parent.Settings
 		self.saveColor = parent.saveColor
 		self.cancelColor = parent.cancelColor
