@@ -76,6 +76,15 @@ class EditList(QWidget):
 		if self.checkAccess() :
 			text = self.stringEditor.text()
 			if not text.isEmpty() :
+				exist = False
+				for i in xrange(self.accountListBox.count()) :
+					if text == self.accountListBox.item(i).text() :
+						exist = True
+						break
+				if exist :
+					QMessageBox.information(self, "ADD NAME",
+						self.tr._translate('Name exist already.'))
+					return None
 				item = QListWidgetItem(text)
 				item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
 				self.accountListBox.addItem(item)
@@ -146,7 +155,7 @@ class EditList(QWidget):
 		if item is None :
 			text = self.tr._translate('Account not selected.')
 		else :
-			text = item.text() + self.tr._translate(" deleted.")
+			text = item.text()
 			# uncomment below for remove available
 			self.Settings.remove(item.text())
 			row = self.accountListBox.row(item)
@@ -157,6 +166,7 @@ class EditList(QWidget):
 			accList_.removeAll(text)
 			accList = accList_.join(';')
 			self.Settings.setValue('Accounts', accList)
+			text += self.tr._translate(" deleted.")
 		QMessageBox.information(self, "DELETE", text)
 
 	def editItem(self):

@@ -81,6 +81,15 @@ class EditList(QWidget):
 		if self.checkAccess() :
 			text = self.stringEditor.text()
 			if not text.isEmpty() :
+				exist = False
+				for i in xrange(self.accountListBox.count()) :
+					if text == self.accountListBox.item(i).text() :
+						exist = True
+						break
+				if exist :
+					QMessageBox.information(self, "ADD NAME",
+						self.tr._translate('Name exist already.'))
+					return None
 				item = QListWidgetItem(text)
 				item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
 				self.accountListBox.addItem(item)
@@ -114,7 +123,9 @@ class EditList(QWidget):
 					self.Settings.remove(self.renamedItem)
 					QMessageBox.information(self, "RENAME", self.renamedItem)
 					print self.renamedItem.toLocal8Bit().data()
-				else : QMessageBox.information(self, "RENAME", 'Rename is fail.')
+				else :
+					QMessageBox.information(self, "RENAME", \
+						self.tr._translate('Rename is fail.'))
 				self.Settings.endGroup()
 				self.renamedItem = None
 				i = 0
@@ -379,10 +390,10 @@ class AkonadiResources(QWidget):
 		if self.Control.exec_() :
 			col = self.Control.selectedCollection()
 			## print dateStamp(), col.name().toUtf8(), col.id(), col.resource()
-			self.collectionID.setText(str(col.id()))
-			self.nameColl = col.name()
-			self.stringEditor.setText(self.nameColl)
-			self.collectionResource.setText(col.resource())
+			self.editParams.collectionID.setText(str(col.id()))
+			self.editParams.nameColl = col.name()
+			#self.editList.stringEditor.setText(self.editParams.nameColl)
+			self.editParams.collectionResource.setText(col.resource())
 
 	def restartAkonadi(self):
 		server = Akonadi.Control()
