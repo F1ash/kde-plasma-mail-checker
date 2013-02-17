@@ -53,7 +53,7 @@ class ProxySettings(QWidget):
 		self.layout.addWidget(self.saveButton, 0, 1,  Qt.AlignLeft)
 
 		self.proxyTypeBox = QComboBox()
-		self.proxyTypeBox.addItem('HTTP', QVariant('HTTP'))
+		#self.proxyTypeBox.addItem('HTTP', QVariant('HTTP'))
 		self.proxyTypeBox.addItem('SOCKS4', QVariant('SOCKS4'))
 		self.proxyTypeBox.addItem('SOCKS5', QVariant('SOCKS5'))
 		self.proxyTypeBox.setToolTip(self.tr._translate("Proxy type"))
@@ -95,10 +95,28 @@ class ProxySettings(QWidget):
 		self.layout.addWidget(self.userEditor, 2, 1)
 		self.layout.addWidget(self.passwEditor, 3, 1)
 
+		self.timeoutLabel = QLabel(self.tr._translate("Timeout Socks"))
+		a, b, c = "If error: ['The read operation timed out']", \
+				"in IMAP/IDLE connect is often,", \
+				"then you should increase the timeout"
+		description = QString('%1\n%2\n%3').arg(a).arg(b).arg(c)
+		self.timeoutLabel.setToolTip(self.tr._translate(description))
+		self.layout.addWidget(self.timeoutLabel, 4, 0)
+		self.layout.addWidget(self.passwEditor, 3, 1)
+		self.timeoutBox = QSpinBox()
+		self.timeoutBox.setMinimum(30)
+		self.timeoutBox.setMaximum(300)
+		value = self.Settings.value('timeoutSocks', 45).toUInt()[0]
+		self.timeoutBox.setValue(value)
+		self.timeoutBox.setSingleStep(1)
+		self.timeoutBox.setToolTip(self.tr._translate('Proxy TimeOut'))
+		self.timeoutBox.valueChanged.connect(self.stateChangedEvent)
+		self.layout.addWidget(self.timeoutBox, 4, 1, Qt.AlignRight)
+
 		if self.loadSocksModule() : available = self.tr._translate("SocksiPy module loaded")
 		else : available = self.tr._translate("SocksiPy module not loaded")
 		self.proxyModuleLabel = QLabel(available)
-		self.layout.addWidget(self.proxyModuleLabel, 0, 1,  Qt.AlignRight)
+		self.layout.addWidget(self.proxyModuleLabel, 0, 1, Qt.AlignRight)
 
 		self.setLayout(self.layout)
 		self.StateChanged = False
@@ -113,6 +131,7 @@ class ProxySettings(QWidget):
 		self.Settings.setValue('ProxyPort', self.portBox.value())
 		self.Settings.setValue('ProxyUSER', self.userEditor.text())
 		self.Settings.setValue('ProxyPASS', self.passwEditor.text())
+		self.Settings.setValue('timeoutSocks', self.timeoutBox.value())
 		self.StateChanged = False
 
 	def activateProxy(self):
@@ -134,3 +153,6 @@ class ProxySettings(QWidget):
 		self.userEditor.setEnabled(state)
 		self.passwEditor.setEnabled(state)
 		self.proxyTypeBox.setEnabled(state)
+		self.timeoutBox.setEnabled(state)
+		self.timeoutLabel.setEnabled(state)
+		self.layout.setEnabled(state)

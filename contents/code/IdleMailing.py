@@ -24,33 +24,8 @@ from PyQt4.QtCore import QThread, QTimer
 from imapUTF7 import imapUTF7Encode
 from MailFunc import dateStamp, getMailAttributes, getCurrentElemTime, clearBlank, imapAuth
 from Functions import SIGNERRO, SIGNSTOP, SIGNINIT, SIGNDATA
-import imaplib, string
+from string import join
 from random import randint
-
-#####
-# see for: https://raw.github.com/athoune/imapidle/master/src/imapidle.py
-def idle(connection):
-	tag = connection._new_tag()
-	#print dateStamp(), "%s IDLE\r\n" % tag
-	connection.send("%s IDLE\r\n" % tag)
-	response = connection.readline()
-	#print dateStamp(), [response]
-	if response == '+ idling\r\n':
-		resp = connection.readline()
-		#print dateStamp(), [resp]
-		if resp != '' :
-			uid, message = resp[2:-2].split(' ')
-			return uid, message
-	raise Exception("IDLE not handled? : %s." % response)
-
-def done(connection):
-	connection.send("DONE\r\n")
-
-imaplib.IMAP4.idle = idle
-imaplib.IMAP4.done = done
-#####
-
-TIMEOUT = 30
 
 class IdleMailing(QThread):
 	def __init__(self, data = (), parent = None):
@@ -63,6 +38,7 @@ class IdleMailing(QThread):
 		self.timer = QTimer()
 		self.Settings = self.prnt.Settings
 		self.countProbe = int(self.Settings.value('CountProbe').toString())
+		self.TIMEOUT = self.Settings.value('timeoutSocks', 45).toUInt()[0]
 		self.readAccountData = parent.someFunctions.readAccountData
 
 	def runIdle(self):
@@ -70,7 +46,7 @@ class IdleMailing(QThread):
 		errorCount = 0
 		while self.key :
 			# random deviation [0-12] sec
-			delay = TIMEOUT*1000 + randint(1, 11999)
+			delay = self.TIMEOUT*1000 - randint(1, 11999)
 			self.timer.setInterval(delay)
 			self.timer.start()
 			#print "+idle: %s <-- R; %s <-- E; %s <-- D"%(self.restarting, errorCount, delay)
@@ -170,7 +146,8 @@ class IdleMailing(QThread):
 				self.answer, self.mail, idleable = imapAuth(\
 						self.authentificationData[0], self.authentificationData[1], \
 						self.authentificationData[2], self.passw, \
-						self.authentificationData[4], self.authentificationData[8])
+						self.authentificationData[4], self.authentificationData[8], \
+						True)
 				#print self.answer, self.mail, idleable
 				if idleable :
 					msg = "IDLE mode is available"
@@ -221,7 +198,7 @@ class IdleMailing(QThread):
 								self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
 																'msg': [countAll, countNew, \
 																		unSeen, NewMailAttributes, \
-																		string.join(newMailIds, ' ')]})
+																		join(newMailIds, ' ')]})
 						break
 			except Exception, err :
 				print dateStamp(), err

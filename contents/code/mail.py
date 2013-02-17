@@ -20,7 +20,7 @@
 #  
 #  
 
-from MailFunc import *
+from MailFunc import checkMail, QString
 import sys, os, os.path
 
 if __name__ == '__main__':
@@ -37,7 +37,6 @@ if __name__ == '__main__':
 	if (account, passw) == ('','') :
 		Result = (False, 0, 0, '', '', '', '-', '')
 	else :
-		loadSocketModule()
 		Result = ( checkMail( [account, passw] ) )
 	suff = ['.Result', '.all', '.new', '.msg', '.content', '.encoding', '.unRead', '.Ids']
 	#print Result, ' -- Result in mail.py'

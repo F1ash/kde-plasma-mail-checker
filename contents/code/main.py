@@ -940,6 +940,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		i.start()
 
 	def idleingStoppedEvent(self):
+		print dateStamp() , 'idleingStoppedEvent'
 		self.someFunctions.savePOP3Cache()
 		self.monitor_isnt_exist()
 		self.initStat = False

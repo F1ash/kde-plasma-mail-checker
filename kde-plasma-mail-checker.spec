@@ -1,21 +1,20 @@
 Name: kde-plasma-mail-checker
-Version: 1.10.50
+Version: 1.11.52
 Release: 1%{?dist}
 Summary: KDE Plasmoid for periodically checking a new messages in the mailboxes list
 Summary(ru): Плазмоид периодически проверяет наличие новых писем в списке почтовых ящиков
-Group: Applications/Internet
 License: GPLv2+
-Source0: https://github.com/F1ash/plasmaMailChecker/archive/%{name}-%{version}.tar.gz
-URL: https://github.com/F1ash/plasmaMailChecker
+Source0: https://github.com/F1ash/%{name}/archive/%{version}.tar.gz
+URL: https://github.com/F1ash/%{name}
 BuildArch: noarch
 
-Requires: PyKDE4, python-SocksiPy, python-mailer
-BuildRequires: kde-filesystem
+Requires: python-SocksiPy, python-mailer
+BuildRequires: kdelibs4-devel
 # for building the translator`s dictionary
 BuildRequires: qt4-devel
 
 %description
-kde-plasma-mail-checker
+%{name}
 Plasmoid should periodic check for new messages in configured accounts.
 Supported protocols: POP3/POP3S/IMAP4/IMAP4S + IMAP4_IDLE.
 Passwords for accounts stored in encrypted container.
@@ -26,7 +25,7 @@ Support preview (integrated mail viewer) for non-Akonadi accounts
 and Quick Answer & Forward Mail.
 
 %description -l ru
-kde-plasma-mail-checker
+%{name}
 Плазмоид периодически проверяет наличие новых писем
 в списке почтовых ящиков.
 Поддерживаются POP3\IMAP4(+IDLE) протоколы с None\SSL аутентификацией.
@@ -40,6 +39,9 @@ kde-plasma-mail-checker
 %setup -q
 
 %build
+if [ -x %{_bindir}/plasma-dataengine-depextractor ] ; then
+  plasma-dataengine-depextractor .
+fi
 make %{?_smp_mflags}
 
 %install
@@ -51,6 +53,10 @@ make install DESTDIR=$RPM_BUILD_ROOT/usr
 %doc README README_RU COPYING Changelog
 
 %changelog
+* Sun Feb 17 2013 Fl@sh <kaperang07@gmail.com> - 1.11.52-1
+- version update
+- fixed for plasma-dataengine-depextractor approach
+
 * Tue Jan 24 2013 Fl@sh <kaperang07@gmail.com> - 1.10.50-1
 - version updated
 

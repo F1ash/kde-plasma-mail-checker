@@ -24,11 +24,14 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from Translator import Translator
 from TextFunc import MAILTO_REGEXP
+from MailFunc import loadSocketModule
 from re import findall
+
 global ModuleExist
 ModuleExist = False
 try :
-	from mailer import Message, Mailer
+	import smtplib
+	import mailer
 	ModuleExist = True
 except Exception : pass
 finally : pass
@@ -199,7 +202,10 @@ class MailSender(QDialog):
 			attachments = []
 			for key in self.attachList :
 				attachments.append(self.attachList[key])
-			message = Message(To, From, CC, BCC, Subj, \
+			loadSocketModule(module = smtplib)
+			reload(mailer)
+			#print getattr(smtplib, '__reloaded__', None), '<< -- MAILER reloaded'
+			message = mailer.Message(To, From, CC, BCC, Subj, \
 					Body, Html, Date, attachments, 'utf-8')
 			return message
 		else :
@@ -250,7 +256,7 @@ class MailSender(QDialog):
 				__init__(self, host="localhost", port=0, use_tls=False,
 						usr=None, pwd=None, use_ssl=False)
 				'''
-				sender = Mailer(host, port, tls, usr, passwd, ssl)
+				sender = mailer.Mailer(host, port, tls, usr, passwd, ssl)
 				self.sender = SendThread(sender, msg, self)
 				self.sender.start()
 

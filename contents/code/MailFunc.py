@@ -22,19 +22,68 @@
 
 from imapUTF7 import imapUTF7Encode
 from PyQt4.QtCore import QString, QSettings, QMutex
-import poplib, imaplib, time, socket, string
+import poplib, imaplib, time, socket
+from string import join
+import re, urllib2
 
 global ErrorMsg
 ErrorMsg = ''
+ModuleType = type(time)
 LOCK = QMutex()
 Settings = QSettings('plasmaMailChecker','plasmaMailChecker')
+TIMEOUT = Settings.value('timeoutSocks', 45).toUInt()[0]
+USE_PROXY = Settings.value('UseProxy', 'False').toString()
+
+pattern = "[1-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?\.[0-9]+[0-9]?[0-9]?"
+ip_re = re.compile(pattern)
+CHECK_SERVICES = ('http://www.viewmyipaddress.com/', 'http://api.wipmania.com/', 'http://checkip.dyndns.org')
+
+def getExternalIP():
+	ip = ''
+	reload(urllib2)
+	for addr in CHECK_SERVICES :
+		try :
+			f = urllib2.urlopen(urllib2.Request(addr))
+			response = f.read()
+			f.close()
+			ip_ = ip_re.findall(response)
+			if ip_ == [] : continue
+			ip = ip_[0]
+			break
+		except Exception, err:
+			print '[MailFunc in getExternalIP] Error: ', str(err)
+		finally : pass
+	return ip
+
+########################################################################
+# see for: https://raw.github.com/athoune/imapidle/master/src/imapidle.py
+def idle(connection):
+	tag = connection._new_tag()
+	#print dateStamp(), "%s IDLE\r\n" % tag
+	connection.send("%s IDLE\r\n" % tag)
+	response = connection.readline()
+	#print dateStamp(), [response]
+	if response == '+ idling\r\n':
+		resp = connection.readline()
+		#print dateStamp(), [resp]
+		if resp != '' :
+			uid, message = resp[2:-2].split(' ')
+			return uid, message
+	raise Exception("IDLE not handled? : %s." % response)
+
+def done(connection):
+	connection.send("DONE\r\n")
+
+def setIdleMethods():
+	imaplib.IMAP4.idle = idle
+	imaplib.IMAP4.done = done
+########################################################################
 
 def readProxySettings(socks):
 	def take_value(arg):
 		return None if arg == 'None' or arg.isEmpty() else QString().fromUtf8(arg)
 	_type = Settings.value('ProxyType', 'None').toString()
-	if   _type is None : proxytype = None
-	elif _type == 'HTTP' : proxytype = socks.PROXY_TYPE_HTTP
+	if   _type == 'HTTP'   : proxytype = socks.PROXY_TYPE_HTTP
 	elif _type == 'SOCKS4' : proxytype = socks.PROXY_TYPE_SOCKS4
 	elif _type == 'SOCKS5' : proxytype = socks.PROXY_TYPE_SOCKS5
 	else : proxytype = None
@@ -49,25 +98,33 @@ def readProxySettings(socks):
 	password = take_value(_pass)
 	return proxytype, addr, port, rdns, username, password
 
-def loadSocketModule(loadModule = None):
+def loadSocketModule(loadModule = None, module = None):
 	proxyLoad = False
 	reload(socket)
-	if ( loadModule is None and Settings.value('UseProxy', 'False')=='True' ) or loadModule :
+	setattr(socket, '__reloaded__', False)
+	if ( loadModule is None and USE_PROXY == 'True' ) or loadModule :
 		## http://sourceforge.net/projects/socksipy/
 		## or install the Fedora liked python-SocksiPy package
 		try :
 			import socks
 			proxyLoad = True
-		except : pass #proxyLoad = False
+		except : pass
 		finally :
 			if proxyLoad :
+				socks._socket.setdefaulttimeout(TIMEOUT)
 				"""setdefaultproxy(proxytype, addr[, port[, rdns[, username[, password]]]])"""
 				proxytype, addr, port, rdns, username, password = readProxySettings(socks)
 				#print proxytype, addr, port, rdns, username, password
 				socks.setdefaultproxy(proxytype, addr, port, rdns, username, password)
 				socket.socket = socks.socksocket
-	reload(poplib)
-	reload(imaplib)
+				setattr(socket, '__reloaded__', True)
+	if type(module) == ModuleType :
+		reload(module)
+		setattr(module, '__reloaded__', getattr(socket, '__reloaded__'))
+	# for checking proxy availability or external IP uncomment below
+	#ip = getExternalIP()
+	#print "External IP: %s ; Reloaded: %s" % (ip, getattr(socket, '__reloaded__'))
+
 	return proxyLoad
 
 def losedBlank(str_raw):
@@ -78,7 +135,7 @@ def losedBlank(str_raw):
 	for str_ in str_raw.split(' ') :
 		_str = str_.rpartition('?=')
 		if _str[1] != '' and _str[2] != '' :
-			STR_ += ''.join([ _str[0], '?= ', losedBlank( _str[2] )]) + ' '
+			STR_ += join([ _str[0], '?= ', losedBlank( _str[2] )], '') + ' '
 		else :
 			STR_ += str_ + ' '
 	return STR_
@@ -161,6 +218,8 @@ def clearBlank(s):
 
 def popAuth(serv, port, login, passw, authMthd):
 	go = False
+	loadSocketModule(module = poplib)
+	#print getattr(poplib, '__reloaded__', None), '<< -- POP3 reloaded'
 	popMail = poplib.POP3_SSL if authMthd == 'SSL' else poplib.POP3
 	m = popMail(serv, port)
 	if m.user(login)[:3] == '+OK' :
@@ -263,9 +322,12 @@ def getMailAttributes(m, i):
 	# NewMailAttributes += m.fetch(i,"(BODY.PEEK[HEADER.FIELDS (date from subject)])")[1][0][1]
 	return Date, From, Subj
 
-def imapAuth(serv, port, login, passw, authMthd, inbox):
+def imapAuth(serv, port, login, passw, authMthd, inbox, idle = False):
 	answer = [None, None]
 	m = None
+	loadSocketModule(module = imaplib)
+	if idle : setIdleMethods()
+	#print getattr(imaplib, '__reloaded__', None), '<< -- IMAP4 reloaded'
 	if authMthd == 'SSL' :
 		m = imaplib.IMAP4_SSL(serv, port)
 	else :
@@ -381,7 +443,7 @@ def connectProbe(probe_ = 3, checkNewMail = None, authData = ['', ''], acc = '')
 		if i == probe_ :
 			ErrorMsg += "\nCan`t connect to server\non Account : " + to_unicode(acc) + '\n'
 	#print dateStamp(), ErrorMsg, '  errors'
-	ids = '' if newMailIds is None else string.join(newMailIds, ' ')
+	ids = '' if newMailIds is None else join(newMailIds, ' ')
 	return Result, all_, new_, ErrorMsg, QString(content).toUtf8(), encoding, str(unSeen), ids
 
 def checkMail(accountData = ['', '']):

@@ -27,7 +27,7 @@ from TextFunc import *
 from Translator import Translator
 from Mail import Mail
 from MailFunc import imapAuth, popAuth, Settings
-from Functions import dateFormat, decodeMailSTR, randomString, dateStamp
+from Functions import dateFormat, randomString, dateStamp
 from email import message_from_string
 import os.path, os, shutil
 
@@ -114,6 +114,9 @@ def getMail(obj, m, protocol):
 		Subj		= textChain(_Subj)
 		_From_Subj	= (_From, _Subj)
 		ReplyTo		= msg.get('Reply-To')
+		# for checking Received address uncomment below
+		#Received	= msg.get('Received')
+		#print Received, ' <--- received from'
 		if Date is None : Date = ''
 		Date = dateFormat('Date: ' + Date)
 		obj.Parent.mailAttr.emit({\

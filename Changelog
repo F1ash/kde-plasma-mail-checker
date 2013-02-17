@@ -171,3 +171,10 @@ added Quick Answer&Forward mail;
 added the checking of complete the Settings changes;
 some improvements & fixes;
 Makefile corrected for new version;
+
+v.1.11.52 :
+added the useing socks-proxy for IMAP/IDLE-mode,
+Preview and Quick Answer|Forward;
+added setting timeout;
+some fixes & improvements;
+
