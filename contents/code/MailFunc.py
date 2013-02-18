@@ -128,8 +128,8 @@ def loadSocketModule(loadModule = None, module = None):
 	return proxyLoad
 
 def losedBlank(str_raw):
-	""" рассчёт на то, что в строке может быть не одна закодированная фраза
-		поэтому добавляем пробел в конце обработанной фразы
+	""" append the gap to end phrase due to the fact
+		that the phrase may be a composite
 	"""
 	STR_ = ''
 	for str_ in str_raw.split(' ') :

@@ -191,8 +191,10 @@ class AkonadiMonitor(QObject):
 		#for i in xrange(self.accList.count()) :
 		#	print self.collResourceList[i], self.collEnableList[i]
 		self.Settings.endGroup()
-		""" получить все коллекции и, совпадающие по id, name, и resource коллекции, отдать монитору.
-			если произошли изменения, то выдать предупреждение о переинициализации конкретных аккаунтов
+		""" Get all collections and that matched for id, name,
+			and resource of the collection transmit to the monitor.
+			If there were changes, print a warning about reinitialization
+			of specific accounts.
 		"""
 		self.job = \
 				Akonadi.CollectionFetchJob( Akonadi.Collection.root(), Akonadi.CollectionFetchJob.Recursive, self)
