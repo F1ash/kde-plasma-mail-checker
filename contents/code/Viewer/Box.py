@@ -139,7 +139,7 @@ def recImap4Mail(obj):
 		getMail(obj, m, 'imap')
 		m.close()
 	else : res = False
-	m.logout()
+	if not (m is None) : m.logout()
 	return res
 
 def recPop3Mail(obj):

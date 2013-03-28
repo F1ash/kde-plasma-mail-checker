@@ -328,10 +328,13 @@ def imapAuth(serv, port, login, passw, authMthd, inbox, idle = False):
 	loadSocketModule(module = imaplib)
 	if idle : setIdleMethods()
 	#print getattr(imaplib, '__reloaded__', None), '<< -- IMAP4 reloaded'
-	if authMthd == 'SSL' :
-		m = imaplib.IMAP4_SSL(serv, port)
-	else :
-		m = imaplib.IMAP4(serv, port)
+	try :
+		if authMthd == 'SSL' :
+			m = imaplib.IMAP4_SSL(serv, port)
+		else :
+			m = imaplib.IMAP4(serv, port)
+	except Exception :
+		return ('', None), m, False
 	tag = m._new_tag()
 	m.send("%s CAPABILITY\r\n" % tag)
 	#print dateStamp(), "%s CAPABILITY\r\n" % tag
@@ -409,7 +412,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 
 		if answer[0] == 'OK' :
 			m.close()
-		m.logout()
+		if not (m is None) : m.logout()
 
 		Settings.sync()
 

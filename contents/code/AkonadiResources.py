@@ -21,6 +21,7 @@
 
 from Functions import dateStamp, dlm
 from PyQt4.QtGui import *
+from PyQt4.QtCore import pyqtSignal
 from AkonadiMod import *
 from Translator import Translator
 from ColorSets import ColorButton

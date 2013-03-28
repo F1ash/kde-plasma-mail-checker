@@ -179,3 +179,7 @@ added setting timeout;
 some fixes & improvements;
 changed icons;
 
+v.1.11.54 :
+fixed freez at IMAP4 initiate exceptions;
+some fixes;
+

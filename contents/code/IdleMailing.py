@@ -212,7 +212,9 @@ class IdleMailing(QThread):
 	def stop(self):
 		self.key = False
 		#print self.key, '<-- key off'
-		self.mail.done()
+		try : self.mail.done()
+		except Exception, err : print dateStamp(), err
+		finally : pass
 
 	def _shutdown(self):
 		if self.answer != [] and self.answer[0] == 'OK' :
