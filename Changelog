@@ -183,3 +183,7 @@ v.1.11.54 :
 fixed freez at IMAP4 initiate exceptions;
 some fixes;
 
+v.11.55 :
+fixed freez in initiation;
+some fixes;
+

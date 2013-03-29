@@ -25,8 +25,9 @@ try :
 	from PyKDE4.akonadi import Akonadi
 except Exception, err:
 	AkonadiModuleExist = False
-	print err
+	print "[in AkonadiMod error]: %s" % err
 finally : pass
 
 if AkonadiModuleExist :
+	print "Load AkonadiObjects"
 	from AkonadiObjects import *

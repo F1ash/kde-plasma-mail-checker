@@ -21,7 +21,7 @@
 
 from Functions import dateStamp, dlm
 from PyQt4.QtGui import *
-from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtCore import QStringList, Qt, pyqtSignal
 from AkonadiMod import *
 from Translator import Translator
 from ColorSets import ColorButton
@@ -175,7 +175,6 @@ class EditList(QWidget):
 		self.close()
 
 class EditParam(QWidget):
-	blinked = pyqtSignal()
 	def __init__(self, parent = None):
 		QWidget.__init__(self, parent)
 
@@ -260,6 +259,7 @@ class EditParam(QWidget):
 		self.saveColor.colorSettings.connect(self.setButtonColor)
 		self.cancelColor.colorSettings.connect(self.setButtonColor)
 		self.initColor()
+		self.blink()
 
 	def initWidgets(self, item):
 		self.Settings.beginGroup('Akonadi account')
@@ -386,6 +386,7 @@ class AkonadiResources(QWidget):
 		self.StateChanged = False
 
 	def collectionSearch(self):
+		if not AkonadiModuleExist : return None
 		self.Control = ControlWidget()
 		self.Control.move(self.Parent.popupPosition(self.Control.size()))
 		if self.Control.exec_() :
@@ -397,6 +398,7 @@ class AkonadiResources(QWidget):
 			self.editParams.collectionResource.setText(col.resource())
 
 	def restartAkonadi(self):
+		if not AkonadiModuleExist : return None
 		server = Akonadi.Control()
 		#server.widgetNeedsAkonadi(self)
 		if Akonadi.ServerManager.isRunning() :
