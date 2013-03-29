@@ -289,6 +289,9 @@ class EditParam(QWidget):
 		self.nameColl = ''
 		self.accountCommand.clear()
 
+	def changeSelfActivity(self, state = True):
+		self.setEnabled(state)
+
 	def cancel(self):
 		self.blink(False, True)
 		# after blink auto clear and emit edited-signal
@@ -357,11 +360,9 @@ class AkonadiResources(QWidget):
 		self.VBLayout.addLayout(self.layout)
 
 		self.editList = EditList(self.Parent, self)
-
 		self.editParams = EditParam(self)
 
 		self.VBLayout.addWidget(self.editList)
-
 		self.VBLayout.addWidget(self.editParams)
 
 		self.setLayout(self.VBLayout)
@@ -369,10 +370,15 @@ class AkonadiResources(QWidget):
 		self.edit.connect(self.editEvent)
 		self.edited.connect(self.editedEvent)
 		self.StateChanged = False
+		self.setEditWidgetsState()
 
+	def setEditWidgetsState(self):
 		if AkonadiModuleExist and Akonadi.ServerManager.state() != Akonadi.ServerManager.State(4) :
-			self.editParams.changeSelfActivity(False)
+			#self.editParams.changeSelfActivity(False)
 			self.editList.changeSelfActivity(True)
+		else :
+			self.editList.changeSelfActivity(False)
+		self.editParams.changeSelfActivity(False)
 
 	def editEvent(self, item):
 		self.StateChanged = True
@@ -409,6 +415,7 @@ class AkonadiResources(QWidget):
 				print dateStamp(), 'Unable to start Akonadi Server '
 		self.akonadiState.setText( self.tr._translate("Akonadi Server is : ") + \
 										StateSTR[Akonadi.ServerManager.state()] )
+		self.setEditWidgetsState()
 
 	def saveData(self):
 		self.editParams.saveAccountData()
