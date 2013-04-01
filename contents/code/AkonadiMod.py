@@ -20,14 +20,21 @@
 #  
 #
 
-try :
-	AkonadiModuleExist = True
-	from PyKDE4.akonadi import Akonadi
-except Exception, err:
-	AkonadiModuleExist = False
-	print "[in AkonadiMod error]: %s" % err
-finally : pass
+import os.path
+import PyKDE4
 
+def reloadAkonadiModule():
+	res = False
+	try :
+		reload (PyKDE4)
+		fn = os.path.join(PyKDE4.__path__[0], 'akonadi.so')
+		res = os.path.isfile(fn)
+	except Exception, err:
+		print "[in AkonadiMod error]: %s" % err
+	finally : pass
+	return res
+
+AkonadiModuleExist = reloadAkonadiModule()
 if AkonadiModuleExist :
-	print "Load AkonadiObjects"
+	from PyKDE4.akonadi import Akonadi
 	from AkonadiObjects import *

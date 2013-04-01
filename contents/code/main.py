@@ -30,12 +30,11 @@ try :
 	from IdleMailing import IdleMailing
 	from EditAccounts import EditAccounts
 	from WaitIdle import WaitIdle
-	from AkonadiMod import *
 	from AppletSettings import AppletSettings
 	from FontNColor import Font_n_Colour
 	from CheckMailThread import ThreadCheckMail
 	from Passwd import PasswordManipulate
-	from AkonadiResources import AkonadiResources
+	from AkonadiResources import AkonadiResources, A
 	from PyQt4.QtCore import *
 	from PyQt4.QtGui import *
 	from PyKDE4.kdecore import KGlobal, KComponentData
@@ -772,6 +771,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		parent.addPage(self.proxy, self.tr._translate("Proxy"))
 		self.examples = Examples(self.user_or_sys('EXAMPLES'), parent)
 		parent.addPage(self.examples, self.tr._translate("EXAMPLES"))
+		self.akonadiResources.reloadAkonadi.connect(self.reloadAkonadiStuff)
 		self.connect(parent, SIGNAL("okClicked()"), self.configAccepted)
 		self.connect(parent, SIGNAL("cancelClicked()"), self.configDenied)
 
@@ -897,10 +897,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.idleThreadMessage.disconnect(self.idleMessage)
 		self.idleingStopped.disconnect(self.idleingStoppedEvent)
 		self.disableIconClick()
-		if 'monitor' in dir(self) :
-			self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
-			del self.monitorTimer
-			del self.monitor
+		self.deleteAkonadiMonitor()
 		x = ''
 		try :
 			self.Timer.stop()
@@ -960,15 +957,15 @@ class plasmaMailChecker(plasmascript.Applet):
 				self.wallet.deleteWallet(self.appletName)
 
 	def initAkonadi(self):
-		if not AkonadiModuleExist or Akonadi.ServerManager.state() == Akonadi.ServerManager.State(4) :
-			print dateStamp(), AkonadiModuleExist , 'Module PyKDE4.akonadi or Akonadi server are not available.'
+		if not A.AkonadiModuleExist or A.Akonadi.ServerManager.state() == A.Akonadi.ServerManager.State(4) :
+			print dateStamp(), A.AkonadiModuleExist , 'Module PyKDE4.akonadi or Akonadi server are not available.'
 			return None
 		else :
-			print dateStamp(), AkonadiModuleExist , 'Module PyKDE4.akonadi is available.'
+			print dateStamp(), A.AkonadiModuleExist , 'Module PyKDE4.akonadi is available.'
 		if self.monitor_isnt_exist() :
 			print dateStamp(), 'Module PyKDE4.akonadi && Akonadi server are available.'
 			timeout = self.initValue('TimeOutGroup', '3')
-			self.monitor = AkonadiMonitor(timeout, self)
+			self.monitor = A.AkonadiMonitor(timeout, self)
 			self.monitorTimer = QTimer()
 			self.monitorTimer.timeout.connect(self.monitor.syncCollection)
 			self.monitor.initAccounts()
@@ -981,19 +978,28 @@ class plasmaMailChecker(plasmascript.Applet):
 		return accList
 
 	def monitor_isnt_exist(self):
-		if AkonadiModuleExist and self.akonadiAccountList().count() != 0 \
-				and Akonadi.ServerManager.state() == Akonadi.ServerManager.State(2) :
-			if 'monitorTimer' in dir(self) :
-				self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
-				self.monitorTimer.stop()
-				del self.monitorTimer
-			if 'monitor' in dir(self) :
-				self.monitor.__del__()
-				del self.monitor
-				print dateStamp(), ' monitor delete.'
+		if A.AkonadiModuleExist and self.akonadiAccountList().count() != 0 \
+				and A.Akonadi.ServerManager.state() == A.Akonadi.ServerManager.State(2) :
+			self.deleteAkonadiMonitor()
 			return True
 		else :
 			return False
+
+	def deleteAkonadiMonitor(self):
+		if 'monitorTimer' in dir(self) :
+			self.monitorTimer.timeout.disconnect(self.monitor.syncCollection)
+			self.monitorTimer.stop()
+			del self.monitorTimer
+		if 'monitor' in dir(self) :
+			self.monitor.__del__()
+			del self.monitor
+			print dateStamp(), ' monitor delete.'
+
+	def reloadAkonadiStuff(self):
+		self.deleteAkonadiMonitor()
+		reload(A)
+		self.initAkonadi()
+		self.akonadiResources.restartAkonadi()
 
 	def __del__(self): self.eventClose()
 

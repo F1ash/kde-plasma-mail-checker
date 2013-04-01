@@ -23,7 +23,7 @@
 from PyQt4.QtCore import *
 from Functions import dateStamp, htmlWrapper
 from MailFunc import losedBlank, codeDetect
-from PyKDE4.akonadi import Akonadi
+from AkonadiMod import Akonadi
 import string
 
 StateSTR = { 0 : 'NotRunning', 1 : 'Starting', 2 : 'Running', 3 : 'Stopping', 4 : 'Broken' }
@@ -230,6 +230,7 @@ class AkonadiMonitor(QObject):
 		for col in self.monitor.collectionsMonitored() :
 			self.monitor.setCollectionMonitored(col, False)
 			## print dateStamp(), col.resource(), '\t', col.name().toUtf8() + '\t', ' not monitored'
+		self.monitor.session().clear()
 		del self.monitor
 		del self.job
 		del self.Timer

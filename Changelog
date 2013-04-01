@@ -183,7 +183,9 @@ v.1.11.54 :
 fixed freez at IMAP4 initiate exceptions;
 some fixes;
 
-v.11.55 :
+v.1.11.55 :
 fixed freez in initiation;
 some fixes;
 
+v.1.12.55 :
+added feature to live enabling\disabling PyKDE4.akonadi modile;

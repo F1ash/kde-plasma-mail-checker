@@ -22,7 +22,7 @@
 from Functions import dateStamp, dlm
 from PyQt4.QtGui import *
 from PyQt4.QtCore import QStringList, Qt, pyqtSignal
-from AkonadiMod import *
+import AkonadiMod as A
 from Translator import Translator
 from ColorSets import ColorButton
 from EditParamOBJ import EditParamOBJ
@@ -323,6 +323,7 @@ class EditParam(QWidget):
 class AkonadiResources(QWidget):
 	edit = pyqtSignal(QListWidgetItem)
 	edited = pyqtSignal()
+	reloadAkonadi = pyqtSignal()
 	def __init__(self, obj = None, parent = None):
 		QWidget.__init__(self)
 
@@ -333,7 +334,7 @@ class AkonadiResources(QWidget):
 		self.tr = Translator('EditAccounts')
 
 		print dateStamp(), 'Module PyKDE4.akonadi is'
-		if not AkonadiModuleExist :
+		if not A.AkonadiModuleExist :
 			print '\tnot'
 		print '\tavailable.'
 		self.init()
@@ -344,16 +345,16 @@ class AkonadiResources(QWidget):
 
 		self.akonadiServer = QPushButton('&Restart')
 		self.akonadiServer.setToolTip(self.tr._translate("Restart Akonadi Server"))
-		self.akonadiServer.clicked.connect(self.restartAkonadi)
+		self.akonadiServer.clicked.connect(self.reloadAkonadiStuff)
 		self.layout.addWidget(self.akonadiServer, 0, 4)
 
 		self.akonadiState = QLabel()
-		if not AkonadiModuleExist :
+		if not A.AkonadiModuleExist :
 			self.akonadiState.setText(self.tr._translate("Module PyKDE4.akonadi isn`t available."))
 			akonadiAccList = []
 		else :
 			self.akonadiState.setText( self.tr._translate("Akonadi Server is : ") + \
-										StateSTR[Akonadi.ServerManager.state()] )
+										A.StateSTR[A.Akonadi.ServerManager.state()] )
 			akonadiAccList = self.Parent.akonadiAccountList()
 		self.layout.addWidget(self.akonadiState, 0, 0)
 
@@ -373,7 +374,7 @@ class AkonadiResources(QWidget):
 		self.setEditWidgetsState()
 
 	def setEditWidgetsState(self):
-		if AkonadiModuleExist and Akonadi.ServerManager.state() != Akonadi.ServerManager.State(4) :
+		if A.AkonadiModuleExist and A.Akonadi.ServerManager.state() != A.Akonadi.ServerManager.State(4) :
 			#self.editParams.changeSelfActivity(False)
 			self.editList.changeSelfActivity(True)
 		else :
@@ -392,8 +393,8 @@ class AkonadiResources(QWidget):
 		self.StateChanged = False
 
 	def collectionSearch(self):
-		if not AkonadiModuleExist : return None
-		self.Control = ControlWidget()
+		if not A.AkonadiModuleExist : return None
+		self.Control = A.ControlWidget()
 		self.Control.move(self.Parent.popupPosition(self.Control.size()))
 		if self.Control.exec_() :
 			col = self.Control.selectedCollection()
@@ -404,18 +405,24 @@ class AkonadiResources(QWidget):
 			self.editParams.collectionResource.setText(col.resource())
 
 	def restartAkonadi(self):
-		if not AkonadiModuleExist : return None
-		server = Akonadi.Control()
-		#server.widgetNeedsAkonadi(self)
-		if Akonadi.ServerManager.isRunning() :
-			if not server.restart(self) :
-				print dateStamp(), 'Unable to start Akonadi Server '
+		if not A.AkonadiModuleExist :
+			self.akonadiState.setText(self.tr._translate("Module PyKDE4.akonadi isn`t available."))
+			akonadiAccList = []
 		else :
-			if not server.start(self) :
-				print dateStamp(), 'Unable to start Akonadi Server '
-		self.akonadiState.setText( self.tr._translate("Akonadi Server is : ") + \
-										StateSTR[Akonadi.ServerManager.state()] )
+			server = A.Akonadi.Control()
+			#server.widgetNeedsAkonadi(self)
+			if A.Akonadi.ServerManager.isRunning() :
+				if not server.restart(self) :
+					print dateStamp(), 'Unable to start Akonadi Server '
+			else :
+				if not server.start(self) :
+					print dateStamp(), 'Unable to start Akonadi Server '
+			self.akonadiState.setText( self.tr._translate("Akonadi Server is : ") + \
+											A.StateSTR[A.Akonadi.ServerManager.state()] )
 		self.setEditWidgetsState()
+
+	def reloadAkonadiStuff(self):
+		self.reloadAkonadi.emit()
 
 	def saveData(self):
 		self.editParams.saveAccountData()
