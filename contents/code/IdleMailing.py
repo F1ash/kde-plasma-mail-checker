@@ -204,7 +204,7 @@ class IdleMailing(QThread):
 				print dateStamp(), err
 			finally : pass
 
-		print dateStamp(), self.name.toLocal8Bit().data(), 'is runned:', self.runned, 'crypted:', self.authentificationData[4]
+		print dateStamp(), self.name.toLocal8Bit().data(), 'is runned:', self.runned, '; crypted:', self.authentificationData[4]
 		if self.key and self.runned : self.runIdle()
 		self.key = False
 		self._shutdown()

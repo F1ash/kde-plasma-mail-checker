@@ -75,7 +75,6 @@ class plasmaMailChecker(plasmascript.Applet):
 	def init(self):
 		self.setHasConfigurationInterface(True)
 		self.T = ThreadCheckMail(self)
-		#self.loop = QEventLoop()
 
 		self.Timer = QTimer()
 		self.Timer.timeout.connect(self._refreshData)
@@ -98,9 +97,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.titleLayout.setOrientation(Qt.Horizontal)
 
 			self.TitleDialog = Plasma.Label()
-			self.TitleDialog.setStyleSheet(self.headerColourStyle)
 			self.initTitle()
-			self.TitleDialog.setText(self.headerPref + self.title + self.headerSuff)
 			self.titleLayout.addItem(self.TitleDialog)
 
 			self.icon.setIcon(self.stopIconPath)
@@ -122,7 +119,6 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.connect(self, SIGNAL('refresh'), self.refreshData)
 		self.connect(self, SIGNAL('access'), self.processInit)
 		self.connect(self, SIGNAL('killThread'), self.killMailCheckerThread)
-		#self.connect(self, SIGNAL('finished()'), self.loop , SLOT(self.T._terminate()))
 		self.idleThreadMessage.connect(self.idleMessage)
 		self.idleingStopped.connect(self.idleingStoppedEvent)
 
@@ -152,6 +148,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			self.title = self.tr._translate('M@il Checker') + '\n' + self.VERSION + ' ' + lang[0][:2]
 		else :
 			self.title = self.tr._translate('M@il Checker')
+		self.TitleDialog.setStyleSheet(self.headerColourStyle)
 		self.TitleDialog.setText(self.headerPref + self.title + self.headerSuff)
 
 	def initColourAndFont(self):
@@ -351,7 +348,7 @@ class plasmaMailChecker(plasmascript.Applet):
 			return os.path.join(os.path.expanduser('~/kde-plasma-mail-checker/'), path_)
 
 	def createDialogWidget(self):
-		if 'Dialog' in dir(self) :
+		if hasattr(self, 'Dialog') :
 			self.layout.removeItem(self.Dialog)
 			del self.label
 			del self.countList
@@ -593,7 +590,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		newMailExist = False
 		self.listNewMail = ''
 		x = ''
-		if 'accountList' not in dir(self) : self.accountList = QStringList()
+		if not hasattr(self, 'accountList') : self.accountList = QStringList()
 		#for item in self.accountList : print item.toLocal8Bit().data(), 'accList'
 		for accountName in self.accountList :
 			self.Settings.beginGroup(accountName)
@@ -676,7 +673,7 @@ class plasmaMailChecker(plasmascript.Applet):
 					k = 0
 					groups = 0
 					for _str in str_.split('\r\n\r\n') :
-						if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
+						if _str not in ('', ' ', '\n', '\t', '\r', '\r\n') :
 							mailAttrStr = self.someFunctions.mailAttrToSTR(_str, encoding[j])
 							_str_raw = htmlWrapper(mailAttrStr, self.mailAttrColor)
 							## None is means deprecated mail header
@@ -781,8 +778,8 @@ class plasmaMailChecker(plasmascript.Applet):
 		self.dialog.setFaceType(KPageDialog.List)
 		self.dialog.setButtons( KDialog.ButtonCode(KDialog.Ok | KDialog.Cancel) )
 		self.createConfigurationInterface(self.dialog)
+		self.dialog.show()
 		self.dialog.move(self.popupPosition(self.dialog.sizeHint()))
-		self.dialog.exec_()
 
 	def settingsChangeComplete(self):
 		if self.editAccounts.StateChanged :
@@ -845,18 +842,16 @@ class plasmaMailChecker(plasmascript.Applet):
 		finally : pass
 		# refresh color & font Variables
 		self.initPrefixAndSuffix()
-		if 'dialog' in dir(self) : del self.dialog
+		if hasattr(self, 'dialog') : del self.dialog
 		# refresh plasmoid Header
 		if self.formFactor() in (Plasma.Planar, Plasma.MediaCenter) :
-			self.TitleDialog.setStyleSheet(self.headerColourStyle)
 			self.initTitle()
-			self.TitleDialog.setText(self.headerPref + self.title + self.headerSuff)
 			self.createDialogWidget()
 		self.connect(self, SIGNAL('refresh'), self.refreshData)
 		self.emit(SIGNAL('killThread'))
 
 	def configDenied(self):
-		del self.dialog
+		if hasattr(self, 'dialog') : del self.dialog
 
 	def _enterPassword(self):
 		if not self.initStat :
@@ -921,8 +916,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		sys.stdout.close()
 
 	def killMailCheckerThread(self):
-		#self.loop.quit()
-		if 'T' in dir(self):
+		if hasattr(self, 'T') :
 			#print dateStamp() ,'   killMetod Up'
 			if self.T.isRunning() : self.T._terminate()
 		# stopping idles mail
@@ -1048,7 +1042,7 @@ class plasmaMailChecker(plasmascript.Applet):
 		# show init or new mail data and notify
 		i = 0
 		self.listNewMail = ''
-		if 'accountList' not in dir(self) : self.accountList = QStringList()
+		if not hasattr(self, 'accountList') : self.accountList = QStringList()
 		#for item in self.accountList : print item.toLocal8Bit().data(), 'accList_IDLE1'
 		for accountName in self.accountList :
 			try :
@@ -1102,7 +1096,7 @@ class plasmaMailChecker(plasmascript.Applet):
 				groups = 0
 				numbers = d['msg'][4].split()
 				for _str in string.split(d['msg'][3], '\r\n\r\n') :
-					if _str not in ['', ' ', '\n', '\t', '\r', '\r\n'] :
+					if _str not in ('', ' ', '\n', '\t', '\r', '\r\n') :
 						mailAttrStr = self.someFunctions.mailAttrToSTR(_str)
 						_str_raw = htmlWrapper(mailAttrStr, self.mailAttrColor)
 						## None is means deprecated mail header

@@ -395,8 +395,8 @@ class AkonadiResources(QWidget):
 	def collectionSearch(self):
 		if not A.AkonadiModuleExist : return None
 		self.Control = A.ControlWidget()
-		self.Control.move(self.Parent.popupPosition(self.Control.size()))
 		if self.Control.exec_() :
+			self.Control.move(self.Parent.popupPosition(self.Control.size()))
 			col = self.Control.selectedCollection()
 			## print dateStamp(), col.name().toUtf8(), col.id(), col.resource()
 			self.editParams.collectionID.setText(str(col.id()))

@@ -91,6 +91,10 @@ class ReceiveParams(QWidget):
 		else : texts = []
 		#print texts, os.getcwd(), templates
 		self.accountCommand.addItems(QStringList() << '' << texts)
+		self.Parent.Parent.Parent.Settings.beginGroup(self.item.text())
+		command = self.Parent.Parent.Parent.Settings.value("CommandLine").toString()
+		self.Parent.Parent.Parent.Settings.endGroup()
+		self.accountCommand.setEditText(command)
 		self.HB2Layout.addWidget(self.accountCommand, 2, 0, 2, 4)
 
 		self.HB3Layout = QGridLayout()
