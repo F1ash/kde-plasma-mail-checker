@@ -188,4 +188,7 @@ fixed freez in initiation;
 some fixes;
 
 v.1.12.55 :
-added feature to live enabling\disabling PyKDE4.akonadi modile;
+added feature to live enabling\disabling PyKDE4.akonadi module;
+
+v.1.12.56 :
+fixed the display of current account command in Receive Parameters;
