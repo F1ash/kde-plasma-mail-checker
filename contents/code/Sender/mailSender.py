@@ -132,7 +132,7 @@ class MailSender(QDialog):
 		self.copyLine = QLineEdit()
 		self.copyLine.setText('')
 		self.subjLine = QLineEdit()
-		self.subjLine.setText(prefix + subj_)
+		self.subjLine.setText(prefix + subj_ if subj_ is not None else '')
 
 		self.send = QPushButton(QIcon.fromTheme('mail-reply-sender'), '')
 		self.send.setToolTip(self.tr._translate('Send mail'))
@@ -188,10 +188,15 @@ class MailSender(QDialog):
 					Subject=None, Body=None, Html=None,
 					Date=None, attachments=None, charset=None)
 			'''
-			_To = self.toLine.text().toLocal8Bit().data()
-			To = findall(MAILTO_REGEXP, _To)[0]
-			_From = self.fromLine.text().toLocal8Bit().data()
-			From = findall(MAILTO_REGEXP, _From)[0]
+			try :
+				_To = self.toLine.text().toLocal8Bit().data()
+				To = findall(MAILTO_REGEXP, _To)[0]
+				_From = self.fromLine.text().toLocal8Bit().data()
+				From = findall(MAILTO_REGEXP, _From)[0]
+			except Exception, err :
+				QMessageBox.information(self, self.tr._translate('Mail Sender'), \
+					'Mail address error.')
+				return None
 			CC = self.copyLine.text().toLocal8Bit().data()
 			BCC = None
 			Subj = self.subjLine.text().toLocal8Bit().data()

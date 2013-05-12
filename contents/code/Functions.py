@@ -210,28 +210,34 @@ class Required():
 		return A and B
 
 	def readAccountData(self, account = ''):
-		self.LOCK.lock()
-		self.Settings.beginGroup(account)
-		serv_ = self.Settings.value('server').toString()
-		port_ = self.Settings.value('port').toString()
-		if port_ == '' : port_ =  '0'
-		login_ = self.Settings.value('login').toString()
-		authMethod_ = self.Settings.value('authentificationMethod').toString()
-		connMethod_ = self.Settings.value('connectMethod').toString()
-		last_ = self.Settings.value('lastElemValue').toString()
-		enable = self.Settings.value('Enabled').toString()
-		if str(connMethod_) == 'imap' :
-			inbox = self.Settings.value('Inbox').toString()
-		else :
-			inbox = ''
-		if self.Settings.contains('CommandLine') :
-			command = self.Settings.value('CommandLine').toString()
-		else :
-			command = ''
-		self.Settings.endGroup()
-		self.LOCK.unlock()
-		return [str(serv_), str(port_), login_, '', \
+		result = ['','','','','','','','','','']
+		try :
+			self.LOCK.lock()
+			self.Settings.beginGroup(account)
+			serv_ = self.Settings.value('server').toString()
+			port_ = self.Settings.value('port').toString()
+			if port_ == '' : port_ =  '0'
+			login_ = self.Settings.value('login').toString()
+			authMethod_ = self.Settings.value('authentificationMethod').toString()
+			connMethod_ = self.Settings.value('connectMethod').toString()
+			last_ = self.Settings.value('lastElemValue').toString()
+			enable = self.Settings.value('Enabled').toString()
+			if connMethod_.startsWith('imap') :
+				inbox = self.Settings.value('Inbox').toString()
+			else :
+				inbox = ''
+			if self.Settings.contains('CommandLine') :
+				command = self.Settings.value('CommandLine').toString()
+			else :
+				command = ''
+			self.Settings.endGroup()
+			result = [str(serv_), str(port_), login_, '', \
 				str(authMethod_), str(connMethod_), str(last_), str(enable), inbox, command]
+			self.LOCK.unlock()
+		except Exception, err :
+			print dateStamp(), err, '  read account data in Required'
+		finally : pass
+		return result
 
 	def initPOP3Cache(self):
 		self.LOCK.lock()

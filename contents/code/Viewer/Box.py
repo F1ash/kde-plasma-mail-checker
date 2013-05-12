@@ -111,7 +111,7 @@ def getMail(obj, m, protocol):
 		_From		= msg.get('From')
 		From		= mailToString(textChain(_From))
 		_Subj		= msg.get('Subject')
-		Subj		= textChain(_Subj)
+		Subj		= '' if _Subj is None else textChain(_Subj)
 		_From_Subj	= (_From, _Subj)
 		ReplyTo		= msg.get('Reply-To')
 		# for checking Received address uncomment below
