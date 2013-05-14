@@ -183,6 +183,7 @@ class GetMail(QThread):
 			self.Parent.Parent.statusBar.showMessage(self.Parent.tr._translate('Job completed.'))
 		else :
 			self.Parent.Parent.statusBar.showMessage(self.Parent.tr._translate('Job completed with error.'))
+		self.Parent.Parent.reload_.setEnabled(True)
 
 	def stop(self):
 		self.key = False
@@ -217,9 +218,13 @@ class Box(QTabWidget):
 			self.mailAttr.connect(self.setMailAttr)
 			self.mailData.connect(self.setMailData)
 			self.getMail = GetMail(data, self)
-			self.getMail.start()
+			self.startGetMail()
 		else :
 			self.Parent.statusBar.showMessage(self.tr._translate('Empty Job.'))
+
+	def startGetMail(self):
+		self.Parent.reload_.setEnabled(False)
+		self.getMail.start()
 
 	def setMailAttr(self, d):
 		i = 0

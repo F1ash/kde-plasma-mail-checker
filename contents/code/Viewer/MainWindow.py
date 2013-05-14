@@ -33,10 +33,15 @@ class MainWindow(QMainWindow):
 		self.tr = Translator('mailViewer')
 		self.autoLoadImage = False
 		self.privateEnable = False
+		self.data = data
 
 		self.setWindowTitle(self.tr._translate('Mail Viewer'))
 		self.setWindowIcon(QIcon().fromTheme("mail"))
 
+		self.reload_ = QAction(QIcon().fromTheme("view-refresh"), '&'+self.tr._translate('Reload Job'), self)
+		self.reload_.setShortcut('Ctrl+R')
+		self.connect(self.reload_, SIGNAL('triggered()'), self.reloadJob)
+		
 		self.exit_ = QAction(QIcon().fromTheme("application-exit"), '&'+self.tr._translate('Exit'), self)
 		self.exit_.setShortcut('Ctrl+Q')
 		self.connect(self.exit_, SIGNAL('triggered()'), self._close)
@@ -58,6 +63,7 @@ class MainWindow(QMainWindow):
 		self.menubar = self.menuBar()
 
 		file_ = self.menubar.addMenu('&'+self.tr._translate('File'))
+		file_.addAction(self.reload_)
 		file_.addAction(self.exit_)
 
 		sett_ = self.menubar.addMenu('&'+self.tr._translate('Settings'))
@@ -67,7 +73,7 @@ class MainWindow(QMainWindow):
 		self.statusBar = QStatusBar(self)
 		self.setStatusBar(self.statusBar)
 
-		self.menuTab = Box(data, self)
+		self.menuTab = Box(self.data, self)
 		self.setCentralWidget(self.menuTab)
 
 	def _image(self): self.regimeChange('image', self.image_.isChecked())
@@ -82,6 +88,11 @@ class MainWindow(QMainWindow):
 		for wdg in self.menuTab.webViewWDGs :
 			wdg.settings().setAttribute(attr, state)
 			wdg.reload()
+
+	def reloadJob(self):
+		self.menuTab = Box(self.data, self)
+		self.setCentralWidget(self.menuTab)
+		self.menuTab.startGetMail()
 
 	def _close(self): self.eventClose()
 
