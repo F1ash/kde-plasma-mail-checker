@@ -348,11 +348,13 @@ class plasmaMailChecker(plasmascript.Applet):
 
 	def createDialogWidget(self):
 		if hasattr(self, 'Dialog') :
-			self.layout.removeItem(self.Dialog)
+			self.layout.removeItem(self.scroll)
+			self.layout.removeItem(self.labelStat)
 			del self.label
 			del self.countList
 			del self.labelStat
 			del self.Dialog
+			del self.scroll
 			#print dateStamp() ,  're-createDialog'
 		self.scroll = Plasma.ScrollWidget()
 		self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
