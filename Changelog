@@ -202,3 +202,7 @@ some fixes & improvements;
 v.1.13.59 :
 fixed error in IdleMailing (v.1.12.58);
 added Reload Job in Viewer for failed mail;
+
+v.1.14.60 :
+some Setting Interface improvements;
+fixed initiate null-date for IMAP_IDLE mode;

@@ -108,7 +108,6 @@ class plasmaMailChecker(plasmascript.Applet):
 
 			self.layout.setOrientation(Qt.Vertical)
 			self.layout.addItem(self.titleLayout)
-			self.setMinimumSize(150.0,75.0)
 			self.createDialogWidget()
 		else:
 			self.createIconWidget()
@@ -355,6 +354,11 @@ class plasmaMailChecker(plasmascript.Applet):
 			del self.labelStat
 			del self.Dialog
 			#print dateStamp() ,  're-createDialog'
+		self.scroll = Plasma.ScrollWidget()
+		self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+		self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+		self.scrolled = QGraphicsWidget()
+		self.scrolled.setMinimumSize(150.0,75.0)
 		self.Dialog = QGraphicsGridLayout()
 		i = 0
 		self.label = []
@@ -376,10 +380,10 @@ class plasmaMailChecker(plasmascript.Applet):
 
 		self.labelStat = Plasma.Label()
 		self.labelStat.setText("<font color=red><b>" + self.tr._translate('..stopped..') + "</b></font>")
-		self.Dialog.addItem(self.labelStat, i, 0)
-
-		self.Dialog.updateGeometry()
-		self.layout.addItem(self.Dialog)
+		self.scrolled.setLayout(self.Dialog)
+		self.scroll.setWidget(self.scrolled)
+		self.layout.addItem(self.scroll)
+		self.layout.addItem(self.labelStat)
 
 		self.setLayout(self.layout)
 
