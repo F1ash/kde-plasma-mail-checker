@@ -261,7 +261,10 @@ class MailSender(QDialog):
 				__init__(self, host="localhost", port=0, use_tls=False,
 						usr=None, pwd=None, use_ssl=False)
 				'''
-				sender = mailer.Mailer(host, port, tls, usr, passwd, ssl)
+				if mailer.__version__ <= "0.7" :
+					sender = mailer.Mailer(host, port, tls, usr, passwd)
+				else :
+					sender = mailer.Mailer(host, port, tls, usr, passwd, ssl)
 				self.sender = SendThread(sender, msg, self)
 				self.sender.start()
 
