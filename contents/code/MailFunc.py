@@ -111,7 +111,9 @@ def loadSocketModule(loadModule = None, module = None):
 		except : pass
 		finally :
 			if proxyLoad :
-				socks._socket.setdefaulttimeout(TIMEOUT)
+				# for old SocksiPy versions
+				if hasattr(socks, '_socket') :
+					socks._socket.setdefaulttimeout(TIMEOUT)
 				"""setdefaultproxy(proxytype, addr[, port[, rdns[, username[, password]]]])"""
 				proxytype, addr, port, rdns, username, password = readProxySettings(socks)
 				#print proxytype, addr, port, rdns, username, password

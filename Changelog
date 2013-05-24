@@ -206,3 +206,6 @@ added Reload Job in Viewer for failed mail;
 v.1.14.60 :
 some Setting Interface improvements;
 fixed initiate null-date for IMAP_IDLE mode;
+
+v.1.15.60 :
+fixed reload socks-proxy for new module version (1.00);
