@@ -374,13 +374,11 @@ class Font_n_Colour(QWidget):
 		return pref, suff
 
 	def getFont(self, currentFont):
-		font = QFontDialog()
-		selectFont, yes = font.getFont(currentFont)
+		selectFont, yes = QFontDialog.getFont(currentFont, self)
 		str_ = string.split(selectFont.key(), ',')
 		b = '0'; i = '0'
 		if selectFont.bold() : b = '1'
 		if selectFont.italic() : i = '1'
-		font.done(0)
 		return str_[0], str_[1], b, i, yes
 
 	def getRGBaStyle(self, (colour, yes)):
@@ -391,9 +389,7 @@ class Font_n_Colour(QWidget):
 		return style
 
 	def getColour(self, (currentColour, yes)):
-		colour = QColorDialog()
-		selectColour, _yes = colour.getRgba(currentColour)
-		colour.done(0)
+		selectColour, _yes = QColorDialog.getRgba(currentColour, self)
 		return str(selectColour), _yes, self.getRGBaStyle((selectColour, _yes))
 
 	def headerFont(self):
