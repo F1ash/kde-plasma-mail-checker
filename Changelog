@@ -210,3 +210,7 @@ fixed initiate null-date for IMAP_IDLE mode;
 v.1.15.60 :
 fixed reload socks-proxy for new module version (1.00);
 fixed init Mailer for old mailer module version (0.7);
+
+v.1.15.62 :
+fixed Font&Color settings;
+some fixes & improvements;

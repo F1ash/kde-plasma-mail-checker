@@ -54,4 +54,4 @@ M@ilChecker использует бумажник умолчанию или ал
 	(Например: ru.qm, de.qm, ge.qm). По умолчанию, язык английский.
 
 Тестировано на :
-	Fedora14 (kdebase-workspace-python-applet-4.5.3-3.fc14.x86_64) -- Fedora18
+	Fedora14 (kdebase-workspace-python-applet-4.5.3-3.fc14.x86_64) -- Fedora19
