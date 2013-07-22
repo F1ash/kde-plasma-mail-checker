@@ -30,7 +30,7 @@ class Mail(QWidget):
 		self.Parent = parent
 		self.tr = Translator('mailViewer')
 		self.reply_to = None
-		self._from_subj = None
+		self._from_subj = (None, None)
 		self.fromField = QLabel(self.tr._translate('From:'))
 		self.fromField.setOpenExternalLinks(True)
 		self.fromField.linkHovered.connect(self.linkDisplay)

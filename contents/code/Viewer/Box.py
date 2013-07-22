@@ -102,7 +102,9 @@ def getMail(obj, m, protocol):
 			else :
 				_Mail = m.retr(idx)[1]
 		except Exception, err :
-			print dateStamp(), err
+			#print dateStamp(), err
+			msg = "Get Mail Error: %s." % err
+			obj.Parent.Parent.statusBar.showMessage(self.Parent.tr._translate(msg))
 			_Mail = 'From: %s' % err
 		finally : pass
 		msg = message_from_string(_Mail)
@@ -138,8 +140,11 @@ def recImap4Mail(obj):
 	if answer[0] == 'OK' :
 		getMail(obj, m, 'imap')
 		m.close()
-	else : res = False
-	if not (m is None) : m.logout()
+	else :
+		res = False
+		msg = "Authentification Error: %s." % answer[1]
+		obj.Parent.Parent.statusBar.showMessage(self.Parent.tr._translate(msg))
+	if m : m.logout()
 	return res
 
 def recPop3Mail(obj):
@@ -152,7 +157,7 @@ def recPop3Mail(obj):
 	if go :
 		getMail(obj, m, 'pop3')
 	else : res = False
-	m.quit()
+	if m : m.quit()
 	return res
 
 def changeImagePath(data, boundary):
@@ -249,7 +254,7 @@ class Box(QTabWidget):
 			_data = changeImagePath(data, d['boundary'])
 			''' create temporary html-file '''
 			fileName = os.path.join(self.iconDatabasePath, randomString(24) + '.html')
-			with open(fileName, 'w') as f : f.write(_data.encode('utf-32'))
+			with open(fileName, 'w') as f : f.write(insertMetaData(_data))
 			wdg = QWebView()
 			wdg.triggerPageAction(QWebPage.Reload, True)
 			wdg.triggerPageAction(QWebPage.Stop, True)

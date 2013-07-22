@@ -230,10 +230,13 @@ def popAuth(serv, port, login, passw, authMthd):
 	loadSocketModule(module = poplib)
 	#print getattr(poplib, '__reloaded__', None), '<< -- POP3 reloaded'
 	popMail = poplib.POP3_SSL if authMthd == 'SSL' else poplib.POP3
-	m = popMail(serv, port)
-	if m.user(login)[:3] == '+OK' :
-		if m.pass_(passw)[:3] == '+OK' :
-			go = True
+	try :
+		m = popMail(serv, port)
+		if m.user(login)[:3] == '+OK' :
+			if m.pass_(passw)[:3] == '+OK' :
+				go = True
+	except Exception : pass
+	finally : pass
 	return m, go
 
 def checkNewMailPOP3(accountData = ['', '']):

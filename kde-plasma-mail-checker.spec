@@ -50,7 +50,7 @@ make install DESTDIR=$RPM_BUILD_ROOT/usr
 %files
 %{_kde4_datadir}/kde4/services/%{name}.desktop
 %{_kde4_appsdir}/plasma/plasmoids/%{name}
-%doc README README_RU COPYING Changelog
+%doc README README_RU COPYING Changelog Licenses
 
 %changelog
 * Mon Jun 10 2013 Fl@sh <kaperang07@gmail.com> - 1.15.62-1

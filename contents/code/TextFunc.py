@@ -93,3 +93,25 @@ def changeLink(data):
 	data = data.replace('\n', '<br>')
 	data = data.replace('\t', '&#09;')
 	return data
+
+def insertMetaData(data):
+	res = None
+	insert_after = 0
+	meta = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
+	if not len(data) :
+		return data
+	while data[0] in string.whitespace :
+		data = data[1:]
+	if data.startswith("<!DOCTYPE") :
+		insert_after = data.find(">") + 1
+	if data.startswith("<html") :
+		insert_after = data.find(">", insert_after) + 1
+	if data.startswith("<head") :
+		insert_after = data.find(">", insert_after) + 1
+	if data.count(meta[:-12]) :
+		res = data
+	else :
+		head = data[:insert_after]
+		tail = data[insert_after:]
+		res = ''.join((head, meta, tail))
+	return res
