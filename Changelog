@@ -214,3 +214,6 @@ fixed init Mailer for old mailer module version (0.7);
 v.1.15.62 :
 fixed Font&Color settings;
 some fixes & improvements;
+
+v.1.15.63 :
+some fixes & improvements;
