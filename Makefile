@@ -1,3 +1,4 @@
+PREFIX=/usr
 INSTALL=install -D -m 0644 -p
 LRELEASE=/usr/bin/lrelease-qt4
 APP_NAME=kde-plasma-mail-checker
