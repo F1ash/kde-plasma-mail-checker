@@ -58,7 +58,7 @@ install: build
 	$(INSTALL) $(CODE)/Sender/__init__.py $(DESTDIR)$(PREFIX)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/Sender/__init__.py
 	$(INSTALL) $(CODE)/Sender/mailSender.py $(DESTDIR)$(PREFIX)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(CODE)/Sender/mailSender.py
 
-	$(INSTALL) $(ICONS)/Licenses $(DESTDIR)$(PREFIX)/Licenses
+	cp -p $(ICONS)/Licenses .
 	$(INSTALL) $(ICONS)/mailChecker.png $(DESTDIR)$(PREFIX)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/mailChecker.png
 	$(INSTALL) $(ICONS)/mailChecker_stop.png $(DESTDIR)$(PREFIX)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/mailChecker_stop.png
 	$(INSTALL) $(ICONS)/mailChecker_web.png $(DESTDIR)$(PREFIX)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/mailChecker_web.png
