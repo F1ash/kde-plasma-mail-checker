@@ -53,7 +53,7 @@ make install DESTDIR=$RPM_BUILD_ROOT/usr
 %doc README README_RU COPYING Changelog Licenses
 
 %changelog
-* Fri Jul 26 2013 Fl@sh <kaperang07@gmail.com> - 1.15.63-2
+* Wed Aug 14 2013 Fl@sh <kaperang07@gmail.com> - 1.15.63-2
 - description improved;
 
 * Fri Jul 26 2013 Fl@sh <kaperang07@gmail.com> - 1.15.63-1
