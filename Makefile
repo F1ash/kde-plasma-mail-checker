@@ -62,7 +62,7 @@ install: build
 	$(INSTALL) $(ICONS)/mailChecker_stop.png $(DESTDIR)$(PREFIX)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/mailChecker_stop.png
 	$(INSTALL) $(ICONS)/mailChecker_web.png $(DESTDIR)$(PREFIX)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/mailChecker_web.png
 	# prepared for %doc
-	$(INSTALL) $(ICONS)/Licenses $(DESTDIR)/Licenses
+	$(INSTALL) $(ICONS)/Licenses ./Licenses
 
 contents/code/ru.qm:
 	$(LRELEASE) $(CODE)/ru.ts -qm $(CODE)/ru.qm
