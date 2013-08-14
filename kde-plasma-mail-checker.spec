@@ -45,7 +45,7 @@ fi
 make %{?_smp_mflags}
 
 %install
-make install DESTDIR=$RPM_BUILD_ROOT/usr
+%{make_install}
 
 %files
 %{_kde4_datadir}/kde4/services/%{name}.desktop
