@@ -201,7 +201,8 @@ def readAccountData(account = ''):
 		authMethod_ = Settings.value('authentificationMethod').toString()
 		connMethod_ = Settings.value('connectMethod').toString()
 		# time.time() for the initiate a time-point of reference
-		last_ = Settings.value('lastElemValue', time.time()).toString()
+		last_ = Settings.value('lastElemValue', time.time()).toUInt()[0]
+		if last_ == 0 : last_ = time.time()
 		enable = Settings.value('Enabled').toString()
 		if connMethod_.startsWith('imap') :
 			inbox = Settings.value('Inbox').toString()
@@ -375,6 +376,7 @@ def checkNewMailIMAP4(accountData = ['', '']):
 	global ErrorMsg
 	encoding = ''
 	x = ''
+	maxShowedMail = Settings.value('MaxShowedMail', 12).toUInt()[0]
 	try:
 		NewMailAttributes = ''
 		newMailExist = False
@@ -393,18 +395,15 @@ def checkNewMailIMAP4(accountData = ['', '']):
 				countAll = int(answer[1][0])
 				unSeen = countAll - len(m.search(None, 'Seen')[1][0].split())
 				i = countAll
+				_lastElemTime = ''
 				while i > 0 :
 					currentElemTime = getCurrentElemTime(m, i)
 					# print dateStamp(), currentElemTime
 					if currentElemTime > lastElemTime :
-						newMailIds.append(str(i))
-						Date, From, Subj = getMailAttributes(m, i)
-						NewMailAttributes += clearBlank(Date) + '\r\n' + \
-											 clearBlank(From) + '\r\n' + \
-											 clearBlank(Subj) + '\r\n\r\n'
-						#print dateStamp(), NewMailAttributes, '   ----==------'
-						encoding += '\n'
+						if currentElemTime > _lastElemTime :
+							_lastElemTime = currentElemTime
 						newMailExist = newMailExist or True
+						newMailIds.append(str(i))
 						countNew += 1
 					else:
 						break
@@ -416,11 +415,19 @@ def checkNewMailIMAP4(accountData = ['', '']):
 			ErrorMsg += '\n' + answer[1]
 
 		if newMailExist :
-			lastElemTime = getCurrentElemTime(m, countAll)
+			if _lastElemTime != '' : lastElemTime = _lastElemTime
 			# print dateStamp(), lastElemTime
 			Settings.beginGroup(accountData[0])
 			Settings.setValue('lastElemValue', lastElemTime)
 			Settings.endGroup()
+			if maxShowedMail >= len(newMailIds) :
+				for i in newMailIds :
+					Date, From, Subj = getMailAttributes(m, i)
+					NewMailAttributes += clearBlank(Date) + '\r\n' + \
+										 clearBlank(From) + '\r\n' + \
+										 clearBlank(Subj) + '\r\n\r\n'
+					#print dateStamp(), NewMailAttributes, '   ----==------'
+					encoding += '\n'
 		else:
 			# print dateStamp(), 'New message(s) not found.'
 			if countAll == 0 :

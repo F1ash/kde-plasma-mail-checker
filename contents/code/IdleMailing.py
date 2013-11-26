@@ -37,7 +37,8 @@ class IdleMailing(QThread):
 		self.runned = False
 		self.timer = QTimer()
 		self.Settings = self.prnt.Settings
-		self.countProbe = int(self.Settings.value('CountProbe').toString())
+		self.maxShowedMail = self.Settings.value('MaxShowedMail', 12).toUInt()[0]
+		self.countProbe = self.Settings.value('CountProbe', 3).toUInt()[0]
 		self.TIMEOUT = self.Settings.value('timeoutSocks', 45).toUInt()[0]
 		self.readAccountData = parent.someFunctions.readAccountData
 
@@ -172,33 +173,38 @@ class IdleMailing(QThread):
 						NewMailAttributes = ''
 						newMailExist = False
 						countNew = 0
+						lastElemTime = ''
 						while i > 0 and self.key :
 							currentElemTime = getCurrentElemTime(self.mail, i)
 							# print dateStamp(), currentElemTime
 							if currentElemTime > self.lastElemTime :
+								if lastElemTime < currentElemTime :
+									lastElemTime = currentElemTime
 								newMailIds.append(str(i))
-								Date, From, Subj = getMailAttributes(self.mail, i)
-								NewMailAttributes += clearBlank(Date) + '\r\n' + \
-													 clearBlank(From) + '\r\n' + \
-													 clearBlank(Subj) + '\r\n\r\n'
-								#print dateStamp(), NewMailAttributes, '   ----==------'
 								newMailExist = newMailExist or True
 								countNew += 1
 							else:
 								break
 							i += -1
-						if self.key :
-							self.lastElemTime = getCurrentElemTime(self.mail, countAll)
-							# print dateStamp(), self.lastElemTime
-							self.Settings.beginGroup(self.name)
-							self.Settings.setValue('lastElemValue', self.lastElemTime)
-							self.Settings.endGroup()
-							if newMailExist :
-								# send data to main thread for change mail data & notify
-								self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
-																'msg': [countAll, countNew, \
-																		unSeen, NewMailAttributes, \
-																		join(newMailIds, ' ')]})
+						if lastElemTime != '' : self.lastElemTime = lastElemTime
+						# print dateStamp(), self.lastElemTime
+						self.Settings.beginGroup(self.name)
+						self.Settings.setValue('lastElemValue', self.lastElemTime)
+						self.Settings.endGroup()
+						if self.key and newMailExist :
+							if self.maxShowedMail >= len(newMailIds) :
+								for i in newMailIds :
+									Date, From, Subj = getMailAttributes(self.mail, i)
+									NewMailAttributes += clearBlank(Date) + '\r\n' + \
+														 clearBlank(From) + '\r\n' + \
+														 clearBlank(Subj) + '\r\n\r\n'
+									#print dateStamp(), NewMailAttributes, '   ----==------'
+
+							# send data to main thread for change mail data & notify
+							self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
+															'msg': [countAll, countNew, \
+																	unSeen, NewMailAttributes, \
+																	join(newMailIds, ' ')]})
 						break
 				elif self.answer[0] != 'OK' :
 					print dateStamp(), self.answer[1], '  IMAP4_IDLE'
