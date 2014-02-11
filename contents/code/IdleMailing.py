@@ -64,15 +64,28 @@ class IdleMailing(QThread):
 				try :
 					self.mail.done()
 					NewMailAttributes = ''
-					currentElemTime = getCurrentElemTime(self.mail, uid)
-					# print dateStamp(), currentElemTime
+					newMailIds = []
 					countAll = len(self.mail.search(None, 'All')[1][0].split())
-					unSeen = countAll - len(self.mail.search(None, 'Seen')[1][0].split())
+					_Seen = self.mail.search(None, 'Seen')
+					if len(_Seen)>1 and len(_Seen[1])>0 and _Seen[1][0] is not None :
+						Seen = len(_Seen[1][0].split())
+					else : Seen = 0
+					unSeen = countAll - Seen
+					currentElemTime = getCurrentElemTime(self.mail, uid)
+					newMailIds.append(str(uid))
 					if currentElemTime > self.lastElemTime :
-						Date, From, Subj = getMailAttributes(self.mail, uid)
-						NewMailAttributes += clearBlank(Date) + '\r\n' + \
-											 clearBlank(From) + '\r\n' + \
-											 clearBlank(Subj) + '\r\n\r\n'
+						# check previous mails
+						_uid = int(uid) - 1
+						while self.lastElemTime < getCurrentElemTime(self.mail, _uid) :
+							# print dateStamp(), currentElemTime, _uid
+							newMailIds.append(str(_uid))
+							_uid += -1
+						newMailIds.reverse()
+						for i in newMailIds :
+							Date, From, Subj = getMailAttributes(self.mail, i)
+							NewMailAttributes += clearBlank(Date) + '\r\n' + \
+												 clearBlank(From) + '\r\n' + \
+												 clearBlank(Subj) + '\r\n\r\n'
 						#print dateStamp(), NewMailAttributes, '   ----==------', unSeen, countAll
 						self.lastElemTime = currentElemTime
 						self.Settings.beginGroup(self.name)
@@ -81,8 +94,9 @@ class IdleMailing(QThread):
 						self.Settings.sync()
 						# send data to main thread for change mail data & notify
 						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
-														'msg': [countAll, 1, unSeen, NewMailAttributes, \
-																str(uid)]})
+														  'msg': [countAll, len(newMailIds), \
+														  unSeen, NewMailAttributes, \
+														  str(uid)]})
 					else :
 						# send data to main thread for change mail data
 						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
@@ -104,7 +118,11 @@ class IdleMailing(QThread):
 				try :
 					new = len(self.mail.search(None, 'New')[1][0].split())
 					countAll = len(self.mail.search(None, 'All')[1][0].split())
-					unSeen = countAll - len(self.mail.search(None, 'Seen')[1][0].split())
+					_Seen = self.mail.search(None, 'Seen')
+					if len(_Seen)>1 and len(_Seen[1])>0 and _Seen[1][0] is not None :
+						Seen = len(_Seen[1][0].split())
+					else : Seen = 0
+					unSeen = countAll - Seen
 					# send data to main thread for change mail data
 					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
 													'msg': [countAll, new, unSeen, '']})
@@ -165,7 +183,11 @@ class IdleMailing(QThread):
 				if self.answer[0] == 'OK' and self.key :
 						self.runned = True
 						countAll = int(self.answer[1][0])
-						unSeen = countAll - len(self.mail.search(None, 'Seen')[1][0].split())
+						_Seen = self.mail.search(None, 'Seen')
+						if len(_Seen)>1 and len(_Seen[1])>0 and _Seen[1][0] is not None :
+							Seen = len(_Seen[1][0].split())
+						else : Seen = 0
+						unSeen = countAll - Seen
 						# send signal with countAll & unSeen for show init data to main thread
 						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
 														'msg': [countAll, 0, unSeen, '']})

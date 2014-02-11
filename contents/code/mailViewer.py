@@ -41,6 +41,7 @@ if __name__ == '__main__':
 			['' for i in xrange(9)]
 
 	app = QtGui.QApplication(sys.argv)
+	app.setApplicationName("pyqt-mail-viewer")
 	data = {'mailBox'	: accName, \
 			'server'	: serv_, \
 			'port'		: port_, \

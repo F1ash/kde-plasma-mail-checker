@@ -393,7 +393,11 @@ def checkNewMailIMAP4(accountData = ['', '']):
 				authentificationData[4], authentificationData[8])
 		if answer[0] == 'OK' :
 				countAll = int(answer[1][0])
-				unSeen = countAll - len(m.search(None, 'Seen')[1][0].split())
+				_Seen = m.search(None, 'Seen')
+				if len(_Seen)>1 and len(_Seen[1])>0 and _Seen[1][0] is not None :
+					Seen = len(_Seen[1][0].split())
+				else : Seen = 0
+				unSeen = countAll - Seen
 				i = countAll
 				_lastElemTime = ''
 				while i > 0 :

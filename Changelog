@@ -220,3 +220,7 @@ some fixes & improvements;
 
 v.1.15.64 :
 improved: cut off the extra work when retrieving IMAP4 mail;
+
+v.1.15.66 :
+fixed the poll empty mailbox;
+added the check for new mail in IMAP/IDLE;
