@@ -194,22 +194,21 @@ def readAccountData(account = ''):
 		LOCK.lock()
 		global Settings
 		Settings.beginGroup(account)
-		serv_ = Settings.value('server').toString()
-		port_ = Settings.value('port').toString()
-		if port_ == '' : port_ =  '0'
-		login_ = Settings.value('login').toString()
-		authMethod_ = Settings.value('authentificationMethod').toString()
-		connMethod_ = Settings.value('connectMethod').toString()
+		serv_ = Settings.value('server', '').toString()
+		port_ = Settings.value('port', '0').toString()
+		login_ = Settings.value('login', '').toString()
+		authMethod_ = Settings.value('authentificationMethod', '').toString()
+		connMethod_ = Settings.value('connectMethod', '').toString()
 		# time.time() for the initiate a time-point of reference
 		last_ = Settings.value('lastElemValue', time.time()).toUInt()[0]
 		if last_ == 0 : last_ = time.time()
-		enable = Settings.value('Enabled').toString()
-		if connMethod_.startsWith('imap') :
-			inbox = Settings.value('Inbox').toString()
+		enable = Settings.value('Enabled', '0').toString()
+		if connMethod_.startsWith('imap') and Settings.contains('Inbox') :
+			inbox = Settings.value('Inbox', '').toString()
 		else :
 			inbox = ''
 		if Settings.contains('CommandLine') :
-			command = Settings.value('CommandLine').toString()
+			command = Settings.value('CommandLine', '').toString()
 		else :
 			command = ''
 		Settings.endGroup()

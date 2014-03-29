@@ -224,3 +224,6 @@ improved: cut off the extra work when retrieving IMAP4 mail;
 v.1.15.66 :
 fixed the poll empty mailbox;
 added the check for new mail in IMAP/IDLE;
+
+v.1.15.67 :
+fixed the read of account's parameters (issue #10);
