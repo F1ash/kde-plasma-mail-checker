@@ -190,8 +190,8 @@ def defineUIDL(accountName = '', str_ = ''):
 
 def readAccountData(account = ''):
 	result = ['','','','','','','','','','']
+	LOCK.lock()
 	try :
-		LOCK.lock()
 		global Settings
 		Settings.beginGroup(account)
 		serv_ = Settings.value('server', '').toString()
@@ -214,10 +214,10 @@ def readAccountData(account = ''):
 		Settings.endGroup()
 		result = [str(serv_), str(port_), login_, '', \
 			str(authMethod_), str(connMethod_), str(last_), str(enable), inbox, command]
-		LOCK.unlock()
 	except Exception, err :
 		print dateStamp(), err, '  read account data'
 	finally : pass
+	LOCK.unlock()
 	return result
 
 def clearBlank(s):

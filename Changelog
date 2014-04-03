@@ -227,3 +227,7 @@ added the check for new mail in IMAP/IDLE;
 
 v.1.15.67 :
 fixed the read of account's parameters (issue #10);
+
+v.1.15.68 :
+fixed getting the numbers of messages;
+some fixes for read  of account's parameters (issue #10);

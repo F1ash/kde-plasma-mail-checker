@@ -96,7 +96,7 @@ class IdleMailing(QThread):
 						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNDATA, \
 														  'msg': [countAll, len(newMailIds), \
 														  unSeen, NewMailAttributes, \
-														  str(uid)]})
+														  join(newMailIds, ' ')]})
 					else :
 						# send data to main thread for change mail data
 						self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \

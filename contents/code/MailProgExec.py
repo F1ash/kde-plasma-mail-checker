@@ -39,17 +39,16 @@ class MailProgExec(QThread):
 			__str = self.param.keys()[0]
 		if self.command.count('integrated mail Viewer') :
 			""" prepeare file with parameters """
-			accName = __str
-			accIds = str(self.param.values()[0])
+			accName =  '' if __str is None else __str
+			accIds = self.param[__str] if __str in self.param else ''
 			self.Settings.beginGroup(accName)
-			serv_ = self.Settings.value('server').toString().toLocal8Bit().data()
-			port_ = self.Settings.value('port').toString().toLocal8Bit().data()
-			if port_ == '' : port_ =  '0'
-			login_ = self.Settings.value('login').toString().toLocal8Bit().data()
-			authMethod_ = self.Settings.value('authentificationMethod').toString().toLocal8Bit().data()
-			connMethod_ = self.Settings.value('connectMethod').toString().toLocal8Bit().data()
+			serv_ = self.Settings.value('server', '').toString().toLocal8Bit().data()
+			port_ = self.Settings.value('port', '0').toString().toLocal8Bit().data()
+			login_ = self.Settings.value('login', '').toString().toLocal8Bit().data()
+			authMethod_ = self.Settings.value('authentificationMethod', '').toString().toLocal8Bit().data()
+			connMethod_ = self.Settings.value('connectMethod', '').toString().toLocal8Bit().data()
 			if str(connMethod_) == 'imap' :
-				inbox = self.Settings.value('Inbox').toString().toLocal8Bit().data()
+				inbox = self.Settings.value('Inbox', '').toString().toLocal8Bit().data()
 			else :
 				inbox = ''
 			anotherAuthData = False
@@ -86,7 +85,7 @@ class MailProgExec(QThread):
 				collId = __str.toLocal8Bit().data()
 			else :
 				collId = __str
-			itemId = str(self.param.values()[0])
+			itemId = self.param[__str] if __str in self.param else ''
 			_command = self.command.replace('%dir_id', collId).replace('%mail_id', itemId)
 			self.COMMAND = '' if _command == '' else '/bin/bash -c "%s"' % _command
 			#print collId, itemId, command, self.COMMAND

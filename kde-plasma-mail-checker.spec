@@ -1,5 +1,5 @@
 Name: kde-plasma-mail-checker
-Version: 1.15.67
+Version: 1.15.68
 Release: 1%{?dist}
 Summary: KDE Plasmoid for periodically checking a new messages in the mailboxes list
 Summary(ru): Плазмоид периодически проверяет наличие новых писем в списке почтовых ящиков
@@ -53,36 +53,6 @@ make %{?_smp_mflags}
 %doc README README_RU COPYING Changelog Licenses
 
 %changelog
-* Sat Mar 29 2014 Fl@sh <kaperang07@gmail.com> - 1.15.67-1
-- version update;
-
-* Tue Feb 11 2014 Fl@sh <kaperang07@gmail.com> - 1.15.66-1
-- version update;
-
-* Tue Nov 26 2013 Fl@sh <kaperang07@gmail.com> - 1.15.64-1
-- version update;
-
-* Wed Aug 14 2013 Fl@sh <kaperang07@gmail.com> - 1.15.63-2
-- description improved;
-
-* Fri Jul 26 2013 Fl@sh <kaperang07@gmail.com> - 1.15.63-1
-- version update;
-
-* Mon Jun 10 2013 Fl@sh <kaperang07@gmail.com> - 1.15.62-1
-- version update;
-
-* Fri May 24 2013 Fl@sh <kaperang07@gmail.com> - 1.15.60-1
-- version update;
-
-* Tue May 21 2013 Fl@sh <kaperang07@gmail.com> - 1.14.60-1
-- version update;
-
-* Tue May 14 2013 Fl@sh <kaperang07@gmail.com> - 1.13.59-1
-- version update;
-
-* Sun May 12 2013 Fl@sh <kaperang07@gmail.com> - 1.12.58-1
-- version update;
-
-* Sun Apr 28 2013 Fl@sh <kaperang07@gmail.com> - 1.12.56-1
+* Thu Apr  3 2014 Fl@sh <kaperang07@gmail.com> - 1.15.68-1
 - version update;
 - clear spec`s changelog;
