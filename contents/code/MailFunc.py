@@ -200,8 +200,8 @@ def readAccountData(account = ''):
 		authMethod_ = Settings.value('authentificationMethod', '').toString()
 		connMethod_ = Settings.value('connectMethod', '').toString()
 		# time.time() for the initiate a time-point of reference
-		last_ = Settings.value('lastElemValue', time.time()).toUInt()[0]
-		if last_ == 0 : last_ = time.time()
+		last_, ok = Settings.value('lastElemValue', time.time()).toUInt()
+		if not ok : last_ = time.time()
 		enable = Settings.value('Enabled', '0').toString()
 		if connMethod_.startsWith('imap') and Settings.contains('Inbox') :
 			inbox = Settings.value('Inbox', '').toString()
@@ -431,12 +431,6 @@ def checkNewMailIMAP4(accountData = ['', '']):
 										 clearBlank(Subj) + '\r\n\r\n'
 					#print dateStamp(), NewMailAttributes, '   ----==------'
 					encoding += '\n'
-		else:
-			# print dateStamp(), 'New message(s) not found.'
-			if countAll == 0 :
-				Settings.beginGroup(accountData[0])
-				Settings.setValue('lastElemValue', '0')
-				Settings.endGroup()
 
 		if answer[0] == 'OK' :
 			m.close()
