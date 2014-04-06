@@ -335,7 +335,7 @@ def getMailAttributes(m, i):
 	return Date, From, Subj
 
 def imapAuth(serv, port, login, passw, authMthd, inbox, idle = False):
-	answer = [None, None]
+	answer = (None, None)
 	m = None
 	loadSocketModule(module = imaplib)
 	if idle : setIdleMethods()
@@ -346,6 +346,7 @@ def imapAuth(serv, port, login, passw, authMthd, inbox, idle = False):
 		else :
 			m = imaplib.IMAP4(serv, port)
 	except Exception, err :
+		print dateStamp(), str(err), 'IMAP4_connect %s:%s' % (serv, port)
 		return ('', str(err)), m, False
 	tag = m._new_tag()
 	m.send("%s CAPABILITY\r\n" % tag)
@@ -366,6 +367,7 @@ def imapAuth(serv, port, login, passw, authMthd, inbox, idle = False):
 			#print dateStamp(), mailBox, imapUTF7Encode(mailBox)
 			answer = m.select(imapUTF7Encode(mailBox))
 	except Exception, err :
+		print dateStamp(), str(err), 'IMAP4_login %s:%s' % (serv, port)
 		answer = ('', str(err))
 	finally : pass
 	return answer, m, idleable

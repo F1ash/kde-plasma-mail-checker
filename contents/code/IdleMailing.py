@@ -55,6 +55,7 @@ class IdleMailing(QThread):
 				uid, msg = (None, '')
 				if self.key : uid, msg = self.mail.idle()
 			except Exception, err :
+				print dateStamp(), str(err), 'IMAP4_IDLE_runIdle1'
 				if not self.restarting : errorCount += 1
 				uid, msg = (None, err)
 			finally : pass
@@ -103,6 +104,7 @@ class IdleMailing(QThread):
 														'msg': [countAll, 0, unSeen, '']})
 				except Exception, err :
 					# send error messasge to main thread
+					print dateStamp(), str(err), 'IMAP4_IDLE_runIdle2'
 					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, 'msg': err})
 				finally :
 					# successfull probe is clear the errorCount
@@ -126,7 +128,8 @@ class IdleMailing(QThread):
 					# send data to main thread for change mail data
 					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNINIT, \
 													'msg': [countAll, new, unSeen, '']})
-				except Exception, err : print dateStamp(), err
+				except Exception, err :
+					print dateStamp(), str(err), 'IMAP4_IDLE_runIdle3'
 				finally : pass
 			elif not self.key :
 				print dateStamp(), 'key off'
@@ -234,7 +237,7 @@ class IdleMailing(QThread):
 					self.prnt.idleThreadMessage.emit({'acc': self.name, 'state': SIGNERRO, \
 													'msg': [self.answer[1]]})
 			except Exception, err :
-				print dateStamp(), err
+				print dateStamp(), str(err), 'IMAP4_IDLE_run'
 			finally : pass
 
 		print dateStamp(), self.name.toLocal8Bit().data(), 'is runned:', self.runned, '; crypted:', self.authentificationData[4]
