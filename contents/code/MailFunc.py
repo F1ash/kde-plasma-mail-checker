@@ -235,7 +235,8 @@ def popAuth(serv, port, login, passw, authMthd):
 		if m.user(login)[:3] == '+OK' :
 			if m.pass_(passw)[:3] == '+OK' :
 				go = True
-	except Exception : pass
+	except Exception :
+		print dateStamp(), str(err), 'POP3_connect %s:%s' % (serv, port)
 	finally : pass
 	return m, go
 
